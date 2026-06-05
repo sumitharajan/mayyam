@@ -27,6 +27,7 @@ pub mod explain_plan_repository;
 pub mod llm_model;
 pub mod llm_provider;
 pub mod mysql_performance_repository;
+pub mod mysql_telemetry_snapshot_repository;
 pub mod prompt_template;
 pub mod query_fingerprint_repository;
 pub mod query_template;

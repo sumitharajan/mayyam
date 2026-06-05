@@ -14,19 +14,49 @@
 
 
 use actix_web::{web, HttpResponse, Responder};
+use chrono::{DateTime, Utc};
 use sea_orm::DatabaseConnection;
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+use uuid::Uuid;
 
 use crate::config::Config;
 use crate::errors::AppError;
 use crate::middleware::auth::Claims;
 use crate::models::database::{CreateDatabaseConnectionRequest, DatabaseQueryRequest};
 use crate::repositories::database::DatabaseRepository;
+use crate::repositories::mysql_telemetry_snapshot_repository::MySqlTelemetrySnapshotRepository;
 use crate::services::analytics::mysql_analytics::mysql_analytics_service::MySqlAnalyticsService;
 use crate::services::analytics::mysql_analytics::mysql_telemetry::MySqlTelemetryCollector;
 use crate::services::analytics::postgres_analytics::postgres_analytics_service::PostgresAnalyticsService;
 use crate::services::database::DatabaseService;
 use crate::utils::database::connect_to_dynamic_database;
+
+#[derive(Debug, Deserialize)]
+pub struct MySqlTelemetryHistoryQuery {
+    pub hours: Option<i64>,
+    pub limit: Option<u64>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct MySqlTelemetryHistoryPoint {
+    pub id: Uuid,
+    pub collected_at: DateTime<Utc>,
+    pub qps_since_start: f64,
+    pub threads_connected: i32,
+    pub threads_running: i32,
+    pub connection_usage_pct: Option<f64>,
+    pub buffer_pool_hit_ratio: Option<f64>,
+    pub slow_queries: i64,
+    pub findings_count: i32,
+    pub high_priority_findings_count: i32,
+}
+
+#[derive(Debug, Serialize)]
+pub struct MySqlTelemetryHistoryResponse {
+    pub snapshots: Vec<MySqlTelemetryHistoryPoint>,
+    pub total: usize,
+}
 
 pub async fn execute_query(
     query_req: web::Json<DatabaseQueryRequest>,
@@ -132,8 +162,76 @@ pub async fn get_mysql_telemetry(
 
     let dynamic_conn = connect_to_dynamic_database(&conn_model, config.get_ref()).await?;
     let telemetry = MySqlTelemetryCollector::collect(&dynamic_conn).await?;
+    let telemetry_repo = MySqlTelemetrySnapshotRepository::new(db_pool.get_ref().clone());
+    if let Err(error) = telemetry_repo.create_from_snapshot(conn_id, &telemetry).await {
+        tracing::warn!(
+            connection_id = %conn_id,
+            error = %error,
+            "Failed to persist MySQL telemetry snapshot"
+        );
+    }
 
     Ok(HttpResponse::Ok().json(telemetry))
+}
+
+pub async fn get_mysql_telemetry_history(
+    path: web::Path<String>,
+    query: web::Query<MySqlTelemetryHistoryQuery>,
+    db_pool: web::Data<Arc<DatabaseConnection>>,
+    config: web::Data<Config>,
+    claims: web::ReqData<Claims>,
+) -> Result<impl Responder, AppError> {
+    let db_repo = DatabaseRepository::new(db_pool.get_ref().clone(), config.get_ref().clone());
+    let conn_id = uuid::Uuid::parse_str(&path.into_inner())
+        .map_err(|e| AppError::BadRequest(format!("Invalid UUID: {}", e)))?;
+    let conn_model = db_repo
+        .find_by_id(conn_id)
+        .await?
+        .ok_or_else(|| AppError::NotFound("Database connection not found".to_string()))?;
+
+    let user_id = uuid::Uuid::parse_str(&claims.sub)
+        .map_err(|e| AppError::BadRequest(format!("Invalid user UUID: {}", e)))?;
+    let is_admin = claims.roles.iter().any(|role| role == "admin");
+    if conn_model.created_by != user_id && !is_admin {
+        return Err(AppError::Auth(
+            "You do not have access to this database connection".to_string(),
+        ));
+    }
+
+    if conn_model.connection_type.to_lowercase() != "mysql" {
+        return Err(AppError::BadRequest(
+            "MySQL telemetry history is only supported for mysql connections".to_string(),
+        ));
+    }
+
+    let hours = query.hours.unwrap_or(24).clamp(1, 24 * 30);
+    let limit = query.limit.unwrap_or(50).clamp(1, 500);
+    let telemetry_repo = MySqlTelemetrySnapshotRepository::new(db_pool.get_ref().clone());
+    let snapshots = telemetry_repo
+        .find_recent_by_connection(conn_id, hours, limit)
+        .await?;
+
+    let points = snapshots
+        .into_iter()
+        .map(|snapshot| MySqlTelemetryHistoryPoint {
+            id: snapshot.id,
+            collected_at: snapshot.collected_at,
+            qps_since_start: snapshot.qps_since_start,
+            threads_connected: snapshot.threads_connected,
+            threads_running: snapshot.threads_running,
+            connection_usage_pct: snapshot.connection_usage_pct,
+            buffer_pool_hit_ratio: snapshot.buffer_pool_hit_ratio,
+            slow_queries: snapshot.slow_queries,
+            findings_count: snapshot.findings_count,
+            high_priority_findings_count: snapshot.high_priority_findings_count,
+        })
+        .collect::<Vec<_>>();
+    let total = points.len();
+
+    Ok(HttpResponse::Ok().json(MySqlTelemetryHistoryResponse {
+        snapshots: points,
+        total,
+    }))
 }
 
 pub async fn list_connections(

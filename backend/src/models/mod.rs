@@ -44,6 +44,7 @@ pub mod query_fingerprint;
 pub mod explain_plan;
 pub mod ai_analysis;
 pub mod mysql_performance_snapshot;
+pub mod mysql_telemetry_snapshot;
 
 // Chaos Engineering models
 pub mod chaos_template;

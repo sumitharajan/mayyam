@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   CAlert,
   CBadge,
@@ -62,6 +62,11 @@ const formatMs = (value) => {
   return `${Number(value).toFixed(0)} ms`;
 };
 
+const formatTime = (value) => {
+  if (!value) return "N/A";
+  return new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+};
+
 const truncate = (value, max = 140) => {
   if (!value) return "";
   return value.length > max ? `${value.slice(0, max)}...` : value;
@@ -69,27 +74,39 @@ const truncate = (value, max = 140) => {
 
 const MySqlTelemetry = ({ connection }) => {
   const [telemetry, setTelemetry] = useState(null);
+  const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchTelemetry = async () => {
+  const fetchTelemetry = useCallback(async () => {
+    if (!connection?.id) return;
+
     try {
       setLoading(true);
       setError(null);
       const response = await api.get(`/api/databases/${connection.id}/mysql/telemetry`);
       setTelemetry(response.data);
+
+      try {
+        const historyResponse = await api.get(
+          `/api/databases/${connection.id}/mysql/telemetry/history?hours=24&limit=12`
+        );
+        setHistory(historyResponse.data?.snapshots || []);
+      } catch (historyErr) {
+        console.warn("Failed to load MySQL telemetry history", historyErr);
+      }
     } catch (err) {
       setError("Failed to load MySQL telemetry: " + (err.response?.data?.message || err.message));
     } finally {
       setLoading(false);
     }
-  };
+  }, [connection?.id]);
 
   useEffect(() => {
     if (connection?.id) {
       fetchTelemetry();
     }
-  }, [connection?.id]);
+  }, [connection?.id, fetchTelemetry]);
 
   if (!connection) {
     return <CAlert color="info">Select a MySQL connection to view telemetry.</CAlert>;
@@ -228,6 +245,59 @@ const MySqlTelemetry = ({ connection }) => {
               </CCard>
             </CCol>
           </CRow>
+
+          {history.length > 0 && (
+            <CRow className="mb-4">
+              <CCol>
+                <CCard>
+                  <CCardHeader>
+                    <strong>Recent Snapshots</strong>
+                    <span className="text-muted small ms-2">last 24 hours</span>
+                  </CCardHeader>
+                  <CCardBody>
+                    <CTable responsive hover small>
+                      <CTableHead>
+                        <CTableRow>
+                          <CTableHeaderCell>Collected</CTableHeaderCell>
+                          <CTableHeaderCell className="text-end">Findings</CTableHeaderCell>
+                          <CTableHeaderCell className="text-end">High</CTableHeaderCell>
+                          <CTableHeaderCell className="text-end">Threads</CTableHeaderCell>
+                          <CTableHeaderCell className="text-end">Running</CTableHeaderCell>
+                          <CTableHeaderCell className="text-end">QPS</CTableHeaderCell>
+                          <CTableHeaderCell className="text-end">Buffer Hit</CTableHeaderCell>
+                        </CTableRow>
+                      </CTableHead>
+                      <CTableBody>
+                        {history.map((snapshot) => (
+                          <CTableRow key={snapshot.id}>
+                            <CTableDataCell>{formatTime(snapshot.collected_at)}</CTableDataCell>
+                            <CTableDataCell className="text-end">{formatNumber(snapshot.findings_count)}</CTableDataCell>
+                            <CTableDataCell className="text-end">
+                              <CBadge color={snapshot.high_priority_findings_count > 0 ? "danger" : "success"}>
+                                {formatNumber(snapshot.high_priority_findings_count)}
+                              </CBadge>
+                            </CTableDataCell>
+                            <CTableDataCell className="text-end">
+                              {formatNumber(snapshot.threads_connected)}
+                            </CTableDataCell>
+                            <CTableDataCell className="text-end">
+                              {formatNumber(snapshot.threads_running)}
+                            </CTableDataCell>
+                            <CTableDataCell className="text-end">
+                              {Number(snapshot.qps_since_start || 0).toFixed(2)}
+                            </CTableDataCell>
+                            <CTableDataCell className="text-end">
+                              {formatPercent(snapshot.buffer_pool_hit_ratio, 100)}
+                            </CTableDataCell>
+                          </CTableRow>
+                        ))}
+                      </CTableBody>
+                    </CTable>
+                  </CCardBody>
+                </CCard>
+              </CCol>
+            </CRow>
+          )}
 
           <CRow className="mb-4">
             <CCol lg={8}>

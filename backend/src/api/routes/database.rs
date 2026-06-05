@@ -59,6 +59,10 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
                     .route(web::get().to(database::get_mysql_telemetry)),
             )
             .service(
+                web::resource("/{id}/mysql/telemetry/history")
+                    .route(web::get().to(database::get_mysql_telemetry_history)),
+            )
+            .service(
                 web::resource("/{id}/table/{table_name}/details")
                     .route(web::get().to(get_table_details)),
             )
