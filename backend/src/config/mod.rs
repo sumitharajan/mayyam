@@ -29,6 +29,8 @@ pub struct Config {
     pub kubernetes: KubernetesConfig,
     #[serde(default)]
     pub sync: SyncConfig,
+    #[serde(default)]
+    pub mysql_telemetry: MySqlTelemetryPollerConfig,
 }
 
 impl Default for Config {
@@ -42,6 +44,7 @@ impl Default for Config {
             security: SecurityConfig::default(),
             kubernetes: KubernetesConfig::default(),
             sync: SyncConfig::default(),
+            mysql_telemetry: MySqlTelemetryPollerConfig::default(),
         }
     }
 }
@@ -241,6 +244,38 @@ impl Default for SyncConfig {
     fn default() -> Self {
         Self {
             region_concurrency: default_region_concurrency(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MySqlTelemetryPollerConfig {
+    #[serde(default = "default_mysql_telemetry_enabled")]
+    pub enabled: bool,
+    #[serde(default = "default_mysql_telemetry_interval_seconds")]
+    pub interval_seconds: u64,
+    #[serde(default = "default_mysql_telemetry_max_connections_per_cycle")]
+    pub max_connections_per_cycle: usize,
+}
+
+fn default_mysql_telemetry_enabled() -> bool {
+    true
+}
+
+fn default_mysql_telemetry_interval_seconds() -> u64 {
+    300
+}
+
+fn default_mysql_telemetry_max_connections_per_cycle() -> usize {
+    50
+}
+
+impl Default for MySqlTelemetryPollerConfig {
+    fn default() -> Self {
+        Self {
+            enabled: default_mysql_telemetry_enabled(),
+            interval_seconds: default_mysql_telemetry_interval_seconds(),
+            max_connections_per_cycle: default_mysql_telemetry_max_connections_per_cycle(),
         }
     }
 }
