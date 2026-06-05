@@ -931,3 +931,147 @@ fn truncate(value: &str, max_chars: usize) -> String {
     truncated.push_str("...");
     truncated
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn base_snapshot() -> MySqlTelemetrySnapshot {
+        MySqlTelemetrySnapshot {
+            collected_at: Utc::now(),
+            server: MySqlServerContext {
+                version: Some("8.0".to_string()),
+                uptime_seconds: 3600,
+                performance_schema_enabled: Some("ON".to_string()),
+                sys_schema_available: true,
+            },
+            workload: MySqlWorkloadSnapshot {
+                questions: 1000,
+                queries: 1000,
+                com_select: 800,
+                com_insert: 100,
+                com_update: 50,
+                com_delete: 50,
+                slow_queries: 0,
+                qps_since_start: 1.0,
+                read_write_ratio: Some(4.0),
+            },
+            connections: MySqlConnectionSnapshot {
+                max_connections: 100,
+                max_used_connections: 40,
+                threads_connected: 20,
+                threads_running: 2,
+                threads_cached: 8,
+                connection_usage_pct: Some(20.0),
+                peak_connection_usage_pct: Some(40.0),
+                aborted_clients: 0,
+                aborted_connects: 0,
+                connection_errors: HashMap::new(),
+            },
+            innodb: MySqlInnoDbSnapshot {
+                buffer_pool_hit_ratio: Some(0.99),
+                buffer_pool_pages_total: 1000,
+                buffer_pool_pages_free: 100,
+                buffer_pool_pages_dirty: 10,
+                buffer_pool_dirty_pct: Some(1.0),
+                buffer_pool_free_pct: Some(10.0),
+                log_waits: 0,
+                row_lock_waits: 0,
+                row_lock_time_ms: 0,
+                deadlocks: 0,
+            },
+            statements: Vec::new(),
+            tables: Vec::new(),
+            indexes: Vec::new(),
+            waits: Vec::new(),
+            locks: MySqlLockSnapshot {
+                blocked_processes: 0,
+                pending_metadata_locks: Some(0),
+                data_lock_waits: Some(0),
+            },
+            findings: Vec::new(),
+        }
+    }
+
+    fn finding_titles(snapshot: &MySqlTelemetrySnapshot) -> Vec<String> {
+        MySqlFindingEngine::analyze(snapshot)
+            .into_iter()
+            .map(|finding| finding.title)
+            .collect()
+    }
+
+    #[test]
+    fn flags_current_connection_saturation() {
+        let mut snapshot = base_snapshot();
+        snapshot.connections.threads_connected = 95;
+        snapshot.connections.connection_usage_pct = Some(95.0);
+
+        let titles = finding_titles(&snapshot);
+
+        assert!(titles
+            .iter()
+            .any(|title| title == "Current connections are near max_connections"));
+    }
+
+    #[test]
+    fn flags_high_rows_examined_waste() {
+        let mut snapshot = base_snapshot();
+        snapshot.statements.push(MySqlStatementDigest {
+            digest: Some("abc".to_string()),
+            schema_name: Some("app".to_string()),
+            digest_text: "SELECT * FROM orders WHERE customer_id = ?".to_string(),
+            execution_count: 25,
+            total_time_ms: 10_000.0,
+            avg_time_ms: 400.0,
+            max_time_ms: 900.0,
+            rows_examined: 2_000_000,
+            rows_sent: 500,
+            rows_examined_per_row_sent: Some(4_000.0),
+            no_index_used_count: 0,
+            no_good_index_used_count: 0,
+            first_seen: None,
+            last_seen: None,
+        });
+
+        let titles = finding_titles(&snapshot);
+
+        assert!(titles
+            .iter()
+            .any(|title| title == "High rows-examined waste in statement digest"));
+    }
+
+    #[test]
+    fn flags_active_lock_waits() {
+        let mut snapshot = base_snapshot();
+        snapshot.locks.blocked_processes = 2;
+        snapshot.locks.pending_metadata_locks = Some(1);
+        snapshot.locks.data_lock_waits = Some(3);
+
+        let titles = finding_titles(&snapshot);
+
+        assert!(titles
+            .iter()
+            .any(|title| title == "Active lock waits detected"));
+    }
+
+    #[test]
+    fn flags_unused_secondary_indexes() {
+        let mut snapshot = base_snapshot();
+        snapshot.indexes.push(MySqlIndexTelemetry {
+            schema_name: "app".to_string(),
+            table_name: "orders".to_string(),
+            index_name: "idx_unused".to_string(),
+            is_unique: false,
+            is_primary: false,
+            columns: vec!["created_at".to_string()],
+            read_count: 0,
+            write_count: 100,
+        });
+
+        let titles = finding_titles(&snapshot);
+
+        assert!(titles
+            .iter()
+            .any(|title| title == "Potentially unused secondary indexes"));
+    }
+}
