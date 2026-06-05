@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 use crate::config::Config;
 use crate::errors::AppError;
 use crate::models::database::{
     ComputeMetrics, CostAnalysis, CostRecommendation, DatabaseAnalysis, DatabaseIssue,
     DatabaseQueryResponse, FrequentQuery, IndexStats, IssueCategory, IssueSeverity,
-    PerformanceMetrics, QueryPlan, QueryPlanNode, QueryStatistics,
-    ResourceCost, SlowQuery, StorageMetrics, TableStats, TrendDirection,
+    PerformanceMetrics, QueryPlan, QueryPlanNode, QueryStatistics, ResourceCost, SlowQuery,
+    StorageMetrics, TableStats, TrendDirection,
 };
+use crate::services::analytics::mysql_analytics::mysql_telemetry::MySqlTelemetryCollector;
 use chrono::{DateTime, Duration, NaiveDateTime, TimeZone, Utc};
 use sea_orm::{ConnectionTrait, DatabaseConnection, DbBackend, QueryResult, Statement};
 use std::collections::HashMap;
@@ -66,26 +66,40 @@ impl MySqlAnalyticsService {
         &self,
         conn: &DatabaseConnection,
     ) -> Result<serde_json::Value, AppError> {
+        let telemetry = MySqlTelemetryCollector::collect(conn).await?;
         let query_stats = self.get_query_statistics(conn).await?;
         let performance_metrics = self.get_performance_metrics(conn).await?;
         let storage_metrics = self.get_storage_metrics(conn).await?;
-        
-        // Combine into a simple JSON object for LLM context
+
+        // Include the legacy shape for current prompts/UI and add the richer evidence
+        // snapshot used by the MySQL babysitter workflow.
         Ok(serde_json::json!({
+            "telemetry_snapshot": telemetry,
+            "evidence_guidance": {
+                "instruction": "Base recommendations only on telemetry_snapshot.findings and metric evidence. If evidence is missing, say what additional data is needed.",
+                "safe_mode": "Read-only recommendations only. Do not suggest destructive SQL without an explicit validation step."
+            },
             "query_statistics": {
                 "total_queries": query_stats.total_queries,
                 "slow_queries": query_stats.slow_queries,
                 "avg_query_time_ms": query_stats.avg_query_time_ms,
                 "top_slow_queries": query_stats.top_slow_queries,
+                "frequent_queries": query_stats.frequent_queries,
             },
             "performance_metrics": {
                 "connection_count": performance_metrics.connection_count,
                 "active_sessions": performance_metrics.active_sessions,
+                "idle_sessions": performance_metrics.idle_sessions,
                 "buffer_hit_ratio": performance_metrics.buffer_hit_ratio,
+                "deadlocks": performance_metrics.deadlocks,
                 "blocked_queries": performance_metrics.blocked_queries,
+                "table_stats": performance_metrics.table_stats,
+                "index_stats": performance_metrics.index_stats,
             },
             "storage_metrics": {
                 "total_bytes": storage_metrics.total_bytes,
+                "user_data_bytes": storage_metrics.user_data_bytes,
+                "index_bytes": storage_metrics.index_bytes,
                 "free_space_bytes": storage_metrics.free_space_bytes,
                 "top_tables_by_size": storage_metrics.top_tables_by_size,
             }
@@ -102,13 +116,13 @@ impl MySqlAnalyticsService {
                 IFNULL(
                     SUM(
                         CASE
-                            WHEN AVG_TIMER_WAIT >= 1000000000 THEN COUNT_STAR
+                            WHEN AVG_TIMER_WAIT >= 1000000000000 THEN COUNT_STAR
                             ELSE 0
                         END
                     ),
                     0
                 ) AS slow_queries,
-                IFNULL(AVG(AVG_TIMER_WAIT) / 1000000000, 0) AS avg_query_time_ms
+                IFNULL(SUM(SUM_TIMER_WAIT) / NULLIF(SUM(COUNT_STAR), 0) / 1000000000, 0) AS avg_query_time_ms
             FROM performance_schema.events_statements_summary_by_digest
             WHERE DIGEST_TEXT IS NOT NULL
         "#;

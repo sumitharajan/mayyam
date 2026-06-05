@@ -62,6 +62,7 @@ import QueryTool from "../components/database/QueryTool";
 import SchemaExplorer from "../components/database/SchemaExplorer";
 import DatabaseMonitoring from "../components/database/DatabaseMonitoring";
 import MySqlTriage from "../components/database/MySqlTriage";
+import MySqlTelemetry from "../components/database/MySqlTelemetry";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
 
@@ -659,6 +660,17 @@ const DatabaseWorkbench = ({
           {connection.connection_type === 'mysql' && (
             <CNavItem>
               <CNavLink
+                active={activeTab === 'mysql-telemetry'}
+                onClick={() => setActiveTab('mysql-telemetry')}
+                href="#"
+              >
+                MySQL Telemetry
+              </CNavLink>
+            </CNavItem>
+          )}
+          {connection.connection_type === 'mysql' && (
+            <CNavItem>
+              <CNavLink
                 active={activeTab === 'triage'}
                 onClick={() => setActiveTab('triage')}
                 href="#"
@@ -713,6 +725,12 @@ const DatabaseWorkbench = ({
               performanceMetrics={performanceMetrics}
             />
           </CTabPane>
+
+          {connection.connection_type === 'mysql' && (
+            <CTabPane visible={activeTab === 'mysql-telemetry'} className="p-3">
+              <MySqlTelemetry connection={connection} />
+            </CTabPane>
+          )}
 
           {connection.connection_type === 'mysql' && (
             <CTabPane visible={activeTab === 'triage'} className="p-3">

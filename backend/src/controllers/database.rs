@@ -23,6 +23,7 @@ use crate::middleware::auth::Claims;
 use crate::models::database::{CreateDatabaseConnectionRequest, DatabaseQueryRequest};
 use crate::repositories::database::DatabaseRepository;
 use crate::services::analytics::mysql_analytics::mysql_analytics_service::MySqlAnalyticsService;
+use crate::services::analytics::mysql_analytics::mysql_telemetry::MySqlTelemetryCollector;
 use crate::services::analytics::postgres_analytics::postgres_analytics_service::PostgresAnalyticsService;
 use crate::services::database::DatabaseService;
 use crate::utils::database::connect_to_dynamic_database;
@@ -98,6 +99,41 @@ pub async fn analyze_database(
     }?;
 
     Ok(HttpResponse::Ok().json(analysis))
+}
+
+pub async fn get_mysql_telemetry(
+    path: web::Path<String>,
+    db_pool: web::Data<Arc<DatabaseConnection>>,
+    config: web::Data<Config>,
+    claims: web::ReqData<Claims>,
+) -> Result<impl Responder, AppError> {
+    let db_repo = DatabaseRepository::new(db_pool.get_ref().clone(), config.get_ref().clone());
+    let conn_id = uuid::Uuid::parse_str(&path.into_inner())
+        .map_err(|e| AppError::BadRequest(format!("Invalid UUID: {}", e)))?;
+    let conn_model = db_repo
+        .find_by_id(conn_id)
+        .await?
+        .ok_or_else(|| AppError::NotFound("Database connection not found".to_string()))?;
+
+    let user_id = uuid::Uuid::parse_str(&claims.sub)
+        .map_err(|e| AppError::BadRequest(format!("Invalid user UUID: {}", e)))?;
+    let is_admin = claims.roles.iter().any(|role| role == "admin");
+    if conn_model.created_by != user_id && !is_admin {
+        return Err(AppError::Auth(
+            "You do not have access to this database connection".to_string(),
+        ));
+    }
+
+    if conn_model.connection_type.to_lowercase() != "mysql" {
+        return Err(AppError::BadRequest(
+            "MySQL telemetry is only supported for mysql connections".to_string(),
+        ));
+    }
+
+    let dynamic_conn = connect_to_dynamic_database(&conn_model, config.get_ref()).await?;
+    let telemetry = MySqlTelemetryCollector::collect(&dynamic_conn).await?;
+
+    Ok(HttpResponse::Ok().json(telemetry))
 }
 
 pub async fn list_connections(
