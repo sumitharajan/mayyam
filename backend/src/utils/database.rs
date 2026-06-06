@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 use crate::config::Config;
 use crate::errors::AppError;
 use crate::models::database::Model as DatabaseConnectionModel;
@@ -27,6 +26,15 @@ use tracing::{error, info};
 
 /// Connect to the database using configuration settings
 pub async fn connect(config: &Config) -> Result<DatabaseConnection, DbErr> {
+    // Allow a direct override for local development and UI validation.
+    // This lets us run against SQLite when Postgres is not available.
+    if let Ok(database_url) = std::env::var("DATABASE_URL") {
+        info!("Connecting to database via DATABASE_URL override");
+        let conn = Database::connect(database_url).await?;
+        info!("Database connection established successfully");
+        return Ok(conn);
+    }
+
     // Use the first PostgreSQL configuration for the application database
     if let Some(pg_config) = config.database.postgres.first() {
         let database_url = format!(
