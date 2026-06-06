@@ -75,6 +75,7 @@ const truncate = (value, max = 140) => {
 const MySqlTelemetry = ({ connection }) => {
   const [telemetry, setTelemetry] = useState(null);
   const [history, setHistory] = useState([]);
+  const [signals, setSignals] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -94,6 +95,15 @@ const MySqlTelemetry = ({ connection }) => {
         setHistory(historyResponse.data?.snapshots || []);
       } catch (historyErr) {
         console.warn("Failed to load MySQL telemetry history", historyErr);
+      }
+
+      try {
+        const signalsResponse = await api.get(
+          `/api/databases/${connection.id}/mysql/telemetry/signals?hours=24&limit=100`
+        );
+        setSignals(signalsResponse.data?.signals || []);
+      } catch (signalsErr) {
+        console.warn("Failed to load MySQL telemetry signals", signalsErr);
       }
     } catch (err) {
       setError("Failed to load MySQL telemetry: " + (err.response?.data?.message || err.message));
@@ -236,6 +246,51 @@ const MySqlTelemetry = ({ connection }) => {
                             <pre className="small bg-light border rounded p-2 mt-2 mb-0">
                               {finding.validation_query}
                             </pre>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CCardBody>
+              </CCard>
+            </CCol>
+          </CRow>
+
+          <CRow className="mb-4">
+            <CCol>
+              <CCard>
+                <CCardHeader>
+                  <strong>Performance Signals</strong>
+                  <span className="text-muted small ms-2">evidence-backed trends</span>
+                </CCardHeader>
+                <CCardBody>
+                  {signals.length === 0 ? (
+                    <CAlert color="success" className="mb-0">
+                      No active trend signals detected in the recent telemetry window.
+                    </CAlert>
+                  ) : (
+                    <div className="d-grid gap-3">
+                      {signals.map((signal, index) => (
+                        <div key={`${signal.title}-${index}`} className="border rounded p-3">
+                          <div className="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                              <CBadge color={severityColor(signal.severity)} className="me-2">
+                                {signal.severity}
+                              </CBadge>
+                              <CBadge color="light" textColor="dark" className="me-2">
+                                {signal.category}
+                              </CBadge>
+                              <strong>{signal.title}</strong>
+                            </div>
+                          </div>
+                          <div className="small mb-2">{signal.summary}</div>
+                          <div className="small mb-2">
+                            <strong>Recommendation:</strong> {signal.recommendation}
+                          </div>
+                          {signal.evidence?.length > 0 && (
+                            <div className="small text-muted">
+                              <strong>Evidence:</strong> {signal.evidence.join(" | ")}
+                            </div>
                           )}
                         </div>
                       ))}

@@ -27,6 +27,9 @@ use crate::models::database::{CreateDatabaseConnectionRequest, DatabaseQueryRequ
 use crate::repositories::database::DatabaseRepository;
 use crate::repositories::mysql_telemetry_snapshot_repository::MySqlTelemetrySnapshotRepository;
 use crate::services::analytics::mysql_analytics::mysql_analytics_service::MySqlAnalyticsService;
+use crate::services::analytics::mysql_analytics::mysql_signals::{
+    MySqlPerformanceSignal, MySqlSignalEvaluator, MySqlSignalRules, MySqlSignalSnapshot,
+};
 use crate::services::analytics::mysql_analytics::mysql_telemetry::MySqlTelemetryCollector;
 use crate::services::analytics::postgres_analytics::postgres_analytics_service::PostgresAnalyticsService;
 use crate::services::database::DatabaseService;
@@ -56,6 +59,13 @@ pub struct MySqlTelemetryHistoryPoint {
 pub struct MySqlTelemetryHistoryResponse {
     pub snapshots: Vec<MySqlTelemetryHistoryPoint>,
     pub total: usize,
+}
+
+#[derive(Debug, Serialize)]
+pub struct MySqlTelemetrySignalsResponse {
+    pub signals: Vec<MySqlPerformanceSignal>,
+    pub sample_count: usize,
+    pub period_hours: i64,
 }
 
 pub async fn execute_query(
@@ -231,6 +241,68 @@ pub async fn get_mysql_telemetry_history(
     Ok(HttpResponse::Ok().json(MySqlTelemetryHistoryResponse {
         snapshots: points,
         total,
+    }))
+}
+
+pub async fn get_mysql_telemetry_signals(
+    path: web::Path<String>,
+    query: web::Query<MySqlTelemetryHistoryQuery>,
+    db_pool: web::Data<Arc<DatabaseConnection>>,
+    config: web::Data<Config>,
+    claims: web::ReqData<Claims>,
+) -> Result<impl Responder, AppError> {
+    let db_repo = DatabaseRepository::new(db_pool.get_ref().clone(), config.get_ref().clone());
+    let conn_id = uuid::Uuid::parse_str(&path.into_inner())
+        .map_err(|e| AppError::BadRequest(format!("Invalid UUID: {}", e)))?;
+    let conn_model = db_repo
+        .find_by_id(conn_id)
+        .await?
+        .ok_or_else(|| AppError::NotFound("Database connection not found".to_string()))?;
+
+    let user_id = uuid::Uuid::parse_str(&claims.sub)
+        .map_err(|e| AppError::BadRequest(format!("Invalid user UUID: {}", e)))?;
+    let is_admin = claims.roles.iter().any(|role| role == "admin");
+    if conn_model.created_by != user_id && !is_admin {
+        return Err(AppError::Auth(
+            "You do not have access to this database connection".to_string(),
+        ));
+    }
+
+    let connection_type = conn_model.connection_type.to_lowercase();
+    if connection_type != "mysql" && connection_type != "aurora-mysql" {
+        return Err(AppError::BadRequest(
+            "MySQL telemetry signals are only supported for mysql connections".to_string(),
+        ));
+    }
+
+    let hours = query.hours.unwrap_or(24).clamp(1, 24 * 30);
+    let limit = query.limit.unwrap_or(100).clamp(2, 500);
+    let telemetry_repo = MySqlTelemetrySnapshotRepository::new(db_pool.get_ref().clone());
+    let snapshots = telemetry_repo
+        .find_recent_by_connection(conn_id, hours, limit)
+        .await?;
+
+    let signal_snapshots = snapshots
+        .iter()
+        .map(|snapshot| MySqlSignalSnapshot {
+            id: snapshot.id,
+            collected_at: snapshot.collected_at,
+            qps_since_start: snapshot.qps_since_start,
+            threads_connected: snapshot.threads_connected,
+            threads_running: snapshot.threads_running,
+            connection_usage_pct: snapshot.connection_usage_pct,
+            buffer_pool_hit_ratio: snapshot.buffer_pool_hit_ratio,
+            slow_queries: snapshot.slow_queries,
+            findings_count: snapshot.findings_count,
+            high_priority_findings_count: snapshot.high_priority_findings_count,
+        })
+        .collect::<Vec<_>>();
+    let signals = MySqlSignalEvaluator::evaluate(&signal_snapshots, &MySqlSignalRules::default());
+
+    Ok(HttpResponse::Ok().json(MySqlTelemetrySignalsResponse {
+        signals,
+        sample_count: signal_snapshots.len(),
+        period_hours: hours,
     }))
 }
 
