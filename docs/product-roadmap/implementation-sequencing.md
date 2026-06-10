@@ -1,0 +1,45 @@
+# Implementation Sequencing
+
+## Phase 0: Product Spine
+
+- Create shared tables and APIs for resource identity, ownership, evidence, finding, recommendation, score, suppression, workflow, audit event, and report snapshot.
+- Define provider/domain adapters for AWS, Kubernetes, MySQL, Kafka, Postgres, Azure, Google Cloud, and Linux hosts.
+- Add a common scorecard UI component that can render all seven pillars.
+- Add a common action model: inspect, diagnose, dry-run, approve, execute, rollback-note, audit, and verify.
+- Add a common agentic investigation trace model for tool calls, hypotheses, uncertainty, approvals, and replay.
+
+## Phase 1: Make Existing Coverage Coherent
+
+- AWS: convert existing service inventory into pillar scorecards and deterministic rule packs.
+- Kubernetes: connect existing resource APIs to unified health, security, capacity, and cost views.
+- MySQL: promote telemetry signals into persisted findings, saved triage sessions, and DBA runbooks.
+- Kafka: expose the backend's existing backup, restore, consumer group, and broker operations in the frontend.
+- Cost: convert cost analytics into opportunity records with impact, confidence, effort, owner, risk, and verification state.
+
+## Phase 2: Close Pending Product Areas
+
+- Postgres: ship parity with MySQL telemetry and triage, then add Postgres-specific vacuum, WAL, replication, bloat, and restore workflows.
+- Azure: ship tenant/subscription/resource-group inventory, Azure Monitor evidence, Advisor/Policy ingestion, and scorecards.
+- Google Cloud: ship org/folder/project inventory, Cloud Asset Inventory, Cloud Operations evidence, Recommender/SCC ingestion, and scorecards.
+- Linux Companion: ship host enrollment, lightweight collector, systemd service, procfs/sysfs metrics, journald logs, package inventory, service posture, and read-only diagnostics.
+
+## Phase 3: Enterprise Differentiation
+
+- Add dry-run remediation, approvals, RBAC, audit trails, rollback notes, and change windows.
+- Add executive reporting by portfolio, workload, team, cost center, environment, and business service.
+- Add SLOs, RTO/RPO targets, DR drill evidence, resilience experiments, and post-incident review automation.
+- Add managed-service specific packs for RDS/Aurora, EKS, MSK, AKS, Azure Database for PostgreSQL, GKE, Cloud SQL, AlloyDB, and BigQuery.
+- Add agentic investigation loops that can safely operate across cloud APIs, Kubernetes APIs, database diagnostics, Kafka Admin APIs, and Linux hosts.
+
+## Backlog Counts
+
+| Area | Rows |
+| --- | --- |
+| AWS Cloud | 5,544 |
+| Kubernetes Dashboard | 2,009 |
+| MySQL AI Triager | 1,617 |
+| Kafka Dashboard and Management | 1,764 |
+| Postgres | 1,862 |
+| Azure Cloud | 3,654 |
+| Google Cloud | 3,465 |
+| Linux Companion | 3,675 |
