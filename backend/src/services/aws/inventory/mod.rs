@@ -16,3 +16,5 @@
 // emit reason-coded findings, and preserve the raw evidence they used.
 
 pub mod ec2_pillar_evaluator;
+pub mod lambda_pillar_evaluator;
+pub mod types;

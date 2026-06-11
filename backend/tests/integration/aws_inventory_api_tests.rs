@@ -75,6 +75,30 @@ async fn ec2_pillar_reports_contract() {
 }
 
 #[tokio::test]
+async fn lambda_pillar_reports_contract() {
+    if !aws_tests_enabled() {
+        println!("Skipping lambda_pillar_reports_contract because ENABLE_AWS_TESTS is not true");
+        return;
+    }
+
+    let base = base_url().await;
+    let client = Client::new();
+    let resp = client
+        .get(format!(
+            "{}/api/aws/inventory/lambda/pillars?account_id=123456789012",
+            base
+        ))
+        .send()
+        .await
+        .expect("lambda pillar report request failed");
+    assert_eq!(resp.status(), 200);
+    let body: Value = resp.json().await.expect("invalid JSON body");
+    assert_eq!(body["resource_type"], "LambdaFunction");
+    let reports = body["reports"].as_array().expect("reports array");
+    assert_eq!(reports.len(), 3);
+}
+
+#[tokio::test]
 async fn ec2_pillar_reports_rejects_unknown_pillar() {
     if !aws_tests_enabled() {
         println!(

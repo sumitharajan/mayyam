@@ -26,9 +26,9 @@ use tracing::debug;
 use crate::errors::AppError;
 use crate::models::aws_resource::AwsResourceType;
 use crate::repositories::aws_resource::AwsResourceRepository;
-use crate::services::aws::inventory::ec2_pillar_evaluator::{
-    evaluate_ec2_fleet, Pillar, DEFAULT_STALE_AFTER_HOURS,
-};
+use crate::services::aws::inventory::ec2_pillar_evaluator::evaluate_ec2_fleet;
+use crate::services::aws::inventory::lambda_pillar_evaluator::evaluate_lambda_fleet;
+use crate::services::aws::inventory::types::{Pillar, DEFAULT_STALE_AFTER_HOURS};
 
 #[derive(Clone)]
 pub struct AwsInventoryController {
@@ -48,42 +48,66 @@ pub struct Ec2PillarQuery {
     pub pillar: Option<String>,
 }
 
-pub async fn get_ec2_pillar_reports(
-    controller: web::Data<Arc<AwsInventoryController>>,
-    query: web::Query<Ec2PillarQuery>,
-) -> Result<HttpResponse, AppError> {
-    let query = query.into_inner();
-    debug!("EC2 pillar report request: {:?}", query);
-
-    let pillars: Vec<Pillar> = match &query.pillar {
-        Some(raw) => vec![Pillar::parse(raw).ok_or_else(|| {
+fn parse_pillars(raw: &Option<String>) -> Result<Vec<Pillar>, AppError> {
+    match raw {
+        Some(raw) => Ok(vec![Pillar::parse(raw).ok_or_else(|| {
             AppError::BadRequest(format!(
                 "Unknown pillar '{}'; expected one of: cost, security, resilience",
                 raw
             ))
-        })?],
-        None => vec![Pillar::Cost, Pillar::Security, Pillar::Resilience],
-    };
+        })?]),
+        None => Ok(vec![Pillar::Cost, Pillar::Security, Pillar::Resilience]),
+    }
+}
 
+async fn pillar_reports(
+    controller: &AwsInventoryController,
+    query: Ec2PillarQuery,
+    resource_type: AwsResourceType,
+    evaluate: impl Fn(
+        &[crate::models::aws_resource::Model],
+        Pillar,
+        chrono::DateTime<Utc>,
+    ) -> crate::services::aws::inventory::types::PillarReport,
+) -> Result<HttpResponse, AppError> {
+    let pillars = parse_pillars(&query.pillar)?;
     let resources = controller
         .aws_resource_repo
-        .find_by_account_and_type(&query.account_id, &AwsResourceType::EC2Instance.to_string())
+        .find_by_account_and_type(&query.account_id, &resource_type.to_string())
         .await?;
 
     let now = Utc::now();
     let reports: Vec<_> = pillars
         .iter()
-        .map(|pillar| evaluate_ec2_fleet(&resources, *pillar, now))
+        .map(|pillar| evaluate(&resources, *pillar, now))
         .collect();
     let oldest_refresh = resources.iter().map(|r| r.last_refreshed).min();
 
     Ok(HttpResponse::Ok().json(json!({
         "account_id": query.account_id,
-        "resource_type": AwsResourceType::EC2Instance.to_string(),
+        "resource_type": resource_type.to_string(),
         "evaluated_at": now,
         "stale_after_hours": DEFAULT_STALE_AFTER_HOURS,
         "resources_evaluated": resources.len(),
         "oldest_refresh": oldest_refresh,
         "reports": reports,
     })))
+}
+
+pub async fn get_ec2_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("EC2 pillar report request: {:?}", query);
+    pillar_reports(&controller, query, AwsResourceType::EC2Instance, evaluate_ec2_fleet).await
+}
+
+pub async fn get_lambda_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Lambda pillar report request: {:?}", query);
+    pillar_reports(&controller, query, AwsResourceType::LambdaFunction, evaluate_lambda_fleet).await
 }

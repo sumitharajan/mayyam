@@ -20,56 +20,13 @@
 // triggered each finding. No AWS calls, no database access, no LLM.
 
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::json;
 
 use crate::models::aws_resource::Model as AwsResourceModel;
-
-/// Well-Architected pillar covered by this evaluator slice.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum Pillar {
-    Cost,
-    Security,
-    Resilience,
-}
-
-impl Pillar {
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Pillar::Cost => "cost",
-            Pillar::Security => "security",
-            Pillar::Resilience => "resilience",
-        }
-    }
-
-    pub fn parse(s: &str) -> Option<Pillar> {
-        match s.to_ascii_lowercase().as_str() {
-            "cost" => Some(Pillar::Cost),
-            "security" => Some(Pillar::Security),
-            "resilience" => Some(Pillar::Resilience),
-            _ => None,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum Severity {
-    High,
-    Medium,
-    Low,
-}
-
-impl Severity {
-    fn score_penalty(&self) -> i32 {
-        match self {
-            Severity::High => 15,
-            Severity::Medium => 7,
-            Severity::Low => 3,
-        }
-    }
-}
+use crate::services::aws::inventory::types::{
+    check_stale, data_str, has_any_tag, score_pillar, InventoryFinding, Pillar, PillarReport,
+    Severity, COST_ALLOCATION_TAG_KEYS, OWNER_TAG_KEYS,
+};
 
 // Reason codes are the stable contract for findings; never reuse or rename.
 pub const REASON_COST_MISSING_ALLOCATION_TAGS: &str = "EC2_COST_MISSING_ALLOCATION_TAGS";
@@ -79,35 +36,6 @@ pub const REASON_SEC_MISSING_OWNER_TAG: &str = "EC2_SEC_MISSING_OWNER_TAG";
 pub const REASON_RES_MISSING_AZ: &str = "EC2_RES_MISSING_AVAILABILITY_ZONE";
 pub const REASON_RES_SINGLE_AZ_CONCENTRATION: &str = "EC2_RES_SINGLE_AZ_CONCENTRATION";
 pub const REASON_INV_STALE_DATA: &str = "EC2_INV_STALE_DATA";
-
-/// Inventory rows older than this are treated as stale evidence.
-pub const DEFAULT_STALE_AFTER_HOURS: i64 = 24;
-
-const COST_ALLOCATION_TAG_KEYS: &[&str] =
-    &["owner", "team", "cost-center", "costcenter", "cost_center", "project"];
-const OWNER_TAG_KEYS: &[&str] = &["owner", "team"];
-
-/// A single deterministic finding with the evidence that produced it.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct InventoryFinding {
-    pub resource_id: String,
-    pub arn: String,
-    pub pillar: Pillar,
-    pub reason_code: String,
-    pub severity: Severity,
-    pub message: String,
-    pub evidence: Value,
-}
-
-/// Pillar evaluation result for one EC2 fleet (one account).
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PillarReport {
-    pub pillar: Pillar,
-    pub resources_evaluated: usize,
-    pub stale_resources: usize,
-    pub score: u8,
-    pub findings: Vec<InventoryFinding>,
-}
 
 /// Evaluate every EC2 instance in the fleet for one pillar.
 pub fn evaluate_ec2_fleet(
@@ -119,7 +47,7 @@ pub fn evaluate_ec2_fleet(
     let mut stale_resources = 0usize;
 
     for resource in resources {
-        if let Some(stale) = check_stale(resource, pillar, now) {
+        if let Some(stale) = check_stale(resource, pillar, REASON_INV_STALE_DATA, now) {
             stale_resources += 1;
             findings.push(stale);
         }
@@ -144,40 +72,6 @@ pub fn evaluate_ec2_fleet(
         score,
         findings,
     }
-}
-
-/// Deterministic score: start at 100, subtract a fixed penalty per finding
-/// severity, clamp to 0.
-pub fn score_pillar(findings: &[InventoryFinding]) -> u8 {
-    let penalty: i32 = findings.iter().map(|f| f.severity.score_penalty()).sum();
-    (100 - penalty).clamp(0, 100) as u8
-}
-
-fn check_stale(
-    resource: &AwsResourceModel,
-    pillar: Pillar,
-    now: DateTime<Utc>,
-) -> Option<InventoryFinding> {
-    let age_hours = (now - resource.last_refreshed).num_hours();
-    if age_hours <= DEFAULT_STALE_AFTER_HOURS {
-        return None;
-    }
-    Some(InventoryFinding {
-        resource_id: resource.resource_id.clone(),
-        arn: resource.arn.clone(),
-        pillar,
-        reason_code: REASON_INV_STALE_DATA.to_string(),
-        severity: Severity::Medium,
-        message: format!(
-            "Inventory data for {} is {} hours old (threshold {} hours); pillar evaluation may not reflect current state",
-            resource.resource_id, age_hours, DEFAULT_STALE_AFTER_HOURS
-        ),
-        evidence: json!({
-            "last_refreshed": resource.last_refreshed,
-            "age_hours": age_hours,
-            "stale_after_hours": DEFAULT_STALE_AFTER_HOURS,
-        }),
-    })
 }
 
 fn evaluate_cost(resource: &AwsResourceModel, findings: &mut Vec<InventoryFinding>) {
@@ -309,52 +203,12 @@ fn check_az_concentration(resources: &[AwsResourceModel]) -> Option<InventoryFin
     })
 }
 
-/// Read a string field from the normalized `resource_data` JSON object.
-fn data_str(resource_data: &Value, key: &str) -> Option<String> {
-    resource_data
-        .get(key)
-        .and_then(|v| v.as_str())
-        .map(|s| s.to_string())
-}
-
-/// Look up a tag value. Supports both shapes that collectors persist:
-/// an object map `{"Owner": "x"}` and an AWS-style array
-/// `[{"Key": "Owner", "Value": "x"}]` (or lowercase `key`/`value`).
-/// Tag key comparison is case-insensitive.
-pub fn tag_value(tags: &Value, key: &str) -> Option<String> {
-    let wanted = key.to_ascii_lowercase();
-    match tags {
-        Value::Object(map) => map
-            .iter()
-            .find(|(k, _)| k.to_ascii_lowercase() == wanted)
-            .and_then(|(_, v)| v.as_str().map(|s| s.to_string())),
-        Value::Array(entries) => entries.iter().find_map(|entry| {
-            let k = entry
-                .get("Key")
-                .or_else(|| entry.get("key"))?
-                .as_str()?;
-            if k.to_ascii_lowercase() == wanted {
-                entry
-                    .get("Value")
-                    .or_else(|| entry.get("value"))?
-                    .as_str()
-                    .map(|s| s.to_string())
-            } else {
-                None
-            }
-        }),
-        _ => None,
-    }
-}
-
-fn has_any_tag(tags: &Value, keys: &[&str]) -> bool {
-    keys.iter().any(|k| tag_value(tags, k).is_some())
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::services::aws::inventory::types::DEFAULT_STALE_AFTER_HOURS;
     use chrono::Duration;
+    use serde_json::Value;
     use uuid::Uuid;
 
     fn fixture(
@@ -550,34 +404,5 @@ mod tests {
             assert_eq!(stale.evidence["age_hours"], json!(48));
             assert_eq!(stale.evidence["stale_after_hours"], json!(DEFAULT_STALE_AFTER_HOURS));
         }
-    }
-
-    #[test]
-    fn tag_value_supports_object_map_and_key_value_array_case_insensitively() {
-        let map = json!({"Owner": "sre"});
-        assert_eq!(tag_value(&map, "owner").as_deref(), Some("sre"));
-        let array = json!([{"Key": "Cost-Center", "Value": "cc-1"}, {"key": "team", "value": "db"}]);
-        assert_eq!(tag_value(&array, "cost-center").as_deref(), Some("cc-1"));
-        assert_eq!(tag_value(&array, "TEAM").as_deref(), Some("db"));
-        assert_eq!(tag_value(&array, "missing"), None);
-        assert_eq!(tag_value(&json!(null), "owner"), None);
-    }
-
-    #[test]
-    fn score_is_deterministic_and_clamped_at_zero() {
-        let make = |severity: Severity| InventoryFinding {
-            resource_id: "i-x".to_string(),
-            arn: String::new(),
-            pillar: Pillar::Cost,
-            reason_code: REASON_COST_MISSING_ALLOCATION_TAGS.to_string(),
-            severity,
-            message: String::new(),
-            evidence: json!({}),
-        };
-        assert_eq!(score_pillar(&[]), 100);
-        assert_eq!(score_pillar(&[make(Severity::High)]), 85);
-        assert_eq!(score_pillar(&[make(Severity::Medium), make(Severity::Low)]), 90);
-        let many: Vec<InventoryFinding> = (0..10).map(|_| make(Severity::High)).collect();
-        assert_eq!(score_pillar(&many), 0);
     }
 }
