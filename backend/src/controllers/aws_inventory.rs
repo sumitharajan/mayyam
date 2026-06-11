@@ -41,7 +41,13 @@ use crate::services::aws::inventory::glacier_pillar_evaluator::evaluate_glacier_
 use crate::services::aws::inventory::iam_pillar_evaluator::evaluate_iam_fleet;
 use crate::services::aws::inventory::kinesis_pillar_evaluator::evaluate_kinesis_fleet;
 use crate::services::aws::inventory::kinesisanalytics_pillar_evaluator::evaluate_kinesisanalytics_fleet;
+use crate::services::aws::inventory::internet_gateway_pillar_evaluator::evaluate_internet_gateway_fleet;
 use crate::services::aws::inventory::lambda_pillar_evaluator::evaluate_lambda_fleet;
+use crate::services::aws::inventory::nat_gateway_pillar_evaluator::evaluate_nat_gateway_fleet;
+use crate::services::aws::inventory::network_acl_pillar_evaluator::evaluate_network_acl_fleet;
+use crate::services::aws::inventory::route_table_pillar_evaluator::evaluate_route_table_fleet;
+use crate::services::aws::inventory::security_group_pillar_evaluator::evaluate_security_group_fleet;
+use crate::services::aws::inventory::subnet_pillar_evaluator::evaluate_subnet_fleet;
 use crate::services::aws::inventory::load_balancer_pillar_evaluator::evaluate_load_balancer_fleet;
 use crate::services::aws::inventory::opensearch_pillar_evaluator::evaluate_opensearch_fleet;
 use crate::services::aws::inventory::rds_pillar_evaluator::evaluate_rds_fleet;
@@ -463,4 +469,73 @@ pub async fn get_kinesisanalytics_pillar_reports(
         evaluate_kinesisanalytics_fleet,
     )
     .await
+}
+
+pub async fn get_subnet_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Subnet pillar report request: {:?}", query);
+    pillar_reports(&controller, query, AwsResourceType::Subnet, evaluate_subnet_fleet).await
+}
+
+pub async fn get_security_group_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Security group pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::SecurityGroup,
+        evaluate_security_group_fleet,
+    )
+    .await
+}
+
+pub async fn get_nat_gateway_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("NAT gateway pillar report request: {:?}", query);
+    pillar_reports(&controller, query, AwsResourceType::NatGateway, evaluate_nat_gateway_fleet)
+        .await
+}
+
+pub async fn get_internet_gateway_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Internet gateway pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::InternetGateway,
+        evaluate_internet_gateway_fleet,
+    )
+    .await
+}
+
+pub async fn get_route_table_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Route table pillar report request: {:?}", query);
+    pillar_reports(&controller, query, AwsResourceType::RouteTable, evaluate_route_table_fleet)
+        .await
+}
+
+pub async fn get_network_acl_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Network ACL pillar report request: {:?}", query);
+    pillar_reports(&controller, query, AwsResourceType::NetworkAcl, evaluate_network_acl_fleet)
+        .await
 }

@@ -41,6 +41,12 @@ const SERVICES = [
   { key: "glacier", label: "Glacier" },
   { key: "storagegateway", label: "Storage Gateway" },
   { key: "kinesisanalytics", label: "Kinesis Analytics" },
+  { key: "subnet", label: "Subnets" },
+  { key: "securitygroup", label: "Security Groups" },
+  { key: "natgateway", label: "NAT Gateway" },
+  { key: "internetgateway", label: "Internet Gateway" },
+  { key: "routetable", label: "Route Tables" },
+  { key: "networkacl", label: "Network ACLs" },
 ];
 
 // Well-Architected pillar scorecards from deterministic inventory

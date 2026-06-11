@@ -45,4 +45,10 @@ pub fn configure(controller: Arc<AwsInventoryController>) -> Scope {
         .route("/glacier/pillars", web::get().to(aws_inventory::get_glacier_pillar_reports))
         .route("/storagegateway/pillars", web::get().to(aws_inventory::get_storagegateway_pillar_reports))
         .route("/kinesisanalytics/pillars", web::get().to(aws_inventory::get_kinesisanalytics_pillar_reports))
+        .route("/subnet/pillars", web::get().to(aws_inventory::get_subnet_pillar_reports))
+        .route("/securitygroup/pillars", web::get().to(aws_inventory::get_security_group_pillar_reports))
+        .route("/natgateway/pillars", web::get().to(aws_inventory::get_nat_gateway_pillar_reports))
+        .route("/internetgateway/pillars", web::get().to(aws_inventory::get_internet_gateway_pillar_reports))
+        .route("/routetable/pillars", web::get().to(aws_inventory::get_route_table_pillar_reports))
+        .route("/networkacl/pillars", web::get().to(aws_inventory::get_network_acl_pillar_reports))
 }

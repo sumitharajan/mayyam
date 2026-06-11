@@ -155,6 +155,12 @@ async fn storage_and_database_pillar_reports_contract() {
         ("glacier", "GlacierArchive"),
         ("storagegateway", "StorageGateway"),
         ("kinesisanalytics", "KinesisAnalyticsApp"),
+        ("subnet", "Subnet"),
+        ("securitygroup", "SecurityGroup"),
+        ("natgateway", "NatGateway"),
+        ("internetgateway", "InternetGateway"),
+        ("routetable", "RouteTable"),
+        ("networkacl", "NetworkAcl"),
     ] {
         let resp = client
             .get(format!(
