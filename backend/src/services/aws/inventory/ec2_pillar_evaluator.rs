@@ -15,7 +15,7 @@
 // Deterministic EC2 inventory and telemetry evaluators for the cost, security,
 // resilience, performance, scalability, and disaster-recovery pillars (roadmap
 // rows 01-AWS-CLOUD-00001/00010/00037 plus
-// 01-AWS-CLOUD-00002/00011/00020/00029/00038/00047).
+// 01-AWS-CLOUD-00002/00011/00020/00029/00038/00047/00056).
 //
 // Pure domain logic: takes already-collected `aws_resources` rows plus an
 // explicit `now`, returns reason-coded findings with the raw evidence that
@@ -53,6 +53,10 @@ pub const REASON_SEC_PUBLIC_PACKET_TRAFFIC_TELEMETRY: &str =
 pub const REASON_DR_MISSING_RECOVERY_POINT_TELEMETRY: &str =
     "EC2_DR_MISSING_RECOVERY_POINT_TELEMETRY";
 pub const REASON_DR_STALE_RECOVERY_POINT_TELEMETRY: &str = "EC2_DR_STALE_RECOVERY_POINT_TELEMETRY";
+pub const REASON_OE_MISSING_TELEMETRY_COLLECTION_METADATA: &str =
+    "EC2_OE_MISSING_TELEMETRY_COLLECTION_METADATA";
+pub const REASON_OE_TELEMETRY_COLLECTION_ERRORS: &str = "EC2_OE_TELEMETRY_COLLECTION_ERRORS";
+pub const REASON_OE_BASIC_MONITORING: &str = "EC2_OE_BASIC_MONITORING";
 pub const REASON_INV_STALE_DATA: &str = "EC2_INV_STALE_DATA";
 
 /// Evaluate every EC2 instance in the fleet for one pillar.
@@ -76,8 +80,9 @@ pub fn evaluate_ec2_fleet(
             Pillar::Performance => evaluate_performance(resource, &mut findings),
             Pillar::Scalability => evaluate_scalability(resource, &mut findings),
             Pillar::DisasterRecovery => evaluate_disaster_recovery(resource, now, &mut findings),
-            // Pillars without checks for this service yet produce no findings.
-            _ => {}
+            Pillar::OperationalExcellence => {
+                evaluate_operational_excellence(resource, &mut findings)
+            }
         }
     }
 
@@ -453,6 +458,91 @@ fn evaluate_disaster_recovery(
             });
         }
         _ => {}
+    }
+}
+
+fn evaluate_operational_excellence(
+    resource: &AwsResourceModel,
+    findings: &mut Vec<InventoryFinding>,
+) {
+    let required_fields = [
+        "telemetry_collection_started_at",
+        "telemetry_collection_completed_at",
+        "telemetry_collection_duration_ms",
+        "telemetry_collection_success_count",
+        "telemetry_collection_failure_count",
+        "telemetry_collection_error_count",
+    ];
+    let missing_fields: Vec<&str> = required_fields
+        .iter()
+        .copied()
+        .filter(|field| resource.resource_data.get(*field).is_none())
+        .collect();
+    if !missing_fields.is_empty() {
+        findings.push(InventoryFinding {
+            resource_id: resource.resource_id.clone(),
+            arn: resource.arn.clone(),
+            pillar: Pillar::OperationalExcellence,
+            reason_code: REASON_OE_MISSING_TELEMETRY_COLLECTION_METADATA.to_string(),
+            severity: Severity::Medium,
+            message: format!(
+                "Instance {} is missing EC2 telemetry collection metadata needed for operational runbooks",
+                resource.resource_id
+            ),
+            evidence: json!({
+                "required_fields": required_fields,
+                "missing_fields": missing_fields,
+                "resource_data_keys": resource_data_keys(resource),
+            }),
+        });
+    }
+
+    let error_count = resource
+        .resource_data
+        .get("telemetry_collection_error_count")
+        .and_then(|value| {
+            value
+                .as_u64()
+                .or_else(|| value.as_i64().map(|n| n.max(0) as u64))
+        })
+        .unwrap_or(0);
+    let errors = resource
+        .resource_data
+        .get("telemetry_collection_errors")
+        .and_then(|value| value.as_array())
+        .cloned()
+        .unwrap_or_default();
+    if error_count > 0 || !errors.is_empty() {
+        findings.push(InventoryFinding {
+            resource_id: resource.resource_id.clone(),
+            arn: resource.arn.clone(),
+            pillar: Pillar::OperationalExcellence,
+            reason_code: REASON_OE_TELEMETRY_COLLECTION_ERRORS.to_string(),
+            severity: Severity::High,
+            message: format!(
+                "Instance {} has EC2 telemetry collection errors; operators cannot rely on complete evidence",
+                resource.resource_id
+            ),
+            evidence: json!({
+                "telemetry_collection_error_count": error_count,
+                "telemetry_collection_errors": errors,
+            }),
+        });
+    }
+
+    if data_str(&resource.resource_data, "monitoring_state").as_deref() == Some("disabled") {
+        findings.push(InventoryFinding {
+            resource_id: resource.resource_id.clone(),
+            arn: resource.arn.clone(),
+            pillar: Pillar::OperationalExcellence,
+            reason_code: REASON_OE_BASIC_MONITORING.to_string(),
+            severity: Severity::Low,
+            message: format!(
+                "Instance {} uses basic EC2 monitoring; operational diagnosis has lower-resolution telemetry",
+                resource.resource_id
+            ),
+            evidence: json!({ "monitoring_state": "disabled" }),
+        });
     }
 }
 
@@ -1154,5 +1244,94 @@ mod tests {
         let codes = reason_codes(&report);
         assert!(codes.contains(&REASON_DR_MISSING_RECOVERY_POINT_TELEMETRY));
         assert!(codes.contains(&REASON_DR_STALE_RECOVERY_POINT_TELEMETRY));
+    }
+
+    #[test]
+    fn ec2_telemetry_operational_excellence_flags_collection_errors_and_basic_monitoring() {
+        let missing_metadata = fixture(
+            "i-no-collection-metadata",
+            json!({"owner": "sre"}),
+            json!({
+                "state": "running",
+                "availability_zone": "us-east-1a",
+                "monitoring_state": "enabled",
+                "cloudwatch_metrics": {
+                    "metrics": [
+                        metric("CPUUtilization", &[24.0])
+                    ]
+                }
+            }),
+            1,
+            now(),
+        );
+        let collection_error = fixture(
+            "i-collection-error",
+            json!({"owner": "sre"}),
+            json!({
+                "state": "running",
+                "availability_zone": "us-east-1a",
+                "monitoring_state": "disabled",
+                "telemetry_collection_started_at": "2026-06-10T00:00:00Z",
+                "telemetry_collection_completed_at": "2026-06-10T00:00:03Z",
+                "telemetry_collection_duration_ms": 3000,
+                "telemetry_collection_error_count": 1,
+                "telemetry_collection_errors": [
+                    {
+                        "source": "cloudwatch",
+                        "operation": "GetMetricData",
+                        "error": "throttled"
+                    }
+                ]
+            }),
+            1,
+            now(),
+        );
+
+        let report = evaluate_ec2_fleet(
+            &[missing_metadata, collection_error],
+            Pillar::OperationalExcellence,
+            now(),
+        );
+        let codes = reason_codes(&report);
+        assert!(codes.contains(&REASON_OE_MISSING_TELEMETRY_COLLECTION_METADATA));
+        assert!(codes.contains(&REASON_OE_TELEMETRY_COLLECTION_ERRORS));
+        assert!(codes.contains(&REASON_OE_BASIC_MONITORING));
+    }
+
+    #[test]
+    fn ec2_telemetry_operational_excellence_passes_for_successful_collection() {
+        let resource = fixture(
+            "i-collection-good",
+            json!({"owner": "sre"}),
+            json!({
+                "state": "running",
+                "availability_zone": "us-east-1a",
+                "monitoring_state": "enabled",
+                "telemetry_collection_started_at": "2026-06-10T00:00:00Z",
+                "telemetry_collection_completed_at": "2026-06-10T00:00:03Z",
+                "telemetry_collection_duration_ms": 3000,
+                "telemetry_collection_success_count": 1,
+                "telemetry_collection_failure_count": 0,
+                "telemetry_collection_error_count": 0,
+                "telemetry_collection_errors": [],
+                "cloudwatch_metric_count": 3,
+                "cloudwatch_metrics": {
+                    "metrics": [
+                        metric("CPUUtilization", &[24.0]),
+                        metric("NetworkIn", &[2048.0]),
+                        metric("NetworkOut", &[1024.0])
+                    ]
+                }
+            }),
+            1,
+            now(),
+        );
+
+        let report = evaluate_ec2_fleet(&[resource], Pillar::OperationalExcellence, now());
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 }

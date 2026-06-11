@@ -259,6 +259,8 @@ impl Ec2ControlPlane {
                     "recovery_point_telemetry_observed".to_string(),
                     json!(recovery_point_age_hours(resource_data).is_some()),
                 );
+                resource_data.insert("telemetry_collection_success_count".to_string(), json!(1));
+                resource_data.insert("telemetry_collection_failure_count".to_string(), json!(0));
                 resource_data.insert("telemetry_collection_error_count".to_string(), json!(0));
                 resource_data.insert("telemetry_collection_errors".to_string(), json!([]));
             }
@@ -274,6 +276,8 @@ impl Ec2ControlPlane {
                     "recovery_point_telemetry_observed".to_string(),
                     json!(recovery_point_age_hours(resource_data).is_some()),
                 );
+                resource_data.insert("telemetry_collection_success_count".to_string(), json!(0));
+                resource_data.insert("telemetry_collection_failure_count".to_string(), json!(1));
                 resource_data.insert("telemetry_collection_error_count".to_string(), json!(1));
                 resource_data.insert(
                     "telemetry_collection_errors".to_string(),

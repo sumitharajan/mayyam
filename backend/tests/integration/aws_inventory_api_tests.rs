@@ -51,7 +51,7 @@ async fn ec2_pillar_reports_contract() {
     assert!(body["stale_after_hours"].is_number());
     assert!(body["resources_evaluated"].is_number());
     let reports = body["reports"].as_array().expect("reports array");
-    assert_eq!(reports.len(), 6);
+    assert_eq!(reports.len(), 7);
     for report in reports {
         assert!(report["pillar"].is_string());
         assert!(report["score"].is_number());
