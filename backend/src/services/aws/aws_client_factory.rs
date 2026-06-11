@@ -59,6 +59,7 @@ use aws_sdk_macie2::Client as MacieClient;
 use aws_sdk_memorydb::Client as MemoryDbClient;
 use aws_sdk_mq::Client as AmazonMqClient;
 use aws_sdk_opensearch::Client as OpenSearchClient;
+use aws_sdk_organizations::Client as OrganizationsClient;
 use aws_sdk_quicksight::Client as QuickSightClient;
 use aws_sdk_rds::Client as RdsClient;
 use aws_sdk_redshift::Client as RedshiftClient;
@@ -289,6 +290,10 @@ pub trait AwsClientFactory {
         &self,
         aws_account_dto: &AwsAccountDto,
     ) -> Result<MacieClient, AppError>;
+    async fn create_organizations_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<OrganizationsClient, AppError>;
     async fn create_memorydb_client(
         &self,
         aws_account_dto: &AwsAccountDto,

@@ -89,6 +89,7 @@ use crate::services::aws::aws_control_plane::macie_control_plane::MacieControlPl
 use crate::services::aws::aws_control_plane::memorydb_control_plane::MemoryDbControlPlane;
 use crate::services::aws::aws_control_plane::msk_control_plane::MskControlPlane;
 use crate::services::aws::aws_control_plane::neptune_control_plane::NeptuneControlPlane;
+use crate::services::aws::aws_control_plane::organizations_control_plane::OrganizationsControlPlane;
 use crate::services::aws::aws_control_plane::privatelink_control_plane::PrivateLinkControlPlane;
 use crate::services::aws::aws_control_plane::quicksight_control_plane::QuickSightControlPlane;
 use crate::services::aws::aws_control_plane::route53_control_plane::Route53ControlPlane;
@@ -795,6 +796,7 @@ impl AwsControlPlane {
                 AwsResourceType::SecurityHubHub.to_string(),
                 AwsResourceType::InspectorAccountCoverage.to_string(),
                 AwsResourceType::MacieAccount.to_string(),
+                AwsResourceType::OrganizationsOrganization.to_string(),
                 // Batch 12: Document DB, Graph DB & In-Memory DB
                 AwsResourceType::DocumentDbCluster.to_string(),
                 AwsResourceType::NeptuneCluster.to_string(),
@@ -1081,6 +1083,10 @@ impl AwsControlPlane {
                 "MacieAccount" => {
                     let cp = MacieControlPlane::new(self.aws_service.clone());
                     cp.sync_account(aws_account_dto, request.sync_id).await
+                }
+                "OrganizationsOrganization" => {
+                    let cp = OrganizationsControlPlane::new(self.aws_service.clone());
+                    cp.sync_organization(aws_account_dto, request.sync_id).await
                 }
                 // Batch 12: Document DB, Graph DB & In-Memory DB
                 "DocumentDbCluster" => {

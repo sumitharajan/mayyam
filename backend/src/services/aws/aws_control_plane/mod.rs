@@ -76,6 +76,7 @@ pub mod guardduty_control_plane;
 pub mod inspector_control_plane;
 pub mod macie_control_plane;
 pub mod msk_control_plane;
+pub mod organizations_control_plane;
 pub mod securityhub_control_plane;
 // Batch 12: Document DB, Graph DB & In-Memory DB
 pub mod documentdb_control_plane;
