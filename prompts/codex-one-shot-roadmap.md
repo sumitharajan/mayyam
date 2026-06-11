@@ -27,22 +27,22 @@ Task selection:
 - Atomically claim selected feature IDs in the checkpoint database before editing.
 
 Batch loop:
-- Continue through up to 3 completed and committed batches in this run unless the user provides a different batch limit.
+- Continue through completed and committed batches until the roadmap is finished or a hard stop condition is reached. Do not stop merely because a batch was completed, a checkpoint was written, a commit succeeded, or a concise status update could be reported.
 - After each verified commit:
   - Update checkpoint.sqlite and RESUME.md.
   - Re-read the active checkpoint.
   - Verify git status --short, runs.last_commit, current_batch_id, next_action, and the roadmap hash.
   - Select and atomically claim the next deterministic batch using the same P0 -> P1 -> P2 priority rules.
   - Implement, validate, checkpoint, commit, and repeat.
-- Stop the loop when any stop condition is hit:
+- Stop the loop only when a hard stop condition is hit:
   - no pending roadmap rows remain
-  - the configured batch limit is reached
   - validation fails and cannot be fixed within the current batch
   - unrelated worktree changes conflict with the next batch
   - a real blocker prevents progress
   - context, token, rate-limit, or timeout pressure makes another implementation batch unsafe
+- Treat context, token, rate-limit, and timeout pressure as hard stop conditions only when there is concrete evidence that continuing another batch would likely lose work or prevent a checkpoint. Do not stop speculatively.
 - Before stopping, write a complete checkpoint with the current batch, feature IDs, changed files, commands run, verification state, last commit, blocker if any, and exact next action.
-- Codex cannot restart itself after API token, context, or rate limits. For a truly continuous loop, rely on an external harness to relaunch Codex with this prompt; SQLite and RESUME.md are the handoff contract.
+- Codex cannot restart itself after API token, context, process, or network limits. For multi-hour unattended execution, run Codex from an external harness that relaunches it with this prompt until the checkpoint reports no pending roadmap rows; SQLite and RESUME.md are the handoff contract.
 
 Execution:
 - Use existing backend/frontend patterns.
