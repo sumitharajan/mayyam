@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Deterministic EC2 inventory evaluators for the cost, security, and
-// resilience pillars (roadmap rows 01-AWS-CLOUD-00001/00010/00037).
+// Deterministic EC2 inventory and telemetry evaluators for the cost, security,
+// resilience, and performance pillars (roadmap rows
+// 01-AWS-CLOUD-00001/00010/00037 plus 01-AWS-CLOUD-00002/00011/00020).
 //
 // Pure domain logic: takes already-collected `aws_resources` rows plus an
 // explicit `now`, returns reason-coded findings with the raw evidence that
 // triggered each finding. No AWS calls, no database access, no LLM.
 
 use chrono::{DateTime, Utc};
-use serde_json::json;
+use serde_json::{json, Value};
 
 use crate::models::aws_resource::Model as AwsResourceModel;
 use crate::services::aws::inventory::types::{
@@ -35,6 +36,14 @@ pub const REASON_SEC_PUBLIC_IP: &str = "EC2_SEC_PUBLIC_IP_ASSIGNED";
 pub const REASON_SEC_MISSING_OWNER_TAG: &str = "EC2_SEC_MISSING_OWNER_TAG";
 pub const REASON_RES_MISSING_AZ: &str = "EC2_RES_MISSING_AVAILABILITY_ZONE";
 pub const REASON_RES_SINGLE_AZ_CONCENTRATION: &str = "EC2_RES_SINGLE_AZ_CONCENTRATION";
+pub const REASON_COST_MISSING_UTILIZATION_TELEMETRY: &str =
+    "EC2_COST_MISSING_UTILIZATION_TELEMETRY";
+pub const REASON_COST_LOW_UTILIZATION_TELEMETRY: &str = "EC2_COST_LOW_UTILIZATION_TELEMETRY";
+pub const REASON_RES_MISSING_STATUS_TELEMETRY: &str = "EC2_RES_MISSING_STATUS_TELEMETRY";
+pub const REASON_RES_STATUS_CHECK_FAILURE_TELEMETRY: &str =
+    "EC2_RES_STATUS_CHECK_FAILURE_TELEMETRY";
+pub const REASON_PERF_MISSING_CORE_TELEMETRY: &str = "EC2_PERF_MISSING_CORE_TELEMETRY";
+pub const REASON_PERF_HIGH_CPU_TELEMETRY: &str = "EC2_PERF_HIGH_CPU_TELEMETRY";
 pub const REASON_INV_STALE_DATA: &str = "EC2_INV_STALE_DATA";
 
 /// Evaluate every EC2 instance in the fleet for one pillar.
@@ -55,6 +64,7 @@ pub fn evaluate_ec2_fleet(
             Pillar::Cost => evaluate_cost(resource, &mut findings),
             Pillar::Security => evaluate_security(resource, &mut findings),
             Pillar::Resilience => evaluate_resilience(resource, &mut findings),
+            Pillar::Performance => evaluate_performance(resource, &mut findings),
             // Pillars without checks for this service yet produce no findings.
             _ => {}
         }
@@ -107,6 +117,45 @@ fn evaluate_cost(resource: &AwsResourceModel, findings: &mut Vec<InventoryFindin
             ),
             evidence: json!({ "state": state }),
         });
+    }
+
+    match metric_max(resource, "CPUUtilization") {
+        None => findings.push(InventoryFinding {
+            resource_id: resource.resource_id.clone(),
+            arn: resource.arn.clone(),
+            pillar: Pillar::Cost,
+            reason_code: REASON_COST_MISSING_UTILIZATION_TELEMETRY.to_string(),
+            severity: Severity::Medium,
+            message: format!(
+                "Instance {} has no CPUUtilization telemetry; cost posture cannot distinguish idle from active capacity",
+                resource.resource_id
+            ),
+            evidence: json!({
+                "required_metric": "CPUUtilization",
+                "resource_data_keys": resource_data_keys(resource),
+            }),
+        }),
+        Some(max_cpu)
+            if state.as_deref() == Some("running") && max_cpu <= LOW_CPU_UTILIZATION_MAX =>
+        {
+            findings.push(InventoryFinding {
+                resource_id: resource.resource_id.clone(),
+                arn: resource.arn.clone(),
+                pillar: Pillar::Cost,
+                reason_code: REASON_COST_LOW_UTILIZATION_TELEMETRY.to_string(),
+                severity: Severity::Low,
+                message: format!(
+                    "Instance {} has low CPUUtilization telemetry; review for rightsizing or scheduling",
+                    resource.resource_id
+                ),
+                evidence: json!({
+                    "metric_name": "CPUUtilization",
+                    "max": max_cpu,
+                    "low_utilization_max": LOW_CPU_UTILIZATION_MAX,
+                }),
+            });
+        }
+        _ => {}
     }
 }
 
@@ -162,6 +211,103 @@ fn evaluate_resilience(resource: &AwsResourceModel, findings: &mut Vec<Inventory
             evidence: json!({ "resource_data": resource.resource_data }),
         });
     }
+
+    let status_metrics = [
+        "StatusCheckFailed",
+        "StatusCheckFailed_Instance",
+        "StatusCheckFailed_System",
+    ];
+    let observed: Vec<(&str, f64)> = status_metrics
+        .iter()
+        .filter_map(|metric| metric_max(resource, metric).map(|value| (*metric, value)))
+        .collect();
+
+    if observed.is_empty() {
+        findings.push(InventoryFinding {
+            resource_id: resource.resource_id.clone(),
+            arn: resource.arn.clone(),
+            pillar: Pillar::Resilience,
+            reason_code: REASON_RES_MISSING_STATUS_TELEMETRY.to_string(),
+            severity: Severity::Medium,
+            message: format!(
+                "Instance {} has no EC2 status check telemetry; reachability resilience cannot be verified",
+                resource.resource_id
+            ),
+            evidence: json!({
+                "required_metrics": status_metrics,
+                "resource_data_keys": resource_data_keys(resource),
+            }),
+        });
+    } else if let Some((metric_name, max_value)) = observed
+        .iter()
+        .copied()
+        .find(|(_, max_value)| *max_value > 0.0)
+    {
+        findings.push(InventoryFinding {
+            resource_id: resource.resource_id.clone(),
+            arn: resource.arn.clone(),
+            pillar: Pillar::Resilience,
+            reason_code: REASON_RES_STATUS_CHECK_FAILURE_TELEMETRY.to_string(),
+            severity: Severity::High,
+            message: format!(
+                "Instance {} has non-zero EC2 status check failure telemetry",
+                resource.resource_id
+            ),
+            evidence: json!({
+                "metric_name": metric_name,
+                "max": max_value,
+            }),
+        });
+    }
+}
+
+fn evaluate_performance(resource: &AwsResourceModel, findings: &mut Vec<InventoryFinding>) {
+    let required_metrics = [
+        "CPUUtilization",
+        "NetworkIn",
+        "NetworkOut",
+        "DiskReadOps",
+        "DiskWriteOps",
+    ];
+    let missing_metrics = missing_metrics(resource, &required_metrics);
+    if !missing_metrics.is_empty() {
+        findings.push(InventoryFinding {
+            resource_id: resource.resource_id.clone(),
+            arn: resource.arn.clone(),
+            pillar: Pillar::Performance,
+            reason_code: REASON_PERF_MISSING_CORE_TELEMETRY.to_string(),
+            severity: Severity::Medium,
+            message: format!(
+                "Instance {} is missing core EC2 performance telemetry",
+                resource.resource_id
+            ),
+            evidence: json!({
+                "required_metrics": required_metrics,
+                "missing_metrics": missing_metrics,
+            }),
+        });
+    }
+
+    if let Some(max_cpu) = metric_max(resource, "CPUUtilization") {
+        if max_cpu >= HIGH_CPU_UTILIZATION_MIN {
+            findings.push(InventoryFinding {
+                resource_id: resource.resource_id.clone(),
+                arn: resource.arn.clone(),
+                pillar: Pillar::Performance,
+                reason_code: REASON_PERF_HIGH_CPU_TELEMETRY.to_string(),
+                severity: Severity::High,
+                message: format!(
+                    "Instance {} has high CPUUtilization telemetry",
+                    resource.resource_id
+                ),
+                evidence: json!({
+                    "metric_name": "CPUUtilization",
+                    "max": max_cpu,
+                    "high_utilization_min": HIGH_CPU_UTILIZATION_MIN,
+                }),
+            });
+        }
+    }
 }
 
 /// Fleet-level check: two or more running instances all placed in one AZ.
@@ -203,6 +349,101 @@ fn check_az_concentration(resources: &[AwsResourceModel]) -> Option<InventoryFin
             "instance_ids": instance_ids,
         }),
     })
+}
+
+const LOW_CPU_UTILIZATION_MAX: f64 = 5.0;
+const HIGH_CPU_UTILIZATION_MIN: f64 = 90.0;
+
+fn missing_metrics(resource: &AwsResourceModel, required_metrics: &[&str]) -> Vec<String> {
+    required_metrics
+        .iter()
+        .filter(|metric| metric_max(resource, metric).is_none())
+        .map(|metric| (*metric).to_string())
+        .collect()
+}
+
+fn metric_max(resource: &AwsResourceModel, metric_name: &str) -> Option<f64> {
+    metric_values(&resource.resource_data, metric_name)
+        .into_iter()
+        .reduce(f64::max)
+}
+
+fn metric_values(resource_data: &Value, metric_name: &str) -> Vec<f64> {
+    let mut values = Vec::new();
+    collect_metric_values(resource_data, metric_name, &mut values);
+
+    if let Some(cloudwatch_metrics) = resource_data.get("cloudwatch_metrics") {
+        collect_metric_values(cloudwatch_metrics, metric_name, &mut values);
+    }
+    if let Some(cloudwatch_metrics) = resource_data.pointer("/telemetry/cloudwatch") {
+        collect_metric_values(cloudwatch_metrics, metric_name, &mut values);
+    }
+
+    values
+}
+
+fn collect_metric_values(value: &Value, metric_name: &str, values: &mut Vec<f64>) {
+    if metric_name_matches(value, metric_name) {
+        collect_metric_payload_values(value, values);
+    }
+
+    if let Some(metrics) = value.get("metrics").and_then(|metrics| metrics.as_array()) {
+        for metric in metrics {
+            if metric_name_matches(metric, metric_name) {
+                collect_metric_payload_values(metric, values);
+            }
+        }
+    }
+
+    if let Some(metrics) = value.get("metrics").and_then(|metrics| metrics.as_object()) {
+        if let Some(metric) = metrics.get(metric_name) {
+            collect_metric_payload_values(metric, values);
+        }
+    }
+
+    if let Some(metric) = value.get(metric_name) {
+        collect_metric_payload_values(metric, values);
+    }
+}
+
+fn metric_name_matches(value: &Value, metric_name: &str) -> bool {
+    value
+        .get("metric_name")
+        .or_else(|| value.get("MetricName"))
+        .and_then(|name| name.as_str())
+        .map(|name| name == metric_name)
+        .unwrap_or(false)
+}
+
+fn collect_metric_payload_values(value: &Value, values: &mut Vec<f64>) {
+    for key in ["value", "latest", "max", "average", "Value"] {
+        if let Some(number) = value.get(key).and_then(|number| number.as_f64()) {
+            values.push(number);
+        }
+    }
+
+    if let Some(datapoints) = value
+        .get("datapoints")
+        .or_else(|| value.get("Datapoints"))
+        .and_then(|datapoints| datapoints.as_array())
+    {
+        for datapoint in datapoints {
+            for key in ["value", "Value", "average", "Average", "maximum", "Maximum"] {
+                if let Some(number) = datapoint.get(key).and_then(|number| number.as_f64()) {
+                    values.push(number);
+                    break;
+                }
+            }
+        }
+    }
+}
+
+fn resource_data_keys(resource: &AwsResourceModel) -> Vec<String> {
+    resource
+        .resource_data
+        .as_object()
+        .map(|object| object.keys().cloned().collect())
+        .unwrap_or_default()
 }
 
 #[cfg(test)]
@@ -256,6 +497,13 @@ mod tests {
             .collect()
     }
 
+    fn metric(metric_name: &str, values: &[f64]) -> Value {
+        json!({
+            "metric_name": metric_name,
+            "datapoints": values.iter().map(|value| json!({ "value": value })).collect::<Vec<_>>()
+        })
+    }
+
     #[test]
     fn cost_flags_missing_allocation_tags_and_stopped_instance() {
         let r = fixture(
@@ -284,7 +532,15 @@ mod tests {
         let r = fixture(
             "i-good",
             json!({"Team": "payments", "cost-center": "cc-42"}),
-            json!({"state": "running", "availability_zone": "us-east-1a"}),
+            json!({
+                "state": "running",
+                "availability_zone": "us-east-1a",
+                "cloudwatch_metrics": {
+                    "metrics": [
+                        metric("CPUUtilization", &[35.0, 42.0])
+                    ]
+                }
+            }),
             1,
             now(),
         );
@@ -346,7 +602,16 @@ mod tests {
         let r = fixture(
             "i-noaz",
             json!({"owner": "sre"}),
-            json!({"state": "running"}),
+            json!({
+                "state": "running",
+                "cloudwatch_metrics": {
+                    "metrics": [
+                        metric("StatusCheckFailed", &[0.0]),
+                        metric("StatusCheckFailed_Instance", &[0.0]),
+                        metric("StatusCheckFailed_System", &[0.0])
+                    ]
+                }
+            }),
             1,
             now(),
         );
@@ -359,14 +624,34 @@ mod tests {
         let a = fixture(
             "i-a",
             json!({"owner": "sre"}),
-            json!({"state": "running", "availability_zone": "us-east-1a"}),
+            json!({
+                "state": "running",
+                "availability_zone": "us-east-1a",
+                "cloudwatch_metrics": {
+                    "metrics": [
+                        metric("StatusCheckFailed", &[0.0]),
+                        metric("StatusCheckFailed_Instance", &[0.0]),
+                        metric("StatusCheckFailed_System", &[0.0])
+                    ]
+                }
+            }),
             1,
             now(),
         );
         let b = fixture(
             "i-b",
             json!({"owner": "sre"}),
-            json!({"state": "running", "availability_zone": "us-east-1a"}),
+            json!({
+                "state": "running",
+                "availability_zone": "us-east-1a",
+                "cloudwatch_metrics": {
+                    "metrics": [
+                        metric("StatusCheckFailed", &[0.0]),
+                        metric("StatusCheckFailed_Instance", &[0.0]),
+                        metric("StatusCheckFailed_System", &[0.0])
+                    ]
+                }
+            }),
             1,
             now(),
         );
@@ -385,14 +670,34 @@ mod tests {
         let a = fixture(
             "i-a",
             json!({"owner": "sre"}),
-            json!({"state": "running", "availability_zone": "us-east-1a"}),
+            json!({
+                "state": "running",
+                "availability_zone": "us-east-1a",
+                "cloudwatch_metrics": {
+                    "metrics": [
+                        metric("StatusCheckFailed", &[0.0]),
+                        metric("StatusCheckFailed_Instance", &[0.0]),
+                        metric("StatusCheckFailed_System", &[0.0])
+                    ]
+                }
+            }),
             1,
             now(),
         );
         let b = fixture(
             "i-b",
             json!({"owner": "sre"}),
-            json!({"state": "running", "availability_zone": "us-east-1b"}),
+            json!({
+                "state": "running",
+                "availability_zone": "us-east-1b",
+                "cloudwatch_metrics": {
+                    "metrics": [
+                        metric("StatusCheckFailed", &[0.0]),
+                        metric("StatusCheckFailed_Instance", &[0.0]),
+                        metric("StatusCheckFailed_System", &[0.0])
+                    ]
+                }
+            }),
             1,
             now(),
         );
@@ -428,5 +733,108 @@ mod tests {
                 json!(DEFAULT_STALE_AFTER_HOURS)
             );
         }
+    }
+
+    #[test]
+    fn ec2_telemetry_cost_flags_low_cpu_utilization() {
+        let r = fixture(
+            "i-idle",
+            json!({"cost-center": "cc-42", "owner": "sre"}),
+            json!({
+                "state": "running",
+                "availability_zone": "us-east-1a",
+                "cloudwatch_metrics": {
+                    "metrics": [
+                        metric("CPUUtilization", &[1.2, 2.4, 3.0])
+                    ]
+                }
+            }),
+            1,
+            now(),
+        );
+
+        let report = evaluate_ec2_fleet(&[r], Pillar::Cost, now());
+        let idle = report
+            .findings
+            .iter()
+            .find(|f| f.reason_code == REASON_COST_LOW_UTILIZATION_TELEMETRY)
+            .expect("low utilization telemetry finding");
+        assert_eq!(idle.severity, Severity::Low);
+        assert_eq!(idle.evidence["metric_name"], json!("CPUUtilization"));
+        assert_eq!(idle.evidence["max"], json!(3.0));
+    }
+
+    #[test]
+    fn ec2_telemetry_resilience_flags_status_check_failures() {
+        let r = fixture(
+            "i-status-failed",
+            json!({"owner": "sre"}),
+            json!({
+                "state": "running",
+                "availability_zone": "us-east-1a",
+                "cloudwatch_metrics": {
+                    "metrics": [
+                        metric("StatusCheckFailed", &[0.0, 1.0]),
+                        metric("StatusCheckFailed_Instance", &[0.0]),
+                        metric("StatusCheckFailed_System", &[0.0])
+                    ]
+                }
+            }),
+            1,
+            now(),
+        );
+
+        let report = evaluate_ec2_fleet(&[r], Pillar::Resilience, now());
+        let status = report
+            .findings
+            .iter()
+            .find(|f| f.reason_code == REASON_RES_STATUS_CHECK_FAILURE_TELEMETRY)
+            .expect("status check telemetry finding");
+        assert_eq!(status.severity, Severity::High);
+        assert_eq!(status.evidence["metric_name"], json!("StatusCheckFailed"));
+        assert_eq!(status.evidence["max"], json!(1.0));
+    }
+
+    #[test]
+    fn ec2_telemetry_performance_requires_core_metrics_and_flags_high_cpu() {
+        let missing = fixture(
+            "i-missing-telemetry",
+            json!({"owner": "sre"}),
+            json!({
+                "state": "running",
+                "availability_zone": "us-east-1a",
+                "cloudwatch_metrics": {
+                    "metrics": [
+                        metric("CPUUtilization", &[35.0])
+                    ]
+                }
+            }),
+            1,
+            now(),
+        );
+        let hot = fixture(
+            "i-hot",
+            json!({"owner": "sre"}),
+            json!({
+                "state": "running",
+                "availability_zone": "us-east-1a",
+                "cloudwatch_metrics": {
+                    "metrics": [
+                        metric("CPUUtilization", &[91.0, 94.0]),
+                        metric("NetworkIn", &[1024.0]),
+                        metric("NetworkOut", &[2048.0]),
+                        metric("DiskReadOps", &[10.0]),
+                        metric("DiskWriteOps", &[12.0])
+                    ]
+                }
+            }),
+            1,
+            now(),
+        );
+
+        let report = evaluate_ec2_fleet(&[missing, hot], Pillar::Performance, now());
+        let codes = reason_codes(&report);
+        assert!(codes.contains(&REASON_PERF_MISSING_CORE_TELEMETRY));
+        assert!(codes.contains(&REASON_PERF_HIGH_CPU_TELEMETRY));
     }
 }

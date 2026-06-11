@@ -129,13 +129,20 @@ impl AwsInventoryController {
 #[derive(Debug, Deserialize)]
 pub struct Ec2PillarQuery {
     pub account_id: String,
-    /// Optional pillar name (e.g. `cost`, `security`, `resilience`). Omit
-    /// for every pillar the service supports.
+    /// Optional pillar name (e.g. `cost`, `security`, `resilience`,
+    /// `performance`). Omit for every pillar the service supports.
     pub pillar: Option<String>,
 }
 
 /// Pillars every inventory evaluator implements.
 const BASE_PILLARS: &[Pillar] = &[Pillar::Cost, Pillar::Security, Pillar::Resilience];
+/// EC2 has M2 telemetry coverage for performance in addition to its M1 pillars.
+const EC2_PILLARS: &[Pillar] = &[
+    Pillar::Cost,
+    Pillar::Security,
+    Pillar::Resilience,
+    Pillar::Performance,
+];
 /// Full pillar set for services with extended evaluator coverage.
 const ALL_PILLARS: &[Pillar] = &[
     Pillar::Cost,
@@ -291,10 +298,11 @@ pub async fn get_ec2_pillar_reports(
 ) -> Result<HttpResponse, AppError> {
     let query = query.into_inner();
     debug!("EC2 pillar report request: {:?}", query);
-    pillar_reports(
+    pillar_reports_for(
         &controller,
         query,
         AwsResourceType::EC2Instance,
+        EC2_PILLARS,
         evaluate_ec2_fleet,
     )
     .await

@@ -34,7 +34,7 @@ async fn ec2_pillar_reports_contract() {
     let client = Client::new();
     let account_id = "123456789012";
 
-    // Happy path: all three pillar reports with freshness metadata.
+    // Happy path: all supported EC2 pillar reports with freshness metadata.
     let resp = client
         .get(format!(
             "{}/api/aws/inventory/ec2/pillars?account_id={}",
@@ -51,7 +51,7 @@ async fn ec2_pillar_reports_contract() {
     assert!(body["stale_after_hours"].is_number());
     assert!(body["resources_evaluated"].is_number());
     let reports = body["reports"].as_array().expect("reports array");
-    assert_eq!(reports.len(), 3);
+    assert_eq!(reports.len(), 4);
     for report in reports {
         assert!(report["pillar"].is_string());
         assert!(report["score"].is_number());
