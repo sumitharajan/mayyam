@@ -174,6 +174,7 @@ pub enum AwsResourceType {
     // AI & ML Resources
     BedrockResource,
     SageMakerResource,
+    TextractResource,
     // Migration & DR Resources
     DmsResource,
     MgnResource,
@@ -308,6 +309,7 @@ impl ToString for AwsResourceType {
             // AI & ML Resources
             AwsResourceType::BedrockResource => "BedrockResource".to_string(),
             AwsResourceType::SageMakerResource => "SageMakerResource".to_string(),
+            AwsResourceType::TextractResource => "TextractResource".to_string(),
             // Migration & DR Resources
             AwsResourceType::DmsResource => "DmsResource".to_string(),
             AwsResourceType::MgnResource => "MgnResource".to_string(),
@@ -442,6 +444,7 @@ impl From<&str> for AwsResourceType {
             // AI & ML Resources
             "BedrockResource" => AwsResourceType::BedrockResource,
             "SageMakerResource" => AwsResourceType::SageMakerResource,
+            "TextractResource" => AwsResourceType::TextractResource,
             // Migration & DR Resources
             "DmsResource" => AwsResourceType::DmsResource,
             "MgnResource" => AwsResourceType::MgnResource,

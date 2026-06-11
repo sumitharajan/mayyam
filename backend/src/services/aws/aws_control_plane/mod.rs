@@ -32,6 +32,7 @@ pub mod s3_control_plane;
 pub mod sagemaker_control_plane;
 pub mod sns_control_plane;
 pub mod sqs_control_plane;
+pub mod textract_control_plane;
 pub mod vpc_control_plane;
 // Batch 2: Security & Compliance
 pub mod acm_control_plane;

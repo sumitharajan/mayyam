@@ -245,6 +245,7 @@ mod aws_resource_model_tests {
             // AI & ML
             "BedrockResource",
             "SageMakerResource",
+            "TextractResource",
             // Migration & DR
             "DmsResource",
             "MgnResource",

@@ -107,6 +107,7 @@ use crate::services::aws::aws_control_plane::securityhub_control_plane::Security
 use crate::services::aws::aws_control_plane::servicecatalog_control_plane::ServiceCatalogControlPlane;
 use crate::services::aws::aws_control_plane::shield_control_plane::ShieldControlPlane;
 use crate::services::aws::aws_control_plane::storagegateway_control_plane::StorageGatewayControlPlane;
+use crate::services::aws::aws_control_plane::textract_control_plane::TextractControlPlane;
 use crate::services::aws::aws_control_plane::timestream_control_plane::TimestreamControlPlane;
 use crate::services::aws::aws_control_plane::transitgateway_control_plane::TransitGatewayControlPlane;
 use crate::services::aws::aws_control_plane::trustedadvisor_control_plane::TrustedAdvisorControlPlane;
@@ -833,6 +834,7 @@ impl AwsControlPlane {
                 // AI & ML
                 AwsResourceType::BedrockResource.to_string(),
                 AwsResourceType::SageMakerResource.to_string(),
+                AwsResourceType::TextractResource.to_string(),
                 // Migration & DR
                 AwsResourceType::DmsResource.to_string(),
                 AwsResourceType::MgnResource.to_string(),
@@ -1207,6 +1209,10 @@ impl AwsControlPlane {
                 }
                 "SageMakerResource" => {
                     let cp = SageMakerControlPlane::new(self.aws_service.clone());
+                    cp.sync_resources(aws_account_dto, request.sync_id).await
+                }
+                "TextractResource" => {
+                    let cp = TextractControlPlane::new(self.aws_service.clone());
                     cp.sync_resources(aws_account_dto, request.sync_id).await
                 }
                 _ => Ok(vec![]),

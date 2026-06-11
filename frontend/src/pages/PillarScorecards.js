@@ -99,6 +99,7 @@ const SERVICES = [
   { key: "drs", label: "Elastic Disaster Recovery" },
   { key: "bedrock", label: "Bedrock" },
   { key: "sagemaker", label: "SageMaker AI" },
+  { key: "textract", label: "Textract" },
   { key: "amazonmq", label: "Amazon MQ" },
   { key: "privatelink", label: "PrivateLink" },
   { key: "shield", label: "Shield" },

@@ -106,6 +106,7 @@ use crate::services::aws::inventory::ssm_pillar_evaluator::evaluate_ssm_fleet;
 use crate::services::aws::inventory::stepfunctions_pillar_evaluator::evaluate_stepfunctions_fleet;
 use crate::services::aws::inventory::storagegateway_pillar_evaluator::evaluate_storagegateway_fleet;
 use crate::services::aws::inventory::subnet_pillar_evaluator::evaluate_subnet_fleet;
+use crate::services::aws::inventory::textract_pillar_evaluator::evaluate_textract_fleet;
 use crate::services::aws::inventory::timestream_pillar_evaluator::evaluate_timestream_fleet;
 use crate::services::aws::inventory::transitgateway_pillar_evaluator::evaluate_transitgateway_fleet;
 use crate::services::aws::inventory::trustedadvisor_pillar_evaluator::evaluate_trustedadvisor_fleet;
@@ -1553,6 +1554,21 @@ pub async fn get_sagemaker_pillar_reports(
         query,
         AwsResourceType::SageMakerResource,
         evaluate_sagemaker_fleet,
+    )
+    .await
+}
+
+pub async fn get_textract_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Textract pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::TextractResource,
+        evaluate_textract_fleet,
     )
     .await
 }
