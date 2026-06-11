@@ -729,4 +729,12 @@ impl AwsClientFactory for AwsService {
         let config = self.get_aws_sdk_config(aws_account_dto).await?;
         Ok(aws_sdk_guardduty::Client::new(&config))
     }
+
+    async fn create_memorydb_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<aws_sdk_memorydb::Client, AppError> {
+        let config = self.get_aws_sdk_config(aws_account_dto).await?;
+        Ok(aws_sdk_memorydb::Client::new(&config))
+    }
 }

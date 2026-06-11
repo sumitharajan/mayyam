@@ -63,6 +63,7 @@ use aws_sdk_appsync::Client as AppSyncClient;
 use aws_sdk_kinesisanalyticsv2::Client as KinesisAnalyticsClient;
 use aws_sdk_kafka::Client as MskClient;
 use aws_sdk_guardduty::Client as GuardDutyClient;
+use aws_sdk_memorydb::Client as MemoryDbClient;
 
 use crate::models::aws_account::AwsAccountDto;
 use crate::{errors::AppError};
@@ -264,4 +265,8 @@ pub trait AwsClientFactory {
         &self,
         aws_account_dto: &AwsAccountDto,
     ) -> Result<GuardDutyClient, AppError>;
+    async fn create_memorydb_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<MemoryDbClient, AppError>;
 }

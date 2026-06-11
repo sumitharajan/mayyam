@@ -141,6 +141,12 @@ pub enum AwsResourceType {
     MskCluster,
     // Security Detection Resources
     GuardDutyDetector,
+    // Document Database Resources
+    DocumentDbCluster,
+    // Graph Database Resources
+    NeptuneCluster,
+    // In-Memory Database Resources
+    MemoryDbCluster,
 }
 
 impl ToString for AwsResourceType {
@@ -235,6 +241,12 @@ impl ToString for AwsResourceType {
             AwsResourceType::MskCluster => "MskCluster".to_string(),
             // Security Detection Resources
             AwsResourceType::GuardDutyDetector => "GuardDutyDetector".to_string(),
+            // Document Database Resources
+            AwsResourceType::DocumentDbCluster => "DocumentDbCluster".to_string(),
+            // Graph Database Resources
+            AwsResourceType::NeptuneCluster => "NeptuneCluster".to_string(),
+            // In-Memory Database Resources
+            AwsResourceType::MemoryDbCluster => "MemoryDbCluster".to_string(),
         }
     }
 }
@@ -331,6 +343,12 @@ impl From<&str> for AwsResourceType {
             "MskCluster" => AwsResourceType::MskCluster,
             // Security Detection Resources
             "GuardDutyDetector" => AwsResourceType::GuardDutyDetector,
+            // Document Database Resources
+            "DocumentDbCluster" => AwsResourceType::DocumentDbCluster,
+            // Graph Database Resources
+            "NeptuneCluster" => AwsResourceType::NeptuneCluster,
+            // In-Memory Database Resources
+            "MemoryDbCluster" => AwsResourceType::MemoryDbCluster,
             _ => panic!("Unknown resource type: {}", s),
         }
     }

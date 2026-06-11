@@ -1826,6 +1826,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-sdk-memorydb"
+version = "1.100.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c8bba16f2c1139774e345b60003f4f5a128272938722154df60d40147dab118e"
+dependencies = [
+ "aws-credential-types",
+ "aws-runtime",
+ "aws-smithy-async",
+ "aws-smithy-http 0.63.6",
+ "aws-smithy-json 0.62.5",
+ "aws-smithy-observability",
+ "aws-smithy-runtime",
+ "aws-smithy-runtime-api",
+ "aws-smithy-types",
+ "aws-types",
+ "bytes",
+ "fastrand 2.3.0",
+ "http 0.2.12",
+ "http 1.3.1",
+ "regex-lite",
+ "tracing",
+]
+
+[[package]]
 name = "aws-sdk-opensearch"
 version = "1.97.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5308,6 +5332,7 @@ dependencies = [
  "aws-sdk-kinesisanalyticsv2",
  "aws-sdk-kms",
  "aws-sdk-lambda",
+ "aws-sdk-memorydb",
  "aws-sdk-opensearch",
  "aws-sdk-rds",
  "aws-sdk-redshift",

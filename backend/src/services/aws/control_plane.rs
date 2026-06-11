@@ -78,6 +78,9 @@ use crate::services::aws::aws_control_plane::secretsmanager_control_plane::Secre
 use crate::services::aws::aws_control_plane::aurora_control_plane::AuroraControlPlane;
 use crate::services::aws::aws_control_plane::msk_control_plane::MskControlPlane;
 use crate::services::aws::aws_control_plane::guardduty_control_plane::GuardDutyControlPlane;
+use crate::services::aws::aws_control_plane::documentdb_control_plane::DocumentDbControlPlane;
+use crate::services::aws::aws_control_plane::neptune_control_plane::NeptuneControlPlane;
+use crate::services::aws::aws_control_plane::memorydb_control_plane::MemoryDbControlPlane;
 use crate::services::aws::aws_control_plane::storagegateway_control_plane::StorageGatewayControlPlane;
 use crate::services::aws::aws_control_plane::connect_control_plane::ConnectControlPlane;
 use crate::services::aws::aws_control_plane::appsync_control_plane::AppSyncControlPlane;
@@ -767,6 +770,10 @@ impl AwsControlPlane {
                 AwsResourceType::AuroraCluster.to_string(),
                 AwsResourceType::MskCluster.to_string(),
                 AwsResourceType::GuardDutyDetector.to_string(),
+                // Batch 12: Document DB, Graph DB & In-Memory DB
+                AwsResourceType::DocumentDbCluster.to_string(),
+                AwsResourceType::NeptuneCluster.to_string(),
+                AwsResourceType::MemoryDbCluster.to_string(),
             ],
         };
 
@@ -1005,6 +1012,19 @@ impl AwsControlPlane {
                 "GuardDutyDetector" => {
                     let cp = GuardDutyControlPlane::new(self.aws_service.clone());
                     cp.sync_detectors(aws_account_dto, request.sync_id).await
+                }
+                // Batch 12: Document DB, Graph DB & In-Memory DB
+                "DocumentDbCluster" => {
+                    let cp = DocumentDbControlPlane::new(self.aws_service.clone());
+                    cp.sync_clusters(aws_account_dto, request.sync_id).await
+                }
+                "NeptuneCluster" => {
+                    let cp = NeptuneControlPlane::new(self.aws_service.clone());
+                    cp.sync_clusters(aws_account_dto, request.sync_id).await
+                }
+                "MemoryDbCluster" => {
+                    let cp = MemoryDbControlPlane::new(self.aws_service.clone());
+                    cp.sync_clusters(aws_account_dto, request.sync_id).await
                 }
                 _ => Ok(vec![]),
             };

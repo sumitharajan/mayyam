@@ -39,8 +39,11 @@ use crate::services::aws::inventory::globalaccelerator_pillar_evaluator::evaluat
 use crate::services::aws::inventory::glue_pillar_evaluator::evaluate_glue_fleet;
 use crate::services::aws::inventory::redshift_pillar_evaluator::evaluate_redshift_fleet;
 use crate::services::aws::inventory::aurora_pillar_evaluator::evaluate_aurora_fleet;
+use crate::services::aws::inventory::documentdb_pillar_evaluator::evaluate_documentdb_fleet;
 use crate::services::aws::inventory::guardduty_pillar_evaluator::evaluate_guardduty_fleet;
+use crate::services::aws::inventory::memorydb_pillar_evaluator::evaluate_memorydb_fleet;
 use crate::services::aws::inventory::msk_pillar_evaluator::evaluate_msk_fleet;
+use crate::services::aws::inventory::neptune_pillar_evaluator::evaluate_neptune_fleet;
 use crate::services::aws::inventory::route53_pillar_evaluator::evaluate_route53_fleet;
 use crate::services::aws::inventory::secretsmanager_pillar_evaluator::evaluate_secretsmanager_fleet;
 use crate::services::aws::inventory::transitgateway_pillar_evaluator::evaluate_transitgateway_fleet;
@@ -992,6 +995,51 @@ pub async fn get_guardduty_pillar_reports(
         query,
         AwsResourceType::GuardDutyDetector,
         evaluate_guardduty_fleet,
+    )
+    .await
+}
+
+pub async fn get_documentdb_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("DocumentDB pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::DocumentDbCluster,
+        evaluate_documentdb_fleet,
+    )
+    .await
+}
+
+pub async fn get_neptune_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Neptune pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::NeptuneCluster,
+        evaluate_neptune_fleet,
+    )
+    .await
+}
+
+pub async fn get_memorydb_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("MemoryDB pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::MemoryDbCluster,
+        evaluate_memorydb_fleet,
     )
     .await
 }

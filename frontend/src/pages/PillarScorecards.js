@@ -73,6 +73,9 @@ const SERVICES = [
   { key: "aurora", label: "Aurora" },
   { key: "msk", label: "MSK" },
   { key: "guardduty", label: "GuardDuty" },
+  { key: "documentdb", label: "DocumentDB" },
+  { key: "neptune", label: "Neptune" },
+  { key: "memorydb", label: "MemoryDB" },
 ];
 
 // Well-Architected pillar scorecards from deterministic inventory
