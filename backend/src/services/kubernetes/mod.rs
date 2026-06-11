@@ -17,6 +17,7 @@ pub mod configmaps_service;
 pub mod daemon_sets;
 pub mod deployments_service;
 pub mod metrics_service;
+pub mod namespace_inventory;
 pub mod namespaces_service;
 pub mod nodes_service;
 pub mod persistent_volume_claims_service;

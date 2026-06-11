@@ -16,7 +16,12 @@ use crate::errors::AppError;
 use crate::middleware::auth::Claims; // Assuming you have auth middleware
 use crate::models::cluster::{CreateKubernetesClusterRequest, KubernetesClusterConfig};
 use crate::services::aws::inventory::types::{Pillar, DEFAULT_STALE_AFTER_HOURS};
-use crate::services::kubernetes::inventory::{evaluate_kubernetes_cluster_fleet, RESOURCE_TYPE};
+use crate::services::kubernetes::inventory::{
+    evaluate_kubernetes_cluster_fleet, RESOURCE_TYPE as CLUSTER_RESOURCE_TYPE,
+};
+use crate::services::kubernetes::namespace_inventory::{
+    evaluate_kubernetes_namespace_inventory, RESOURCE_TYPE as NAMESPACE_RESOURCE_TYPE,
+};
 use crate::services::kubernetes::prelude::*;
 use actix_web::{web, HttpResponse, Responder};
 use actix_web_lab::sse;
@@ -37,6 +42,7 @@ const KUBERNETES_INVENTORY_PILLARS: &[Pillar] =
 #[derive(Debug, Deserialize)]
 pub struct KubernetesInventoryQuery {
     pub pillar: Option<String>,
+    pub cluster_id: Option<String>,
 }
 
 fn parse_kubernetes_inventory_pillars(raw: &Option<String>) -> Result<Vec<Pillar>, AppError> {
@@ -164,10 +170,60 @@ pub async fn get_cluster_inventory_pillar_reports_controller(
     let oldest_refresh = clusters.iter().map(|cluster| cluster.updated_at).min();
 
     Ok(HttpResponse::Ok().json(json!({
-        "resource_type": RESOURCE_TYPE,
+        "resource_type": CLUSTER_RESOURCE_TYPE,
         "evaluated_at": now,
         "stale_after_hours": DEFAULT_STALE_AFTER_HOURS,
         "resources_evaluated": clusters.len(),
+        "oldest_refresh": oldest_refresh,
+        "reports": reports,
+    })))
+}
+
+pub async fn get_namespace_inventory_pillar_reports_controller(
+    claims: web::ReqData<Claims>,
+    db: web::Data<Arc<DatabaseConnection>>,
+    query: web::Query<KubernetesInventoryQuery>,
+    namespaces_service: web::Data<Arc<NamespacesService>>,
+) -> Result<impl Responder, AppError> {
+    let query = query.into_inner();
+    debug!(
+        target: "mayyam::controllers::kubernetes",
+        user_id = %claims.username,
+        ?query,
+        "Kubernetes namespace inventory pillar report request"
+    );
+
+    let pillars = parse_kubernetes_inventory_pillars(&query.pillar)?;
+    let cluster_id = query
+        .cluster_id
+        .as_deref()
+        .map(str::trim)
+        .filter(|cluster_id| !cluster_id.is_empty());
+    let namespace_items = if let Some(cluster_id) = cluster_id {
+        let cluster_config = get_cluster_config_by_id(db.get_ref().as_ref(), cluster_id).await?;
+        namespaces_service
+            .list_namespace_inventory(&cluster_config, cluster_id)
+            .await?
+    } else {
+        Vec::new()
+    };
+
+    let now = Utc::now();
+    let reports = pillars
+        .iter()
+        .map(|pillar| evaluate_kubernetes_namespace_inventory(&namespace_items, *pillar, now))
+        .collect::<Vec<_>>();
+    let oldest_refresh = namespace_items
+        .iter()
+        .map(|namespace| namespace.collected_at)
+        .min();
+
+    Ok(HttpResponse::Ok().json(json!({
+        "resource_type": NAMESPACE_RESOURCE_TYPE,
+        "evaluated_at": now,
+        "stale_after_hours": DEFAULT_STALE_AFTER_HOURS,
+        "cluster_id": query.cluster_id,
+        "resources_evaluated": namespace_items.len(),
         "oldest_refresh": oldest_refresh,
         "reports": reports,
     })))
