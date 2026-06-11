@@ -162,6 +162,9 @@ async fn storage_and_database_pillar_reports_contract() {
         ("routetable", "RouteTable"),
         ("networkacl", "NetworkAcl"),
         ("fargate", "FargateProfile"),
+        ("kms", "KmsKey"),
+        ("acm", "AcmCertificate"),
+        ("cloudtrail", "CloudTrailTrail"),
     ] {
         let resp = client
             .get(format!(

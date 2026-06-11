@@ -26,9 +26,11 @@ use tracing::debug;
 use crate::errors::AppError;
 use crate::models::aws_resource::AwsResourceType;
 use crate::repositories::aws_resource::AwsResourceRepository;
+use crate::services::aws::inventory::acm_pillar_evaluator::evaluate_acm_fleet;
 use crate::services::aws::inventory::api_gateway_pillar_evaluator::evaluate_api_gateway_fleet;
 use crate::services::aws::inventory::appsync_pillar_evaluator::evaluate_appsync_fleet;
 use crate::services::aws::inventory::cloudfront_pillar_evaluator::evaluate_cloudfront_fleet;
+use crate::services::aws::inventory::cloudtrail_pillar_evaluator::evaluate_cloudtrail_fleet;
 use crate::services::aws::inventory::cloudwatch_pillar_evaluator::evaluate_cloudwatch_fleet;
 use crate::services::aws::inventory::dynamodb_pillar_evaluator::evaluate_dynamodb_fleet;
 use crate::services::aws::inventory::ebs_pillar_evaluator::evaluate_ebs_fleet;
@@ -42,6 +44,7 @@ use crate::services::aws::inventory::glacier_pillar_evaluator::evaluate_glacier_
 use crate::services::aws::inventory::iam_pillar_evaluator::evaluate_iam_fleet;
 use crate::services::aws::inventory::kinesis_pillar_evaluator::evaluate_kinesis_fleet;
 use crate::services::aws::inventory::kinesisanalytics_pillar_evaluator::evaluate_kinesisanalytics_fleet;
+use crate::services::aws::inventory::kms_pillar_evaluator::evaluate_kms_fleet;
 use crate::services::aws::inventory::internet_gateway_pillar_evaluator::evaluate_internet_gateway_fleet;
 use crate::services::aws::inventory::lambda_pillar_evaluator::evaluate_lambda_fleet;
 use crate::services::aws::inventory::nat_gateway_pillar_evaluator::evaluate_nat_gateway_fleet;
@@ -549,4 +552,37 @@ pub async fn get_fargate_pillar_reports(
     debug!("Fargate pillar report request: {:?}", query);
     pillar_reports(&controller, query, AwsResourceType::FargateProfile, evaluate_fargate_fleet)
         .await
+}
+
+pub async fn get_kms_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("KMS pillar report request: {:?}", query);
+    pillar_reports(&controller, query, AwsResourceType::KmsKey, evaluate_kms_fleet).await
+}
+
+pub async fn get_acm_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("ACM pillar report request: {:?}", query);
+    pillar_reports(&controller, query, AwsResourceType::AcmCertificate, evaluate_acm_fleet).await
+}
+
+pub async fn get_cloudtrail_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("CloudTrail pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::CloudTrailTrail,
+        evaluate_cloudtrail_fleet,
+    )
+    .await
 }

@@ -15,9 +15,11 @@
 // Deterministic inventory pillar evaluators. These run without an LLM,
 // emit reason-coded findings, and preserve the raw evidence they used.
 
+pub mod acm_pillar_evaluator;
 pub mod api_gateway_pillar_evaluator;
 pub mod appsync_pillar_evaluator;
 pub mod cloudfront_pillar_evaluator;
+pub mod cloudtrail_pillar_evaluator;
 pub mod cloudwatch_pillar_evaluator;
 pub mod dynamodb_pillar_evaluator;
 pub mod ebs_pillar_evaluator;
@@ -32,6 +34,7 @@ pub mod iam_pillar_evaluator;
 pub mod internet_gateway_pillar_evaluator;
 pub mod kinesis_pillar_evaluator;
 pub mod kinesisanalytics_pillar_evaluator;
+pub mod kms_pillar_evaluator;
 pub mod lambda_pillar_evaluator;
 pub mod load_balancer_pillar_evaluator;
 pub mod nat_gateway_pillar_evaluator;

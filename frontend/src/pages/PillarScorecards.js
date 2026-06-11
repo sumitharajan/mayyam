@@ -48,6 +48,9 @@ const SERVICES = [
   { key: "routetable", label: "Route Tables" },
   { key: "networkacl", label: "Network ACLs" },
   { key: "fargate", label: "Fargate" },
+  { key: "kms", label: "KMS" },
+  { key: "acm", label: "ACM" },
+  { key: "cloudtrail", label: "CloudTrail" },
 ];
 
 // Well-Architected pillar scorecards from deterministic inventory
