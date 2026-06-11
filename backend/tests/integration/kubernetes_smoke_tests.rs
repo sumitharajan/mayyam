@@ -13,7 +13,13 @@
 // limitations under the License.
 
 use crate::integration::helpers::TestHarness;
+use actix_web::{dev::Service as _, http::StatusCode, test, web, App, HttpMessage};
+use mayyam::controllers::kubernetes::get_node_inventory_pillar_reports_controller;
+use mayyam::middleware::auth::Claims;
+use mayyam::services::kubernetes::nodes_service::NodesService;
+use sea_orm::DatabaseConnection;
 use serde_json::Value;
+use std::sync::Arc;
 
 #[tokio::test]
 async fn kubernetes_cluster_inventory_pillar_reports_contract() {
@@ -121,55 +127,65 @@ async fn kubernetes_namespace_inventory_pillar_reports_contract() {
 
 #[tokio::test]
 async fn kubernetes_node_inventory_pillar_reports_contract() {
-    if let Some(harness) = TestHarness::try_new().await {
-        let response = harness
-            .client()
-            .get(&harness.build_url("/api/kubernetes/inventory/nodes/pillars"))
-            .header("Authorization", format!("Bearer {}", harness.auth_token()))
-            .send()
-            .await
-            .expect("node pillar report request failed");
+    let claims = Claims {
+        sub: "test-user".to_string(),
+        username: "test-user".to_string(),
+        email: None,
+        roles: vec!["admin".to_string()],
+        exp: i64::MAX,
+        iat: 0,
+    };
+    let db = Arc::new(DatabaseConnection::default());
+    let nodes_service = Arc::new(NodesService::new());
+    let app = test::init_service(
+        App::new()
+            .wrap_fn(move |req, srv| {
+                req.extensions_mut().insert(claims.clone());
+                srv.call(req)
+            })
+            .app_data(web::Data::new(db))
+            .app_data(web::Data::new(nodes_service))
+            .route(
+                "/api/kubernetes/inventory/nodes/pillars",
+                web::get().to(get_node_inventory_pillar_reports_controller),
+            ),
+    )
+    .await;
 
-        assert_eq!(response.status().as_u16(), 200);
-        let body: Value = response.json().await.expect("invalid JSON body");
-        assert_eq!(body["resource_type"], "KubernetesNode");
-        assert!(body["evaluated_at"].is_string());
-        assert!(body["stale_after_hours"].is_number());
-        assert!(body["resources_evaluated"].is_number());
-        let reports = body["reports"].as_array().expect("reports array");
-        assert_eq!(reports.len(), 3);
-        for report in reports {
-            assert!(report["pillar"].is_string());
-            assert!(report["score"].is_number());
-            assert!(report["findings"].is_array());
-        }
+    let request = test::TestRequest::get()
+        .uri("/api/kubernetes/inventory/nodes/pillars")
+        .to_request();
+    let response = test::call_service(&app, request).await;
+    assert_eq!(response.status(), StatusCode::OK);
 
-        let response = harness
-            .client()
-            .get(&harness.build_url("/api/kubernetes/inventory/nodes/pillars?pillar=resilience"))
-            .header("Authorization", format!("Bearer {}", harness.auth_token()))
-            .send()
-            .await
-            .expect("single node pillar report request failed");
-        assert_eq!(response.status().as_u16(), 200);
-        let body: Value = response.json().await.expect("invalid JSON body");
-        let reports = body["reports"].as_array().expect("reports array");
-        assert_eq!(reports.len(), 1);
-        assert_eq!(reports[0]["pillar"], "resilience");
-
-        let response = harness
-            .client()
-            .get(&harness.build_url("/api/kubernetes/inventory/nodes/pillars?pillar=bogus"))
-            .header("Authorization", format!("Bearer {}", harness.auth_token()))
-            .send()
-            .await
-            .expect("bad node pillar request failed");
-        assert_eq!(response.status().as_u16(), 400);
-    } else {
-        eprintln!(
-            "Skipping Kubernetes node pillar contract: backend not healthy (likely DB down)."
-        );
+    let body: Value = test::read_body_json(response).await;
+    assert_eq!(body["resource_type"], "KubernetesNode");
+    assert!(body["evaluated_at"].is_string());
+    assert!(body["stale_after_hours"].is_number());
+    assert!(body["resources_evaluated"].is_number());
+    let reports = body["reports"].as_array().expect("reports array");
+    assert_eq!(reports.len(), 3);
+    for report in reports {
+        assert!(report["pillar"].is_string());
+        assert!(report["score"].is_number());
+        assert!(report["findings"].is_array());
     }
+
+    let request = test::TestRequest::get()
+        .uri("/api/kubernetes/inventory/nodes/pillars?pillar=resilience")
+        .to_request();
+    let response = test::call_service(&app, request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let body: Value = test::read_body_json(response).await;
+    let reports = body["reports"].as_array().expect("reports array");
+    assert_eq!(reports.len(), 1);
+    assert_eq!(reports[0]["pillar"], "resilience");
+
+    let request = test::TestRequest::get()
+        .uri("/api/kubernetes/inventory/nodes/pillars?pillar=bogus")
+        .to_request();
+    let response = test::call_service(&app, request).await;
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }
 
 #[tokio::test]
