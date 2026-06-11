@@ -15,6 +15,7 @@
 pub mod client;
 pub mod configmaps_service;
 pub mod daemon_sets;
+pub mod deployment_inventory;
 pub mod deployments_service;
 pub mod metrics_service;
 pub mod namespace_inventory;
