@@ -71,6 +71,7 @@ use crate::services::aws::inventory::lakeformation_pillar_evaluator::evaluate_la
 use crate::services::aws::inventory::lambda_pillar_evaluator::evaluate_lambda_fleet;
 use crate::services::aws::inventory::lightsail_pillar_evaluator::evaluate_lightsail_fleet;
 use crate::services::aws::inventory::load_balancer_pillar_evaluator::evaluate_load_balancer_fleet;
+use crate::services::aws::inventory::macie_pillar_evaluator::evaluate_macie_fleet;
 use crate::services::aws::inventory::memorydb_pillar_evaluator::evaluate_memorydb_fleet;
 use crate::services::aws::inventory::msk_pillar_evaluator::evaluate_msk_fleet;
 use crate::services::aws::inventory::nat_gateway_pillar_evaluator::evaluate_nat_gateway_fleet;
@@ -1174,6 +1175,21 @@ pub async fn get_inspector_pillar_reports(
         query,
         AwsResourceType::InspectorAccountCoverage,
         evaluate_inspector_fleet,
+    )
+    .await
+}
+
+pub async fn get_macie_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Macie pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::MacieAccount,
+        evaluate_macie_fleet,
     )
     .await
 }

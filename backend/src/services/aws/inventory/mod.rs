@@ -60,6 +60,7 @@ pub mod lakeformation_pillar_evaluator;
 pub mod lambda_pillar_evaluator;
 pub mod lightsail_pillar_evaluator;
 pub mod load_balancer_pillar_evaluator;
+pub mod macie_pillar_evaluator;
 pub mod memorydb_pillar_evaluator;
 pub mod msk_pillar_evaluator;
 pub mod nat_gateway_pillar_evaluator;

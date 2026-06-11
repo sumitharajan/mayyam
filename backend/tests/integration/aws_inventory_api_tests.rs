@@ -189,6 +189,7 @@ async fn storage_and_database_pillar_reports_contract() {
         ("guardduty", "GuardDutyDetector", 3),
         ("securityhub", "SecurityHubHub", 3),
         ("inspector", "InspectorAccountCoverage", 3),
+        ("macie", "MacieAccount", 3),
         ("documentdb", "DocumentDbCluster", 3),
         ("neptune", "NeptuneCluster", 3),
         ("memorydb", "MemoryDbCluster", 3),

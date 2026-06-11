@@ -179,6 +179,7 @@ aws-sdk-mq = "1.22.0"
 aws-sdk-shield = "1.22.0"
 aws-sdk-securityhub = "1.22.0"
 aws-sdk-inspector2 = "1.22.0"
+aws-sdk-macie2 = "1.22.0"
 
 [dev-dependencies]
 mockall = "0.11"

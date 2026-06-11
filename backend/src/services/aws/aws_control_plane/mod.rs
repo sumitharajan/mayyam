@@ -74,6 +74,7 @@ pub mod transitgateway_control_plane;
 pub mod aurora_control_plane;
 pub mod guardduty_control_plane;
 pub mod inspector_control_plane;
+pub mod macie_control_plane;
 pub mod msk_control_plane;
 pub mod securityhub_control_plane;
 // Batch 12: Document DB, Graph DB & In-Memory DB

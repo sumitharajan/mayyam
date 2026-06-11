@@ -42,6 +42,7 @@ use aws_sdk_kinesis::Client as KinesisClient;
 use aws_sdk_lakeformation::Client as LakeFormationClient;
 use aws_sdk_lambda::Client as LambdaClient;
 use aws_sdk_lightsail::Client as LightsailClient;
+use aws_sdk_macie2::Client as MacieClient;
 use aws_sdk_mq::Client as AmazonMqClient;
 use aws_sdk_opensearch::Client as OpenSearchClient;
 use aws_sdk_quicksight::Client as QuickSightClient;
@@ -751,6 +752,14 @@ impl AwsClientFactory for AwsService {
     ) -> Result<InspectorClient, AppError> {
         let config = self.get_aws_sdk_config(aws_account_dto).await?;
         Ok(InspectorClient::new(&config))
+    }
+
+    async fn create_macie_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<MacieClient, AppError> {
+        let config = self.get_aws_sdk_config(aws_account_dto).await?;
+        Ok(MacieClient::new(&config))
     }
 
     async fn create_memorydb_client(

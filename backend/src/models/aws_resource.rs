@@ -145,6 +145,7 @@ pub enum AwsResourceType {
     GuardDutyDetector,
     SecurityHubHub,
     InspectorAccountCoverage,
+    MacieAccount,
     // Document Database Resources
     DocumentDbCluster,
     // Graph Database Resources
@@ -262,6 +263,7 @@ impl ToString for AwsResourceType {
             AwsResourceType::GuardDutyDetector => "GuardDutyDetector".to_string(),
             AwsResourceType::SecurityHubHub => "SecurityHubHub".to_string(),
             AwsResourceType::InspectorAccountCoverage => "InspectorAccountCoverage".to_string(),
+            AwsResourceType::MacieAccount => "MacieAccount".to_string(),
             // Document Database Resources
             AwsResourceType::DocumentDbCluster => "DocumentDbCluster".to_string(),
             // Graph Database Resources
@@ -383,6 +385,7 @@ impl From<&str> for AwsResourceType {
             "GuardDutyDetector" => AwsResourceType::GuardDutyDetector,
             "SecurityHubHub" => AwsResourceType::SecurityHubHub,
             "InspectorAccountCoverage" => AwsResourceType::InspectorAccountCoverage,
+            "MacieAccount" => AwsResourceType::MacieAccount,
             // Document Database Resources
             "DocumentDbCluster" => AwsResourceType::DocumentDbCluster,
             // Graph Database Resources

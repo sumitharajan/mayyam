@@ -55,6 +55,7 @@ use aws_sdk_kms::Client as KmsClient;
 use aws_sdk_lakeformation::Client as LakeFormationClient;
 use aws_sdk_lambda::Client as LambdaClient;
 use aws_sdk_lightsail::Client as LightsailClient;
+use aws_sdk_macie2::Client as MacieClient;
 use aws_sdk_memorydb::Client as MemoryDbClient;
 use aws_sdk_mq::Client as AmazonMqClient;
 use aws_sdk_opensearch::Client as OpenSearchClient;
@@ -284,6 +285,10 @@ pub trait AwsClientFactory {
         &self,
         aws_account_dto: &AwsAccountDto,
     ) -> Result<InspectorClient, AppError>;
+    async fn create_macie_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<MacieClient, AppError>;
     async fn create_memorydb_client(
         &self,
         aws_account_dto: &AwsAccountDto,

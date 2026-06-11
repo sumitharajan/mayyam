@@ -253,6 +253,10 @@ pub fn configure(controller: Arc<AwsInventoryController>) -> Scope {
             web::get().to(aws_inventory::get_inspector_pillar_reports),
         )
         .route(
+            "/macie/pillars",
+            web::get().to(aws_inventory::get_macie_pillar_reports),
+        )
+        .route(
             "/documentdb/pillars",
             web::get().to(aws_inventory::get_documentdb_pillar_reports),
         )
