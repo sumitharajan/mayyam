@@ -19,6 +19,7 @@ Turn MySQL telemetry into evidence-grounded DBA triage, safe recommendations, re
 - `current-state.md` explains source modules reviewed, current maturity, gaps, and target operating model.
 - `capability-map.md` lists the service/domain coverage and feature-row counts.
 - `epics.md` breaks delivery into implementation slices.
+- `release-plan.md` orders the backlog by maturity phase, priority, ship size, and first P0 vertical slices.
 - `feature-backlog.csv` contains 1,617 implementation-ready feature rows with release phase, ship size, API contract, tests, rollout guardrail, and runbook scope.
 
 ## Build Order

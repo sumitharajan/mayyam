@@ -982,6 +982,353 @@ const aiObservabilityItems = plannedItems([
   ["Reporting", "AI spend report"],
 ]);
 
+const alertingItems = plannedItems([
+  ["Rule Model", "alert rule model"],
+  ["Rule Model", "metric threshold alert"],
+  ["Rule Model", "log pattern alert"],
+  ["Rule Model", "anomaly alert"],
+  ["Rule Model", "composite alert"],
+  ["SLO", "burn rate alert"],
+  ["FinOps", "cost anomaly alert"],
+  ["Security", "security finding alert"],
+  ["Kafka", "consumer lag alert"],
+  ["Database", "slow query alert"],
+  ["Linux", "host health alert"],
+  ["Kubernetes", "workload health alert"],
+  ["Cloud", "quota exhaustion alert"],
+  ["Noise Control", "alert deduplication"],
+  ["Noise Control", "alert suppression"],
+  ["Noise Control", "maintenance window"],
+  ["Response", "escalation policy"],
+  ["Response", "on-call schedule"],
+  ["Response", "notification routing"],
+  ["Integrations", "Slack notification"],
+  ["Integrations", "Teams notification"],
+  ["Integrations", "PagerDuty notification"],
+  ["Integrations", "webhook delivery"],
+  ["Governance", "alert audit trail"],
+  ["Quality", "alert test run"],
+]);
+
+const logManagementItems = plannedItems([
+  ["Sources", "log source enrollment"],
+  ["Sources", "Linux journald logs"],
+  ["Sources", "Kubernetes pod logs"],
+  ["Sources", "cloud provider logs"],
+  ["Sources", "database logs"],
+  ["Sources", "Kafka broker logs"],
+  ["Sources", "application logs"],
+  ["Parsing", "parser pipeline"],
+  ["Parsing", "JSON parser"],
+  ["Parsing", "pattern parser"],
+  ["Parsing", "schema extraction"],
+  ["Privacy", "PII redaction"],
+  ["Indexing", "indexing policy"],
+  ["Indexing", "retention tier"],
+  ["Search", "live tail"],
+  ["Search", "log search"],
+  ["Search", "saved log query"],
+  ["Analysis", "log anomaly detection"],
+  ["Analysis", "pattern clustering"],
+  ["Correlation", "trace to log link"],
+  ["Correlation", "metric from logs"],
+  ["Archive", "archive export"],
+  ["Archive", "log rehydration"],
+  ["Governance", "log access audit"],
+  ["FinOps", "log volume cost controls"],
+  ["Noise Control", "noisy log suppression"],
+]);
+
+const dashboardWorkbenchItems = plannedItems([
+  ["Widgets", "widget library"],
+  ["Queries", "metric query builder"],
+  ["Queries", "log query builder"],
+  ["Queries", "trace query builder"],
+  ["Widgets", "topology widget"],
+  ["Widgets", "cost widget"],
+  ["Widgets", "SLO widget"],
+  ["Widgets", "incident widget"],
+  ["Templates", "template dashboard"],
+  ["Authoring", "custom dashboard"],
+  ["Authoring", "dashboard variables"],
+  ["Time", "time range controls"],
+  ["Time", "compare time ranges"],
+  ["Context", "dashboard annotations"],
+  ["Sharing", "share links"],
+  ["Sharing", "PDF export"],
+  ["Sharing", "CSV export"],
+  ["Governance", "dashboard RBAC"],
+  ["Governance", "dashboard as code"],
+  ["Performance", "query explain"],
+  ["Performance", "query performance"],
+  ["Views", "saved views"],
+  ["Executive", "executive scorecard"],
+]);
+
+const rumItems = plannedItems([
+  ["SDK", "browser SDK"],
+  ["SDK", "mobile SDK"],
+  ["Performance", "page load timing"],
+  ["Performance", "Core Web Vitals"],
+  ["Errors", "JavaScript error"],
+  ["Dependencies", "API dependency timing"],
+  ["Journeys", "user journey"],
+  ["Replay", "session replay"],
+  ["Privacy", "privacy masking"],
+  ["Dimensions", "geo dimension"],
+  ["Dimensions", "device dimension"],
+  ["Dimensions", "browser dimension"],
+  ["Release", "release correlation"],
+  ["Release", "feature flag correlation"],
+  ["Synthetics", "synthetic to RUM comparison"],
+  ["Analytics", "funnel analysis"],
+  ["Signals", "frustration signals"],
+  ["SLO", "frontend SLO"],
+  ["Mobile", "mobile crash reporting"],
+  ["Mobile", "mobile network telemetry"],
+  ["Mobile", "offline event telemetry"],
+  ["Governance", "RUM PII controls"],
+  ["Sampling", "RUM sample rate"],
+  ["Impact", "user impact score"],
+]);
+
+const networkObservabilityItems = plannedItems([
+  ["Topology", "network topology discovery"],
+  ["Flow Logs", "VPC flow logs"],
+  ["Flow Logs", "Kubernetes network flows"],
+  ["Flow Logs", "Linux conntrack"],
+  ["DNS", "DNS telemetry"],
+  ["TLS", "TLS telemetry"],
+  ["Load Balancing", "load balancer health"],
+  ["Edge", "CDN edge telemetry"],
+  ["Traffic", "ingress traffic"],
+  ["Traffic", "egress traffic"],
+  ["Quality", "packet drops"],
+  ["Quality", "TCP retransmits"],
+  ["Quality", "latency map"],
+  ["Capacity", "bandwidth utilization"],
+  ["FinOps", "network cost attribution"],
+  ["Security", "firewall rule reachability"],
+  ["Security", "security group reachability"],
+  ["Security", "network ACL posture"],
+  ["Routing", "route table analysis"],
+  ["Routing", "NAT gateway saturation"],
+  ["Private Connectivity", "private link posture"],
+  ["Service Mesh", "service mesh flows"],
+  ["Diagnostics", "connection tracking"],
+  ["Diagnostics", "packet capture request"],
+  ["Synthetics", "network path probe"],
+  ["RCA", "network path root cause"],
+]);
+
+const secretsCertItems = plannedItems([
+  ["Inventory", "secret inventory"],
+  ["Inventory", "certificate inventory"],
+  ["Lifecycle", "certificate expiry detection"],
+  ["Lifecycle", "rotation policy"],
+  ["Lifecycle", "stale secret detection"],
+  ["Exposure", "secret exposure scan"],
+  ["Identity", "IAM key age"],
+  ["Database", "database credential rotation"],
+  ["TLS", "TLS chain validation"],
+  ["TLS", "mTLS identity"],
+  ["SSH", "SSH key audit"],
+  ["Kubernetes", "Kubernetes secrets audit"],
+  ["Cloud", "cloud secrets manager"],
+  ["Integrations", "Vault integration"],
+  ["Encryption", "KMS key audit"],
+  ["Encryption", "encryption coverage"],
+  ["Governance", "secret access review"],
+  ["Governance", "break glass access"],
+  ["Actions", "rotation workflow"],
+  ["Actions", "certificate renewal automation"],
+  ["Audit", "revocation audit"],
+]);
+
+const backupDrItems = plannedItems([
+  ["Inventory", "backup inventory"],
+  ["Policy", "backup policy"],
+  ["Objectives", "RPO tracker"],
+  ["Objectives", "RTO tracker"],
+  ["Validation", "restore drill"],
+  ["Validation", "point in time recovery"],
+  ["Validation", "snapshot validation"],
+  ["Replication", "cross region copy"],
+  ["Security", "immutable backup"],
+  ["Security", "backup encryption audit"],
+  ["Compliance", "retention compliance"],
+  ["Waste", "orphaned snapshot"],
+  ["Alerting", "failed backup alert"],
+  ["Topology", "workload dependency map"],
+  ["Runbooks", "DR runbook"],
+  ["Runbooks", "failover dry run"],
+  ["Runbooks", "DNS failover"],
+  ["Databases", "database restore"],
+  ["Kubernetes", "Kubernetes restore"],
+  ["Kafka", "Kafka topic restore"],
+  ["Linux", "Linux host restore"],
+  ["Cloud", "cloud account recovery"],
+  ["Evidence", "recovery evidence bundle"],
+  ["FinOps", "backup cost analysis"],
+  ["Scorecard", "recovery scorecard"],
+]);
+
+const chaosItems = plannedItems([
+  ["Catalog", "experiment catalog"],
+  ["Safety", "blast radius guardrail"],
+  ["Safety", "steady state hypothesis"],
+  ["Safety", "rollback condition"],
+  ["Safety", "failure injection approval"],
+  ["Kubernetes", "pod kill experiment"],
+  ["Kubernetes", "node drain experiment"],
+  ["Network", "network latency injection"],
+  ["Network", "packet loss injection"],
+  ["Network", "DNS failure injection"],
+  ["Linux", "disk pressure injection"],
+  ["Linux", "CPU pressure injection"],
+  ["Database", "database failover experiment"],
+  ["Kafka", "broker failure experiment"],
+  ["Cloud", "availability zone outage drill"],
+  ["Dependencies", "dependency outage drill"],
+  ["Practice", "game day planning"],
+  ["Practice", "experiment schedule"],
+  ["Analysis", "experiment result analysis"],
+  ["Learning", "resilience learning"],
+  ["Governance", "chaos safety policy"],
+  ["FinOps", "chaos cost impact"],
+]);
+
+const dataPipelineItems = plannedItems([
+  ["Inventory", "pipeline inventory"],
+  ["Inventory", "DAG discovery"],
+  ["Freshness", "job freshness"],
+  ["Freshness", "SLA miss detection"],
+  ["Reliability", "job failure"],
+  ["Volume", "data volume anomaly"],
+  ["Schema", "schema drift"],
+  ["Quality", "data quality check"],
+  ["Lineage", "lineage graph"],
+  ["FinOps", "warehouse cost"],
+  ["FinOps", "query spend"],
+  ["Managed Service", "BigQuery jobs"],
+  ["Managed Service", "Redshift queries"],
+  ["Managed Service", "Glue jobs"],
+  ["Managed Service", "Dataflow jobs"],
+  ["Managed Service", "Databricks jobs"],
+  ["Integrations", "Airflow integration"],
+  ["Integrations", "dbt run"],
+  ["Streaming", "Kafka to warehouse lag"],
+  ["Actions", "backfill workflow"],
+  ["Actions", "replay workflow"],
+  ["Ownership", "pipeline owner mapping"],
+  ["Incident", "pipeline incident link"],
+]);
+
+const tenantGovernanceItems = plannedItems([
+  ["Organization", "organization model"],
+  ["Organization", "tenant model"],
+  ["Organization", "workspace model"],
+  ["Organization", "team model"],
+  ["Access", "RBAC roles"],
+  ["Access", "ABAC policies"],
+  ["Access", "scoped credentials"],
+  ["Audit", "audit trail"],
+  ["Policy", "policy exception"],
+  ["Policy", "approval workflow"],
+  ["Policy", "data retention policy"],
+  ["Limits", "usage quotas"],
+  ["FinOps", "cost attribution"],
+  ["Commercial", "billing plan"],
+  ["Commercial", "license controls"],
+  ["Identity", "SSO"],
+  ["Identity", "SCIM"],
+  ["Identity", "API tokens"],
+  ["Identity", "service accounts"],
+  ["Governance", "access review"],
+  ["Governance", "data residency"],
+  ["Governance", "organization settings"],
+  ["Governance", "delegated admin"],
+  ["Reporting", "governance report"],
+]);
+
+const edgeServiceMeshItems = plannedItems([
+  ["Inventory", "API gateway inventory"],
+  ["Inventory", "CDN inventory"],
+  ["Inventory", "DNS zone inventory"],
+  ["Inventory", "service mesh inventory"],
+  ["Kubernetes", "ingress controller"],
+  ["Kubernetes", "egress gateway"],
+  ["Health", "route health"],
+  ["Security", "WAF policy"],
+  ["Security", "rate limit policy"],
+  ["Security", "auth policy"],
+  ["Security", "mTLS posture"],
+  ["Traffic", "canary routing"],
+  ["Traffic", "traffic shifting"],
+  ["Resilience", "circuit breaker"],
+  ["Resilience", "retry policy"],
+  ["Resilience", "timeout policy"],
+  ["Performance", "edge cache"],
+  ["TLS", "certificate binding"],
+  ["DR", "DNS failover"],
+  ["API", "API versioning"],
+  ["FinOps", "gateway cost"],
+  ["Service Mesh", "mesh latency"],
+  ["Security", "endpoint security"],
+]);
+
+const developerExperienceItems = plannedItems([
+  ["CLI", "Mayyam CLI"],
+  ["IaC", "Terraform provider"],
+  ["CI/CD", "GitHub Action"],
+  ["CI/CD", "CI policy gate"],
+  ["Local Dev", "local dev fixture"],
+  ["Scaffolding", "connector scaffold"],
+  ["Scaffolding", "rule pack scaffold"],
+  ["Scaffolding", "action scaffold"],
+  ["Docs", "API docs"],
+  ["Docs", "OpenAPI spec"],
+  ["SDK", "JavaScript SDK"],
+  ["SDK", "Python SDK"],
+  ["SDK", "Go SDK"],
+  ["Integrations", "webhook docs"],
+  ["Examples", "sample apps"],
+  ["Testing", "sandbox environment"],
+  ["Testing", "test harness"],
+  ["Testing", "mock provider"],
+  ["Upgrade", "migration guide"],
+  ["Release", "release notes"],
+  ["Release", "changelog automation"],
+  ["Community", "contributor guide"],
+]);
+
+const telemetryStorageItems = plannedItems([
+  ["Storage", "metric storage"],
+  ["Storage", "log storage"],
+  ["Storage", "trace storage"],
+  ["Storage", "profile storage"],
+  ["Storage", "event storage"],
+  ["Lifecycle", "retention policy"],
+  ["Lifecycle", "tiered storage"],
+  ["Efficiency", "compression"],
+  ["Efficiency", "partitioning"],
+  ["Efficiency", "cardinality budgets"],
+  ["Query", "query planner"],
+  ["Query", "query cache"],
+  ["Aggregation", "downsampling"],
+  ["Aggregation", "compaction"],
+  ["Archive", "archive export"],
+  ["Archive", "rehydration"],
+  ["Security", "tenant isolation"],
+  ["Security", "encryption at rest"],
+  ["Compliance", "deletion policy"],
+  ["Resilience", "telemetry backup"],
+  ["FinOps", "storage cost forecast"],
+  ["Noise Control", "noisy source controls"],
+  ["SLO", "storage SLO"],
+  ["Evidence", "evidence immutability"],
+]);
+
 const modules = [
   {
     folder: "01-aws-cloud",
@@ -1406,6 +1753,149 @@ modules.push(
       "Need agent trace replay, budget controls, stop conditions, model routing policy, provider failover, and AI spend reporting.",
     ],
   ),
+  platformModule(
+    "26-alerting-notification-oncall",
+    "Alerting, Notification, and On-Call",
+    "Turn findings, SLO burns, cost anomalies, security issues, and resource health signals into actionable alerts with routing, deduplication, escalation, and audit.",
+    alertingItems,
+    [
+      "Need alert rule definitions, composite alerts, anomaly detection, burn-rate alerts, cost anomalies, and resource-specific alert packs.",
+      "Need deduplication, suppressions, maintenance windows, escalation policies, on-call schedules, and notification routing.",
+      "Need alert testing, audit trails, incident creation, and feedback loops to reduce noise.",
+    ],
+  ),
+  platformModule(
+    "27-log-management-analytics",
+    "Log Management and Analytics",
+    "Build a log platform that can ingest, parse, search, correlate, archive, rehydrate, redact, and cost-control logs from hosts, cloud services, Kubernetes, databases, Kafka, and applications.",
+    logManagementItems,
+    [
+      "Need source enrollment, parsing pipelines, schema extraction, PII redaction, indexing policies, retention tiers, and live tail.",
+      "Need search, saved queries, anomaly detection, pattern clustering, metrics from logs, and trace-log correlation.",
+      "Need archive, rehydration, access audit, and log volume cost controls.",
+    ],
+  ),
+  platformModule(
+    "28-dashboard-query-workbench",
+    "Dashboard and Query Workbench",
+    "Give teams a high-density operational workbench for metrics, logs, traces, topology, costs, SLOs, incidents, saved views, annotations, exports, and executive scorecards.",
+    dashboardWorkbenchItems,
+    [
+      "Need reusable widgets, query builders, dashboard variables, time comparison, annotations, and saved views.",
+      "Need dashboard-as-code, RBAC, sharing, PDF/CSV exports, query explain, and query performance visibility.",
+      "Need executive scorecards that can roll up every module into leadership-facing health.",
+    ],
+  ),
+  platformModule(
+    "29-rum-mobile-session-replay",
+    "RUM, Mobile Monitoring, and Session Replay",
+    "Cover real user experience for browser and mobile apps with page load, Core Web Vitals, crashes, API dependency timing, journeys, session replay, privacy controls, and user impact scoring.",
+    rumItems,
+    [
+      "Need browser and mobile SDKs, performance telemetry, JavaScript errors, mobile crashes, journeys, and API dependency timing.",
+      "Need session replay with privacy masking, sampling, PII controls, synthetic comparison, and release correlation.",
+      "Need frontend SLOs and user-impact scoring that feed incidents and resource graph dependencies.",
+    ],
+  ),
+  platformModule(
+    "30-network-observability",
+    "Network Observability",
+    "Make network behavior visible and actionable across cloud VPCs, Kubernetes, Linux hosts, service mesh, DNS, TLS, load balancers, CDN, egress, packet quality, and network cost.",
+    networkObservabilityItems,
+    [
+      "Need topology discovery, flow logs, DNS/TLS telemetry, load balancer health, CDN edge telemetry, and service mesh flows.",
+      "Need packet drops, retransmits, latency maps, bandwidth saturation, route/NAT analysis, and private connectivity posture.",
+      "Need network cost attribution and path root-cause analysis that can explain reachability and performance failures.",
+    ],
+  ),
+  platformModule(
+    "31-secrets-certificates-pki",
+    "Secrets, Certificates, and PKI",
+    "Manage secrets, certificates, SSH keys, IAM keys, KMS, TLS chains, mTLS identities, rotation, renewal, revocation, exposure, and access review across every runtime.",
+    secretsCertItems,
+    [
+      "Need secret and certificate inventory across cloud, Kubernetes, Linux, databases, and Vault-like systems.",
+      "Need expiry, stale-secret, exposure, IAM key age, SSH key, TLS chain, encryption coverage, and access review findings.",
+      "Need rotation, renewal, revocation, break-glass, and audit workflows with approval gates.",
+    ],
+  ),
+  platformModule(
+    "32-backup-restore-dr-orchestrator",
+    "Backup, Restore, and DR Orchestrator",
+    "Own recovery, not just backup visibility: inventory, policies, RPO/RTO, restore drills, PITR, cross-region copies, immutability, failover runbooks, and recovery evidence.",
+    backupDrItems,
+    [
+      "Need backup inventory, backup policies, RPO/RTO tracking, restore drills, PITR, snapshot validation, and cross-region copy posture.",
+      "Need workload-specific restore workflows for databases, Kubernetes, Kafka, Linux hosts, cloud accounts, and DNS failover.",
+      "Need immutable backup, retention compliance, encryption, recovery evidence bundles, cost analysis, and recovery scorecards.",
+    ],
+  ),
+  platformModule(
+    "33-chaos-reliability-engineering",
+    "Chaos and Reliability Engineering",
+    "Convert resilience into practiced evidence through safe experiments, guardrails, failure injection, game days, result analysis, and learning loops.",
+    chaosItems,
+    [
+      "Need experiment catalog, steady-state hypotheses, blast-radius guardrails, rollback conditions, approvals, and scheduling.",
+      "Need failure injections for Kubernetes, Linux, databases, Kafka, cloud zones, network, DNS, and dependencies.",
+      "Need experiment result analysis that feeds resilience findings, SLOs, runbooks, and deterministic rules.",
+    ],
+  ),
+  platformModule(
+    "34-data-pipeline-observability",
+    "Data Pipeline Observability",
+    "Cover operational data workflows: DAGs, jobs, freshness, SLAs, schema drift, quality checks, lineage, warehouse costs, streaming lag, backfills, and replays.",
+    dataPipelineItems,
+    [
+      "Need pipeline inventory, DAG discovery, freshness, SLA miss, failure, volume anomaly, schema drift, and data quality checks.",
+      "Need managed-service visibility for BigQuery, Redshift, Glue, Dataflow, Databricks, Airflow, dbt, and Kafka-to-warehouse flows.",
+      "Need backfill, replay, lineage, owner mapping, spend analysis, and incident integration.",
+    ],
+  ),
+  platformModule(
+    "35-tenant-rbac-governance",
+    "Tenant, RBAC, and Governance",
+    "Make Mayyam enterprise-ready with organizations, tenants, workspaces, teams, RBAC, ABAC, scoped credentials, audit, retention, quotas, SSO, SCIM, and governance reports.",
+    tenantGovernanceItems,
+    [
+      "Need organization, tenant, workspace, and team models that every product area can use.",
+      "Need RBAC, ABAC, scoped credentials, SSO, SCIM, API tokens, service accounts, access reviews, and delegated admin.",
+      "Need audit trails, policy exceptions, approval workflows, retention, quotas, data residency, cost attribution, billing, and license controls.",
+    ],
+  ),
+  platformModule(
+    "36-edge-api-service-mesh",
+    "Edge, API, and Service Mesh",
+    "Operate the request edge: API gateways, CDNs, DNS, ingress, egress, WAF, rate limits, auth, mTLS, canaries, traffic shifting, retries, timeouts, and DNS failover.",
+    edgeServiceMeshItems,
+    [
+      "Need inventory for API gateways, CDN, DNS zones, service mesh, ingress controllers, and egress gateways.",
+      "Need WAF, rate limit, auth, mTLS, route health, endpoint security, retry, timeout, circuit breaker, and canary posture.",
+      "Need edge cache, DNS failover, API versioning, gateway cost, mesh latency, and traffic-shift workflows.",
+    ],
+  ),
+  platformModule(
+    "37-developer-platform-sdk-cli",
+    "Developer Platform, SDK, and CLI",
+    "Let teams extend, test, and automate Mayyam with a CLI, Terraform provider, CI gates, connector scaffolds, rule/action SDKs, OpenAPI docs, sample apps, and test harnesses.",
+    developerExperienceItems,
+    [
+      "Need CLI, Terraform provider, GitHub Action, CI gates, local fixtures, scaffolds, SDKs, and webhook docs.",
+      "Need sandbox, mock providers, test harnesses, sample apps, migration guides, and contributor documentation.",
+      "Need release notes and changelog automation so platform growth remains operable.",
+    ],
+  ),
+  platformModule(
+    "38-telemetry-storage-retention",
+    "Telemetry Storage and Retention",
+    "Build the telemetry substrate for metrics, logs, traces, profiles, events, retention, tiering, compression, query performance, tenant isolation, deletion, and storage cost controls.",
+    telemetryStorageItems,
+    [
+      "Need storage models for metrics, logs, traces, profiles, events, evidence, retention, tiers, compression, partitioning, and cardinality budgets.",
+      "Need query planner, cache, downsampling, compaction, archive, rehydration, tenant isolation, encryption, deletion policy, and backup.",
+      "Need storage SLOs, noisy-source controls, evidence immutability, and storage cost forecasts.",
+    ],
+  ),
 );
 
 function priority(status, pillar, workstream) {
@@ -1435,6 +1925,28 @@ function shipSize(workstream) {
   if (workstream === "inventory" || workstream === "tests") return "S";
   if (workstream === "agentic-investigation" || workstream === "remediation") return "L";
   return "M";
+}
+
+const releasePhaseOrder = [
+  "M1 inventory",
+  "M2 observable",
+  "M3 explainable",
+  "M4 interactive",
+  "M5 autonomous-assist",
+];
+
+function phaseRank(phase) {
+  const index = releasePhaseOrder.indexOf(phase);
+  return index === -1 ? releasePhaseOrder.length : index;
+}
+
+function countBy(rows, key) {
+  const counts = new Map();
+  for (const row of rows) {
+    const value = row[key];
+    counts.set(value, (counts.get(value) || 0) + 1);
+  }
+  return [...counts.entries()].sort(([left], [right]) => String(left).localeCompare(String(right)));
 }
 
 function generateRows(module) {
@@ -1628,6 +2140,85 @@ ${categories.map((category, index) => `### EPIC-${String(index + 1).padStart(2, 
   write(path.join(OUT, module.folder, "epics.md"), content);
 }
 
+function writeReleasePlan(module, rows) {
+  const phaseCounts = releasePhaseOrder.map((phase) => [
+    phase,
+    String(rows.filter((row) => row.release_phase === phase).length),
+  ]);
+  const priorityCounts = countBy(rows, "priority").map(([priorityName, count]) => [
+    priorityName,
+    String(count),
+  ]);
+  const sizeCounts = countBy(rows, "ship_size").map(([sizeName, count]) => [
+    sizeName,
+    String(count),
+  ]);
+
+  const seen = new Set();
+  const firstSlices = [];
+  const p0Rows = rows
+    .filter((candidate) => candidate.priority === "P0")
+    .sort((left, right) => left.id.localeCompare(right.id));
+  const firstSlicePillars = ["cost", "security", "resilience", "disaster-recovery"];
+  for (const phase of releasePhaseOrder) {
+    for (const pillar of firstSlicePillars) {
+      let addedForPillar = 0;
+      for (const row of p0Rows.filter((candidate) => candidate.release_phase === phase && candidate.pillar === pillar)) {
+        const key = `${row.category}:${row.service_or_domain}:${row.pillar}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        firstSlices.push([
+          row.id,
+          row.release_phase,
+          row.ship_size,
+          row.service_or_domain,
+          row.pillar,
+          row.workstream,
+        ]);
+        addedForPillar += 1;
+        if (firstSlices.length >= 12 || addedForPillar >= 3) break;
+      }
+      if (firstSlices.length >= 12) break;
+    }
+    if (firstSlices.length >= 12) break;
+  }
+
+  const content = `# ${module.title}: Release Plan
+
+## Shipment Strategy
+
+Ship this module in maturity order. Start with M1 inventory for identity and ownership, move to M2 observable for health and freshness, then M3 explainable for deterministic findings and AI triage. Only after those are reliable should the team ship M4 interactive workflows and M5 autonomous-assist investigation.
+
+## Phase Counts
+
+${table(["Release Phase", "Feature Rows"], phaseCounts)}
+
+## Priority Counts
+
+${table(["Priority", "Feature Rows"], priorityCounts)}
+
+## Ship Size Counts
+
+${table(["Ship Size", "Feature Rows"], sizeCounts)}
+
+## First P0 Vertical Slices
+
+${table(
+  ["Feature ID", "Phase", "Size", "Service or Domain", "Pillar", "Workstream"],
+  firstSlices,
+)}
+
+## Execution Rules
+
+- Do not begin M5 autonomous-assist until deterministic evidence, RBAC, audit, and replay are implemented for the same service or domain.
+- Every M4 action must support read-only preview or dry-run before mutation.
+- Every cost-related P0 must include estimated impact, confidence, effort, risk, owner, and verification.
+- Every security-related P0 must include permission scope, audit trail, suppression policy, and stale-data behavior.
+- Every resilience or disaster-recovery P0 must include recovery evidence, drill path, RTO/RPO fields where relevant, and rollback or recovery notes.
+`;
+  write(path.join(OUT, module.folder, "release-plan.md"), content);
+}
+
 function writeModuleReadme(module, rows) {
   const content = `# ${module.title}
 
@@ -1646,6 +2237,7 @@ ${module.gaps.map((item) => `- ${item}`).join("\n")}
 - \`current-state.md\` explains source modules reviewed, current maturity, gaps, and target operating model.
 - \`capability-map.md\` lists the service/domain coverage and feature-row counts.
 - \`epics.md\` breaks delivery into implementation slices.
+- \`release-plan.md\` orders the backlog by maturity phase, priority, ship size, and first P0 vertical slices.
 - \`feature-backlog.csv\` contains ${rows.length.toLocaleString()} implementation-ready feature rows with release phase, ship size, API contract, tests, rollout guardrail, and runbook scope.
 
 ## Build Order
@@ -1690,6 +2282,7 @@ Total generated backlog rows: ${totalRows.toLocaleString()}.
 - \`agentic-operating-model.md\`: deterministic evidence, AI triage, bounded agentic investigation, and approved remediation.
 - \`source-module-review.md\`: current code surface and architectural gaps.
 - \`implementation-sequencing.md\`: suggested build phases.
+- Every roadmap folder now includes \`release-plan.md\` for phase, priority, ship-size, and first-P0 execution planning.
 
 ## Product Principles
 
@@ -1702,6 +2295,7 @@ Total generated backlog rows: ${totalRows.toLocaleString()}.
 - Safe operations: mutations need dry-run, validation, approvals, RBAC, audit trails, and rollback notes.
 - Multi-provider normalization: AWS, Azure, GCP, Kubernetes, Linux, databases, and Kafka should share identity, ownership, finding, recommendation, and workflow models.
 - DBA/SRE usability: workflows should end in concrete next steps, not generic dashboards.
+- Execution clarity: every module should have a release plan that makes P0 vertical slices visible without mining the full CSV.
 
 ## Source References
 
@@ -1746,6 +2340,9 @@ Every supported resource must answer these questions:
 - Resource workbench: one page per resource with inventory, metrics, logs, events, dependency graph, posture, triage, actions, and history.
 - Investigation workspace: deterministic findings, agent traces, tool calls, hypotheses, approvals, and notes.
 - Remediation center: dry-run plans, approvals, execution state, rollback notes, audit logs, and verification checks.
+- Alerting and on-call: alert rules, routing, deduplication, escalation, notification integrations, and alert quality feedback.
+- Telemetry workbench: logs, metrics, traces, profiles, events, dashboards, query builders, storage, retention, and cost controls.
+- Experience monitoring: real-user monitoring, mobile crashes, session replay, synthetic comparison, and user-impact scoring.
 - Linux companion: host-level collector and operator for servers outside managed cloud control planes.
 - Runbook library: promote repeated investigations into deterministic checks and approved workflows.
 
@@ -1945,6 +2542,15 @@ function writeSequencing(summaries) {
 - Add managed-service specific packs for RDS/Aurora, EKS, MSK, AKS, Azure Database for PostgreSQL, GKE, Cloud SQL, AlloyDB, and BigQuery.
 - Add agentic investigation loops that can safely operate across cloud APIs, Kubernetes APIs, database diagnostics, Kafka Admin APIs, and Linux hosts.
 
+## Phase 4: Datadog and Dynatrace Replacement Parity
+
+- Alerting: rule packs, composite alerts, anomaly alerts, escalation, on-call, notification routing, suppression, maintenance windows, and alert quality.
+- Logs and telemetry: log ingest, parsing, search, live tail, archive, rehydration, metrics, traces, profiles, events, retention, storage SLOs, and cost controls.
+- User experience: RUM, mobile monitoring, session replay, frontend SLOs, synthetic comparison, and user-impact scoring.
+- Network and edge: flow logs, DNS, TLS, load balancers, CDN, API gateways, service mesh, WAF, rate limits, and route health.
+- Enterprise control plane: tenants, workspaces, RBAC, ABAC, SSO, SCIM, audit, quotas, data residency, billing, and governance reports.
+- Developer platform: CLI, Terraform provider, CI policy gates, SDKs, scaffolds, OpenAPI docs, sandbox, test harness, and sample integrations.
+
 ## Backlog Counts
 
 ${table(
@@ -1964,6 +2570,7 @@ function main() {
     writeCurrentState(module, rows.length);
     writeCapabilityMap(module, rows);
     writeEpics(module);
+    writeReleasePlan(module, rows);
     writeBacklog(module, rows);
     summaries.push({
       folder: module.folder,

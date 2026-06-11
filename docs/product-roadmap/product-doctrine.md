@@ -33,6 +33,9 @@ Every supported resource must answer these questions:
 - Resource workbench: one page per resource with inventory, metrics, logs, events, dependency graph, posture, triage, actions, and history.
 - Investigation workspace: deterministic findings, agent traces, tool calls, hypotheses, approvals, and notes.
 - Remediation center: dry-run plans, approvals, execution state, rollback notes, audit logs, and verification checks.
+- Alerting and on-call: alert rules, routing, deduplication, escalation, notification integrations, and alert quality feedback.
+- Telemetry workbench: logs, metrics, traces, profiles, events, dashboards, query builders, storage, retention, and cost controls.
+- Experience monitoring: real-user monitoring, mobile crashes, session replay, synthetic comparison, and user-impact scoring.
 - Linux companion: host-level collector and operator for servers outside managed cloud control planes.
 - Runbook library: promote repeated investigations into deterministic checks and approved workflows.
 

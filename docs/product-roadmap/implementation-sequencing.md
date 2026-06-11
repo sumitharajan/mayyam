@@ -31,6 +31,15 @@
 - Add managed-service specific packs for RDS/Aurora, EKS, MSK, AKS, Azure Database for PostgreSQL, GKE, Cloud SQL, AlloyDB, and BigQuery.
 - Add agentic investigation loops that can safely operate across cloud APIs, Kubernetes APIs, database diagnostics, Kafka Admin APIs, and Linux hosts.
 
+## Phase 4: Datadog and Dynatrace Replacement Parity
+
+- Alerting: rule packs, composite alerts, anomaly alerts, escalation, on-call, notification routing, suppression, maintenance windows, and alert quality.
+- Logs and telemetry: log ingest, parsing, search, live tail, archive, rehydration, metrics, traces, profiles, events, retention, storage SLOs, and cost controls.
+- User experience: RUM, mobile monitoring, session replay, frontend SLOs, synthetic comparison, and user-impact scoring.
+- Network and edge: flow logs, DNS, TLS, load balancers, CDN, API gateways, service mesh, WAF, rate limits, and route health.
+- Enterprise control plane: tenants, workspaces, RBAC, ABAC, SSO, SCIM, audit, quotas, data residency, billing, and governance reports.
+- Developer platform: CLI, Terraform provider, CI policy gates, SDKs, scaffolds, OpenAPI docs, sandbox, test harness, and sample integrations.
+
 ## Backlog Counts
 
 | Area | Rows |
@@ -60,3 +69,16 @@
 | Kubernetes Cost Allocation | 980 |
 | Applications and Microservices APM | 1,127 |
 | AI and LLM Observability | 1,078 |
+| Alerting, Notification, and On-Call | 1,225 |
+| Log Management and Analytics | 1,274 |
+| Dashboard and Query Workbench | 1,127 |
+| RUM, Mobile Monitoring, and Session Replay | 1,176 |
+| Network Observability | 1,274 |
+| Secrets, Certificates, and PKI | 1,029 |
+| Backup, Restore, and DR Orchestrator | 1,225 |
+| Chaos and Reliability Engineering | 1,078 |
+| Data Pipeline Observability | 1,127 |
+| Tenant, RBAC, and Governance | 1,176 |
+| Edge, API, and Service Mesh | 1,127 |
+| Developer Platform, SDK, and CLI | 1,078 |
+| Telemetry Storage and Retention | 1,176 |

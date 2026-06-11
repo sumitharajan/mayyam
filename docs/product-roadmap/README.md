@@ -33,8 +33,21 @@ Mayyam should become a broad SRE/DBA/cloud engineering platform: Datadog/Dynatra
 | `23-kubernetes-cost-allocation` | Kubernetes Cost Allocation | 980 | greenfield pending: platform primitive is not yet implemented as a first-class Mayyam module |
 | `24-applications-microservices-apm` | Applications and Microservices APM | 1,127 | greenfield pending: platform primitive is not yet implemented as a first-class Mayyam module |
 | `25-ai-llm-observability` | AI and LLM Observability | 1,078 | greenfield pending: platform primitive is not yet implemented as a first-class Mayyam module |
+| `26-alerting-notification-oncall` | Alerting, Notification, and On-Call | 1,225 | greenfield pending: platform primitive is not yet implemented as a first-class Mayyam module |
+| `27-log-management-analytics` | Log Management and Analytics | 1,274 | greenfield pending: platform primitive is not yet implemented as a first-class Mayyam module |
+| `28-dashboard-query-workbench` | Dashboard and Query Workbench | 1,127 | greenfield pending: platform primitive is not yet implemented as a first-class Mayyam module |
+| `29-rum-mobile-session-replay` | RUM, Mobile Monitoring, and Session Replay | 1,176 | greenfield pending: platform primitive is not yet implemented as a first-class Mayyam module |
+| `30-network-observability` | Network Observability | 1,274 | greenfield pending: platform primitive is not yet implemented as a first-class Mayyam module |
+| `31-secrets-certificates-pki` | Secrets, Certificates, and PKI | 1,029 | greenfield pending: platform primitive is not yet implemented as a first-class Mayyam module |
+| `32-backup-restore-dr-orchestrator` | Backup, Restore, and DR Orchestrator | 1,225 | greenfield pending: platform primitive is not yet implemented as a first-class Mayyam module |
+| `33-chaos-reliability-engineering` | Chaos and Reliability Engineering | 1,078 | greenfield pending: platform primitive is not yet implemented as a first-class Mayyam module |
+| `34-data-pipeline-observability` | Data Pipeline Observability | 1,127 | greenfield pending: platform primitive is not yet implemented as a first-class Mayyam module |
+| `35-tenant-rbac-governance` | Tenant, RBAC, and Governance | 1,176 | greenfield pending: platform primitive is not yet implemented as a first-class Mayyam module |
+| `36-edge-api-service-mesh` | Edge, API, and Service Mesh | 1,127 | greenfield pending: platform primitive is not yet implemented as a first-class Mayyam module |
+| `37-developer-platform-sdk-cli` | Developer Platform, SDK, and CLI | 1,078 | greenfield pending: platform primitive is not yet implemented as a first-class Mayyam module |
+| `38-telemetry-storage-retention` | Telemetry Storage and Retention | 1,176 | greenfield pending: platform primitive is not yet implemented as a first-class Mayyam module |
 
-Total generated backlog rows: 44,219.
+Total generated backlog rows: 59,311.
 
 ## Foundational Docs
 
@@ -43,6 +56,7 @@ Total generated backlog rows: 44,219.
 - `agentic-operating-model.md`: deterministic evidence, AI triage, bounded agentic investigation, and approved remediation.
 - `source-module-review.md`: current code surface and architectural gaps.
 - `implementation-sequencing.md`: suggested build phases.
+- Every roadmap folder now includes `release-plan.md` for phase, priority, ship-size, and first-P0 execution planning.
 
 ## Product Principles
 
@@ -55,6 +69,7 @@ Total generated backlog rows: 44,219.
 - Safe operations: mutations need dry-run, validation, approvals, RBAC, audit trails, and rollback notes.
 - Multi-provider normalization: AWS, Azure, GCP, Kubernetes, Linux, databases, and Kafka should share identity, ownership, finding, recommendation, and workflow models.
 - DBA/SRE usability: workflows should end in concrete next steps, not generic dashboards.
+- Execution clarity: every module should have a release plan that makes P0 vertical slices visible without mining the full CSV.
 
 ## Source References
 
