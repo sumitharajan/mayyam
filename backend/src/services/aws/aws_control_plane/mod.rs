@@ -73,6 +73,7 @@ pub mod transitgateway_control_plane;
 // Batch 11: Database Clusters, Streaming & Security Detection
 pub mod aurora_control_plane;
 pub mod guardduty_control_plane;
+pub mod inspector_control_plane;
 pub mod msk_control_plane;
 pub mod securityhub_control_plane;
 // Batch 12: Document DB, Graph DB & In-Memory DB

@@ -37,6 +37,7 @@ use aws_sdk_elasticloadbalancing::Client as ElbClient;
 use aws_sdk_elasticloadbalancingv2::Client as Elbv2Client;
 use aws_sdk_firehose::Client as FirehoseClient;
 use aws_sdk_iam::Client as IamClient;
+use aws_sdk_inspector2::Client as InspectorClient;
 use aws_sdk_kinesis::Client as KinesisClient;
 use aws_sdk_lakeformation::Client as LakeFormationClient;
 use aws_sdk_lambda::Client as LambdaClient;
@@ -742,6 +743,14 @@ impl AwsClientFactory for AwsService {
     ) -> Result<aws_sdk_securityhub::Client, AppError> {
         let config = self.get_aws_sdk_config(aws_account_dto).await?;
         Ok(aws_sdk_securityhub::Client::new(&config))
+    }
+
+    async fn create_inspector_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<InspectorClient, AppError> {
+        let config = self.get_aws_sdk_config(aws_account_dto).await?;
+        Ok(InspectorClient::new(&config))
     }
 
     async fn create_memorydb_client(

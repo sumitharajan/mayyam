@@ -47,6 +47,7 @@ use aws_sdk_globalaccelerator::Client as GlobalAcceleratorClient;
 use aws_sdk_glue::Client as GlueClient;
 use aws_sdk_guardduty::Client as GuardDutyClient;
 use aws_sdk_iam::Client as IamClient;
+use aws_sdk_inspector2::Client as InspectorClient;
 use aws_sdk_kafka::Client as MskClient;
 use aws_sdk_kinesis::Client as KinesisClient;
 use aws_sdk_kinesisanalyticsv2::Client as KinesisAnalyticsClient;
@@ -279,6 +280,10 @@ pub trait AwsClientFactory {
         &self,
         aws_account_dto: &AwsAccountDto,
     ) -> Result<SecurityHubClient, AppError>;
+    async fn create_inspector_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<InspectorClient, AppError>;
     async fn create_memorydb_client(
         &self,
         aws_account_dto: &AwsAccountDto,

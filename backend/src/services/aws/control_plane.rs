@@ -81,6 +81,7 @@ use crate::services::aws::aws_control_plane::firehose_control_plane::FirehoseCon
 use crate::services::aws::aws_control_plane::fsx_control_plane::FsxControlPlane;
 use crate::services::aws::aws_control_plane::glacier_control_plane::GlacierControlPlane;
 use crate::services::aws::aws_control_plane::guardduty_control_plane::GuardDutyControlPlane;
+use crate::services::aws::aws_control_plane::inspector_control_plane::InspectorControlPlane;
 use crate::services::aws::aws_control_plane::kinesisanalytics_control_plane::KinesisAnalyticsControlPlane;
 use crate::services::aws::aws_control_plane::lakeformation_control_plane::LakeFormationControlPlane;
 use crate::services::aws::aws_control_plane::lightsail_control_plane::LightsailControlPlane;
@@ -791,6 +792,7 @@ impl AwsControlPlane {
                 AwsResourceType::MskCluster.to_string(),
                 AwsResourceType::GuardDutyDetector.to_string(),
                 AwsResourceType::SecurityHubHub.to_string(),
+                AwsResourceType::InspectorAccountCoverage.to_string(),
                 // Batch 12: Document DB, Graph DB & In-Memory DB
                 AwsResourceType::DocumentDbCluster.to_string(),
                 AwsResourceType::NeptuneCluster.to_string(),
@@ -1068,6 +1070,11 @@ impl AwsControlPlane {
                 "SecurityHubHub" => {
                     let cp = SecurityHubControlPlane::new(self.aws_service.clone());
                     cp.sync_hubs(aws_account_dto, request.sync_id).await
+                }
+                "InspectorAccountCoverage" => {
+                    let cp = InspectorControlPlane::new(self.aws_service.clone());
+                    cp.sync_account_coverage(aws_account_dto, request.sync_id)
+                        .await
                 }
                 // Batch 12: Document DB, Graph DB & In-Memory DB
                 "DocumentDbCluster" => {

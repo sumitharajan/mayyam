@@ -51,6 +51,7 @@ pub mod globalaccelerator_pillar_evaluator;
 pub mod glue_pillar_evaluator;
 pub mod guardduty_pillar_evaluator;
 pub mod iam_pillar_evaluator;
+pub mod inspector_pillar_evaluator;
 pub mod internet_gateway_pillar_evaluator;
 pub mod kinesis_pillar_evaluator;
 pub mod kinesisanalytics_pillar_evaluator;

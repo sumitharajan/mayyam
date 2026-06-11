@@ -62,6 +62,7 @@ use crate::services::aws::inventory::globalaccelerator_pillar_evaluator::evaluat
 use crate::services::aws::inventory::glue_pillar_evaluator::evaluate_glue_fleet;
 use crate::services::aws::inventory::guardduty_pillar_evaluator::evaluate_guardduty_fleet;
 use crate::services::aws::inventory::iam_pillar_evaluator::evaluate_iam_fleet;
+use crate::services::aws::inventory::inspector_pillar_evaluator::evaluate_inspector_fleet;
 use crate::services::aws::inventory::internet_gateway_pillar_evaluator::evaluate_internet_gateway_fleet;
 use crate::services::aws::inventory::kinesis_pillar_evaluator::evaluate_kinesis_fleet;
 use crate::services::aws::inventory::kinesisanalytics_pillar_evaluator::evaluate_kinesisanalytics_fleet;
@@ -1158,6 +1159,21 @@ pub async fn get_securityhub_pillar_reports(
         query,
         AwsResourceType::SecurityHubHub,
         evaluate_securityhub_fleet,
+    )
+    .await
+}
+
+pub async fn get_inspector_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Inspector pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::InspectorAccountCoverage,
+        evaluate_inspector_fleet,
     )
     .await
 }
