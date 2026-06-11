@@ -24,4 +24,7 @@ pub fn configure(controller: Arc<AwsInventoryController>) -> Scope {
         .route("/ec2/pillars", web::get().to(aws_inventory::get_ec2_pillar_reports))
         .route("/lambda/pillars", web::get().to(aws_inventory::get_lambda_pillar_reports))
         .route("/s3/pillars", web::get().to(aws_inventory::get_s3_pillar_reports))
+        .route("/rds/pillars", web::get().to(aws_inventory::get_rds_pillar_reports))
+        .route("/ebs/pillars", web::get().to(aws_inventory::get_ebs_pillar_reports))
+        .route("/efs/pillars", web::get().to(aws_inventory::get_efs_pillar_reports))
 }

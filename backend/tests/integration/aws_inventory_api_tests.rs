@@ -123,6 +123,37 @@ async fn s3_pillar_reports_contract() {
 }
 
 #[tokio::test]
+async fn storage_and_database_pillar_reports_contract() {
+    if !aws_tests_enabled() {
+        println!(
+            "Skipping storage_and_database_pillar_reports_contract because ENABLE_AWS_TESTS is not true"
+        );
+        return;
+    }
+
+    let base = base_url().await;
+    let client = Client::new();
+    for (path, resource_type) in [
+        ("rds", "RdsInstance"),
+        ("ebs", "EbsVolume"),
+        ("efs", "EfsFileSystem"),
+    ] {
+        let resp = client
+            .get(format!(
+                "{}/api/aws/inventory/{}/pillars?account_id=123456789012",
+                base, path
+            ))
+            .send()
+            .await
+            .unwrap_or_else(|e| panic!("{} pillar report request failed: {}", path, e));
+        assert_eq!(resp.status(), 200, "endpoint {}", path);
+        let body: Value = resp.json().await.expect("invalid JSON body");
+        assert_eq!(body["resource_type"], resource_type);
+        assert_eq!(body["reports"].as_array().expect("reports").len(), 3);
+    }
+}
+
+#[tokio::test]
 async fn ec2_pillar_reports_rejects_unknown_pillar() {
     if !aws_tests_enabled() {
         println!(

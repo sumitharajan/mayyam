@@ -26,8 +26,11 @@ use tracing::debug;
 use crate::errors::AppError;
 use crate::models::aws_resource::AwsResourceType;
 use crate::repositories::aws_resource::AwsResourceRepository;
+use crate::services::aws::inventory::ebs_pillar_evaluator::evaluate_ebs_fleet;
 use crate::services::aws::inventory::ec2_pillar_evaluator::evaluate_ec2_fleet;
+use crate::services::aws::inventory::efs_pillar_evaluator::evaluate_efs_fleet;
 use crate::services::aws::inventory::lambda_pillar_evaluator::evaluate_lambda_fleet;
+use crate::services::aws::inventory::rds_pillar_evaluator::evaluate_rds_fleet;
 use crate::services::aws::inventory::s3_pillar_evaluator::evaluate_s3_fleet;
 use crate::services::aws::inventory::types::{Pillar, DEFAULT_STALE_AFTER_HOURS};
 
@@ -120,4 +123,31 @@ pub async fn get_s3_pillar_reports(
     let query = query.into_inner();
     debug!("S3 pillar report request: {:?}", query);
     pillar_reports(&controller, query, AwsResourceType::S3Bucket, evaluate_s3_fleet).await
+}
+
+pub async fn get_rds_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("RDS pillar report request: {:?}", query);
+    pillar_reports(&controller, query, AwsResourceType::RdsInstance, evaluate_rds_fleet).await
+}
+
+pub async fn get_ebs_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("EBS pillar report request: {:?}", query);
+    pillar_reports(&controller, query, AwsResourceType::EbsVolume, evaluate_ebs_fleet).await
+}
+
+pub async fn get_efs_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("EFS pillar report request: {:?}", query);
+    pillar_reports(&controller, query, AwsResourceType::EfsFileSystem, evaluate_efs_fleet).await
 }
