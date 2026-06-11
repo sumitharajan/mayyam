@@ -229,7 +229,11 @@ mod aws_resource_model_tests {
             // Document DB, Graph DB & In-Memory DB
             "DocumentDbCluster", "NeptuneCluster", "MemoryDbCluster",
             // Platform, Data Movement & File Systems
-            "ElasticBeanstalkEnvironment", "DataSyncTask", "FsxFileSystem"
+            "ElasticBeanstalkEnvironment", "DataSyncTask", "FsxFileSystem",
+            // Data, Streaming Delivery & Governance
+            "TimestreamTable",
+            "FirehoseDeliveryStream",
+            "LakeFormationDataLake",
         ];
 
         for resource_type in valid_types {

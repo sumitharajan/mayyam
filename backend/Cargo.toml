@@ -170,6 +170,9 @@ aws-sdk-memorydb = "1.22.0"
 aws-sdk-elasticbeanstalk = "1.22.0"
 aws-sdk-datasync = "1.22.0"
 aws-sdk-fsx = "1.22.0"
+aws-sdk-timestreamwrite = "1.22.0"
+aws-sdk-firehose = "1.22.0"
+aws-sdk-lakeformation = "1.22.0"
 
 [dev-dependencies]
 mockall = "0.11"

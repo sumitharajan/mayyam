@@ -35,8 +35,10 @@ use aws_sdk_efs::Client as EfsClient;
 use aws_sdk_elasticache::Client as ElasticacheClient;
 use aws_sdk_elasticloadbalancing::Client as ElbClient;
 use aws_sdk_elasticloadbalancingv2::Client as Elbv2Client;
+use aws_sdk_firehose::Client as FirehoseClient;
 use aws_sdk_iam::Client as IamClient;
 use aws_sdk_kinesis::Client as KinesisClient;
+use aws_sdk_lakeformation::Client as LakeFormationClient;
 use aws_sdk_lambda::Client as LambdaClient;
 use aws_sdk_opensearch::Client as OpenSearchClient;
 use aws_sdk_rds::Client as RdsClient;
@@ -44,6 +46,7 @@ use aws_sdk_s3::Client as S3Client;
 use aws_sdk_sns::Client as SnsClient;
 use aws_sdk_sqs::Client as SqsClient;
 use aws_sdk_sts::Client as StsClient;
+use aws_sdk_timestreamwrite::Client as TimestreamWriteClient;
 use aws_types;
 use std::fs;
 use std::str::FromStr;
@@ -759,5 +762,29 @@ impl AwsClientFactory for AwsService {
     ) -> Result<aws_sdk_fsx::Client, AppError> {
         let config = self.get_aws_sdk_config(aws_account_dto).await?;
         Ok(aws_sdk_fsx::Client::new(&config))
+    }
+
+    async fn create_timestreamwrite_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<TimestreamWriteClient, AppError> {
+        let config = self.get_aws_sdk_config(aws_account_dto).await?;
+        Ok(TimestreamWriteClient::new(&config))
+    }
+
+    async fn create_firehose_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<FirehoseClient, AppError> {
+        let config = self.get_aws_sdk_config(aws_account_dto).await?;
+        Ok(FirehoseClient::new(&config))
+    }
+
+    async fn create_lakeformation_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<LakeFormationClient, AppError> {
+        let config = self.get_aws_sdk_config(aws_account_dto).await?;
+        Ok(LakeFormationClient::new(&config))
     }
 }

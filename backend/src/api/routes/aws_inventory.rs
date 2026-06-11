@@ -268,4 +268,16 @@ pub fn configure(controller: Arc<AwsInventoryController>) -> Scope {
             "/fsx/pillars",
             web::get().to(aws_inventory::get_fsx_pillar_reports),
         )
+        .route(
+            "/timestream/pillars",
+            web::get().to(aws_inventory::get_timestream_pillar_reports),
+        )
+        .route(
+            "/firehose/pillars",
+            web::get().to(aws_inventory::get_firehose_pillar_reports),
+        )
+        .route(
+            "/lakeformation/pillars",
+            web::get().to(aws_inventory::get_lakeformation_pillar_reports),
+        )
 }

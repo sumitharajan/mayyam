@@ -193,6 +193,9 @@ async fn storage_and_database_pillar_reports_contract() {
         ("elasticbeanstalk", "ElasticBeanstalkEnvironment", 3),
         ("datasync", "DataSyncTask", 3),
         ("fsx", "FsxFileSystem", 3),
+        ("timestream", "TimestreamTable", 3),
+        ("firehose", "FirehoseDeliveryStream", 3),
+        ("lakeformation", "LakeFormationDataLake", 3),
     ] {
         let resp = client
             .get(format!(

@@ -150,6 +150,10 @@ pub enum AwsResourceType {
     ElasticBeanstalkEnvironment,
     DataSyncTask,
     FsxFileSystem,
+    // Data, Streaming Delivery & Governance Resources
+    TimestreamTable,
+    FirehoseDeliveryStream,
+    LakeFormationDataLake,
 }
 
 impl ToString for AwsResourceType {
@@ -256,6 +260,10 @@ impl ToString for AwsResourceType {
             }
             AwsResourceType::DataSyncTask => "DataSyncTask".to_string(),
             AwsResourceType::FsxFileSystem => "FsxFileSystem".to_string(),
+            // Data, Streaming Delivery & Governance Resources
+            AwsResourceType::TimestreamTable => "TimestreamTable".to_string(),
+            AwsResourceType::FirehoseDeliveryStream => "FirehoseDeliveryStream".to_string(),
+            AwsResourceType::LakeFormationDataLake => "LakeFormationDataLake".to_string(),
         }
     }
 }
@@ -362,6 +370,10 @@ impl From<&str> for AwsResourceType {
             "ElasticBeanstalkEnvironment" => AwsResourceType::ElasticBeanstalkEnvironment,
             "DataSyncTask" => AwsResourceType::DataSyncTask,
             "FsxFileSystem" => AwsResourceType::FsxFileSystem,
+            // Data, Streaming Delivery & Governance Resources
+            "TimestreamTable" => AwsResourceType::TimestreamTable,
+            "FirehoseDeliveryStream" => AwsResourceType::FirehoseDeliveryStream,
+            "LakeFormationDataLake" => AwsResourceType::LakeFormationDataLake,
             _ => panic!("Unknown resource type: {}", s),
         }
     }

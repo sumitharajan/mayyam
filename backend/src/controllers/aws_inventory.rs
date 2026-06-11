@@ -54,6 +54,7 @@ use crate::services::aws::inventory::elasticbeanstalk_pillar_evaluator::evaluate
 use crate::services::aws::inventory::emr_pillar_evaluator::evaluate_emr_fleet;
 use crate::services::aws::inventory::eventbridge_pillar_evaluator::evaluate_eventbridge_fleet;
 use crate::services::aws::inventory::fargate_pillar_evaluator::evaluate_fargate_fleet;
+use crate::services::aws::inventory::firehose_pillar_evaluator::evaluate_firehose_fleet;
 use crate::services::aws::inventory::fsx_pillar_evaluator::evaluate_fsx_fleet;
 use crate::services::aws::inventory::glacier_pillar_evaluator::evaluate_glacier_fleet;
 use crate::services::aws::inventory::globalaccelerator_pillar_evaluator::evaluate_globalaccelerator_fleet;
@@ -64,6 +65,7 @@ use crate::services::aws::inventory::internet_gateway_pillar_evaluator::evaluate
 use crate::services::aws::inventory::kinesis_pillar_evaluator::evaluate_kinesis_fleet;
 use crate::services::aws::inventory::kinesisanalytics_pillar_evaluator::evaluate_kinesisanalytics_fleet;
 use crate::services::aws::inventory::kms_pillar_evaluator::evaluate_kms_fleet;
+use crate::services::aws::inventory::lakeformation_pillar_evaluator::evaluate_lakeformation_fleet;
 use crate::services::aws::inventory::lambda_pillar_evaluator::evaluate_lambda_fleet;
 use crate::services::aws::inventory::load_balancer_pillar_evaluator::evaluate_load_balancer_fleet;
 use crate::services::aws::inventory::memorydb_pillar_evaluator::evaluate_memorydb_fleet;
@@ -85,6 +87,7 @@ use crate::services::aws::inventory::ssm_pillar_evaluator::evaluate_ssm_fleet;
 use crate::services::aws::inventory::stepfunctions_pillar_evaluator::evaluate_stepfunctions_fleet;
 use crate::services::aws::inventory::storagegateway_pillar_evaluator::evaluate_storagegateway_fleet;
 use crate::services::aws::inventory::subnet_pillar_evaluator::evaluate_subnet_fleet;
+use crate::services::aws::inventory::timestream_pillar_evaluator::evaluate_timestream_fleet;
 use crate::services::aws::inventory::transitgateway_pillar_evaluator::evaluate_transitgateway_fleet;
 use crate::services::aws::inventory::types::{Pillar, DEFAULT_STALE_AFTER_HOURS};
 use crate::services::aws::inventory::vpc_pillar_evaluator::evaluate_vpc_fleet;
@@ -1224,6 +1227,51 @@ pub async fn get_fsx_pillar_reports(
         query,
         AwsResourceType::FsxFileSystem,
         evaluate_fsx_fleet,
+    )
+    .await
+}
+
+pub async fn get_timestream_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Timestream pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::TimestreamTable,
+        evaluate_timestream_fleet,
+    )
+    .await
+}
+
+pub async fn get_firehose_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Firehose pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::FirehoseDeliveryStream,
+        evaluate_firehose_fleet,
+    )
+    .await
+}
+
+pub async fn get_lakeformation_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Lake Formation pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::LakeFormationDataLake,
+        evaluate_lakeformation_fleet,
     )
     .await
 }

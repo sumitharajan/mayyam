@@ -76,16 +76,19 @@ use crate::services::aws::aws_control_plane::connect_control_plane::ConnectContr
 use crate::services::aws::aws_control_plane::datasync_control_plane::DataSyncControlPlane;
 use crate::services::aws::aws_control_plane::documentdb_control_plane::DocumentDbControlPlane;
 use crate::services::aws::aws_control_plane::elasticbeanstalk_control_plane::ElasticBeanstalkControlPlane;
+use crate::services::aws::aws_control_plane::firehose_control_plane::FirehoseControlPlane;
 use crate::services::aws::aws_control_plane::fsx_control_plane::FsxControlPlane;
 use crate::services::aws::aws_control_plane::glacier_control_plane::GlacierControlPlane;
 use crate::services::aws::aws_control_plane::guardduty_control_plane::GuardDutyControlPlane;
 use crate::services::aws::aws_control_plane::kinesisanalytics_control_plane::KinesisAnalyticsControlPlane;
+use crate::services::aws::aws_control_plane::lakeformation_control_plane::LakeFormationControlPlane;
 use crate::services::aws::aws_control_plane::memorydb_control_plane::MemoryDbControlPlane;
 use crate::services::aws::aws_control_plane::msk_control_plane::MskControlPlane;
 use crate::services::aws::aws_control_plane::neptune_control_plane::NeptuneControlPlane;
 use crate::services::aws::aws_control_plane::route53_control_plane::Route53ControlPlane;
 use crate::services::aws::aws_control_plane::secretsmanager_control_plane::SecretsManagerControlPlane;
 use crate::services::aws::aws_control_plane::storagegateway_control_plane::StorageGatewayControlPlane;
+use crate::services::aws::aws_control_plane::timestream_control_plane::TimestreamControlPlane;
 use crate::services::aws::aws_control_plane::transitgateway_control_plane::TransitGatewayControlPlane;
 
 use crate::services::aws::aws_types::resource_sync::{
@@ -786,6 +789,10 @@ impl AwsControlPlane {
                 AwsResourceType::ElasticBeanstalkEnvironment.to_string(),
                 AwsResourceType::DataSyncTask.to_string(),
                 AwsResourceType::FsxFileSystem.to_string(),
+                // Data, Streaming Delivery & Governance
+                AwsResourceType::TimestreamTable.to_string(),
+                AwsResourceType::FirehoseDeliveryStream.to_string(),
+                AwsResourceType::LakeFormationDataLake.to_string(),
             ],
         };
 
@@ -1056,6 +1063,21 @@ impl AwsControlPlane {
                 "FsxFileSystem" => {
                     let cp = FsxControlPlane::new(self.aws_service.clone());
                     cp.sync_file_systems(aws_account_dto, request.sync_id).await
+                }
+                // Data, Streaming Delivery & Governance
+                "TimestreamTable" => {
+                    let cp = TimestreamControlPlane::new(self.aws_service.clone());
+                    cp.sync_tables(aws_account_dto, request.sync_id).await
+                }
+                "FirehoseDeliveryStream" => {
+                    let cp = FirehoseControlPlane::new(self.aws_service.clone());
+                    cp.sync_delivery_streams(aws_account_dto, request.sync_id)
+                        .await
+                }
+                "LakeFormationDataLake" => {
+                    let cp = LakeFormationControlPlane::new(self.aws_service.clone());
+                    cp.sync_data_lake_resources(aws_account_dto, request.sync_id)
+                        .await
                 }
                 _ => Ok(vec![]),
             };

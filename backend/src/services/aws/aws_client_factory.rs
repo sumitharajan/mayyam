@@ -40,6 +40,7 @@ use aws_sdk_elasticloadbalancing::Client as ElbClient;
 use aws_sdk_elasticloadbalancingv2::Client as Elbv2Client;
 use aws_sdk_emr::Client as EmrClient;
 use aws_sdk_eventbridge::Client as EventBridgeClient;
+use aws_sdk_firehose::Client as FirehoseClient;
 use aws_sdk_fsx::Client as FsxClient;
 use aws_sdk_glacier::Client as GlacierClient;
 use aws_sdk_globalaccelerator::Client as GlobalAcceleratorClient;
@@ -50,6 +51,7 @@ use aws_sdk_kafka::Client as MskClient;
 use aws_sdk_kinesis::Client as KinesisClient;
 use aws_sdk_kinesisanalyticsv2::Client as KinesisAnalyticsClient;
 use aws_sdk_kms::Client as KmsClient;
+use aws_sdk_lakeformation::Client as LakeFormationClient;
 use aws_sdk_lambda::Client as LambdaClient;
 use aws_sdk_memorydb::Client as MemoryDbClient;
 use aws_sdk_opensearch::Client as OpenSearchClient;
@@ -65,6 +67,7 @@ use aws_sdk_sqs::Client as SqsClient;
 use aws_sdk_ssm::Client as SsmClient;
 use aws_sdk_storagegateway::Client as StorageGatewayClient;
 use aws_sdk_sts::Client as StsClient;
+use aws_sdk_timestreamwrite::Client as TimestreamWriteClient;
 use aws_sdk_wafv2::Client as WafV2Client;
 
 use crate::errors::AppError;
@@ -283,4 +286,16 @@ pub trait AwsClientFactory {
         &self,
         aws_account_dto: &AwsAccountDto,
     ) -> Result<FsxClient, AppError>;
+    async fn create_timestreamwrite_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<TimestreamWriteClient, AppError>;
+    async fn create_firehose_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<FirehoseClient, AppError>;
+    async fn create_lakeformation_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<LakeFormationClient, AppError>;
 }

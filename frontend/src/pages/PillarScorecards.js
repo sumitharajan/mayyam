@@ -79,6 +79,9 @@ const SERVICES = [
   { key: "elasticbeanstalk", label: "Elastic Beanstalk" },
   { key: "datasync", label: "DataSync" },
   { key: "fsx", label: "FSx" },
+  { key: "timestream", label: "Timestream" },
+  { key: "firehose", label: "Firehose" },
+  { key: "lakeformation", label: "Lake Formation" },
 ];
 
 // Well-Architected pillar scorecards from deterministic inventory
