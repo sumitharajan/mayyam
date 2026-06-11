@@ -48,3 +48,8 @@ ai:
   api_key: "your-openai-api-key"
   model: "gpt-4"
   endpoint: "https://api.openai.com/v1"
+
+mysql_telemetry:
+  enabled: true
+  interval_seconds: 300
+  max_connections_per_cycle: 50

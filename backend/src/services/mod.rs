@@ -35,6 +35,7 @@ pub mod data_collection;
 pub mod llm;
 pub mod llm_provider;
 pub mod metric_streams_parser;
+pub mod mysql_telemetry_poller;
 
 // Re-export commonly used services for backward compatibility
 pub use aws::AwsService;

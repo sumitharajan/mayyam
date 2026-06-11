@@ -55,6 +55,7 @@ use crate::services::{
     kafka::KafkaService,
     llm::{LlmAnalyticsService, LlmIntegrationService},
     llm_provider::LlmProviderService,
+    mysql_telemetry_poller::MySqlTelemetryPoller,
     user::UserService,
 };
 use crate::repositories::chaos_repository::ChaosRepository;
@@ -299,6 +300,18 @@ pub async fn run_server(host: String, port: u16, config: Config) -> Result<(), B
 
     let kinesis_data_plane = Arc::new(KinesisDataPlane::new(aws_service.clone()));
     let kinesis_control_plane = Arc::new(KinesisControlPlane::new(aws_service.clone()));
+
+    if config.mysql_telemetry.enabled {
+        let mysql_telemetry_poller = Arc::new(MySqlTelemetryPoller::new(
+            db_connection.clone(),
+            config.clone(),
+            config.mysql_telemetry.interval_seconds,
+            config.mysql_telemetry.max_connections_per_cycle,
+        ));
+        tokio::spawn(mysql_telemetry_poller.start());
+    } else {
+        info!("MySQL telemetry poller is disabled");
+    }
 
     // Create and start the HTTP server
     HttpServer::new(move || {

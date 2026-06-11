@@ -94,3 +94,8 @@ logging:
 sync:
   # Max number of regions to scan in parallel per account sync
   region_concurrency: 4
+
+mysql_telemetry:
+  enabled: true
+  interval_seconds: 300
+  max_connections_per_cycle: 50
