@@ -74,4 +74,7 @@ pub fn configure(controller: Arc<AwsInventoryController>) -> Scope {
         .route("/route53/pillars", web::get().to(aws_inventory::get_route53_pillar_reports))
         .route("/transitgateway/pillars", web::get().to(aws_inventory::get_transitgateway_pillar_reports))
         .route("/secretsmanager/pillars", web::get().to(aws_inventory::get_secretsmanager_pillar_reports))
+        .route("/aurora/pillars", web::get().to(aws_inventory::get_aurora_pillar_reports))
+        .route("/msk/pillars", web::get().to(aws_inventory::get_msk_pillar_reports))
+        .route("/guardduty/pillars", web::get().to(aws_inventory::get_guardduty_pillar_reports))
 }

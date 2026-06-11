@@ -70,6 +70,9 @@ const SERVICES = [
   { key: "route53", label: "Route 53" },
   { key: "transitgateway", label: "Transit Gateway" },
   { key: "secretsmanager", label: "Secrets Manager" },
+  { key: "aurora", label: "Aurora" },
+  { key: "msk", label: "MSK" },
+  { key: "guardduty", label: "GuardDuty" },
 ];
 
 // Well-Architected pillar scorecards from deterministic inventory

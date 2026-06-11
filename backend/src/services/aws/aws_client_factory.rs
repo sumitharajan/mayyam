@@ -61,6 +61,8 @@ use aws_sdk_storagegateway::Client as StorageGatewayClient;
 use aws_sdk_connect::Client as ConnectClient;
 use aws_sdk_appsync::Client as AppSyncClient;
 use aws_sdk_kinesisanalyticsv2::Client as KinesisAnalyticsClient;
+use aws_sdk_kafka::Client as MskClient;
+use aws_sdk_guardduty::Client as GuardDutyClient;
 
 use crate::models::aws_account::AwsAccountDto;
 use crate::{errors::AppError};
@@ -254,4 +256,12 @@ pub trait AwsClientFactory {
         &self,
         aws_account_dto: &AwsAccountDto,
     ) -> Result<KinesisAnalyticsClient, AppError>;
+    async fn create_msk_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<MskClient, AppError>;
+    async fn create_guardduty_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<GuardDutyClient, AppError>;
 }

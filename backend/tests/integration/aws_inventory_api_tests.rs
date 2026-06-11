@@ -184,6 +184,9 @@ async fn storage_and_database_pillar_reports_contract() {
         ("route53", "Route53HostedZone", 3),
         ("transitgateway", "TransitGateway", 3),
         ("secretsmanager", "SecretsManagerSecret", 3),
+        ("aurora", "AuroraCluster", 3),
+        ("msk", "MskCluster", 3),
+        ("guardduty", "GuardDutyDetector", 3),
     ] {
         let resp = client
             .get(format!(

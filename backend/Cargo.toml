@@ -164,6 +164,8 @@ aws-sdk-kinesisanalyticsv2 = "1.22.0"
 aws-sdk-autoscaling = "1.22.0"
 aws-sdk-route53 = "1.22.0"
 aws-sdk-secretsmanager = "1.22.0"
+aws-sdk-kafka = "1.22.0"
+aws-sdk-guardduty = "1.22.0"
 
 [dev-dependencies]
 mockall = "0.11"

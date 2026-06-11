@@ -713,4 +713,20 @@ impl AwsClientFactory for AwsService {
         let config = self.get_aws_sdk_config(aws_account_dto).await?;
         Ok(aws_sdk_kinesisanalyticsv2::Client::new(&config))
     }
+
+    async fn create_msk_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<aws_sdk_kafka::Client, AppError> {
+        let config = self.get_aws_sdk_config(aws_account_dto).await?;
+        Ok(aws_sdk_kafka::Client::new(&config))
+    }
+
+    async fn create_guardduty_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<aws_sdk_guardduty::Client, AppError> {
+        let config = self.get_aws_sdk_config(aws_account_dto).await?;
+        Ok(aws_sdk_guardduty::Client::new(&config))
+    }
 }

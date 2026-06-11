@@ -67,3 +67,7 @@ pub mod autoscaling_control_plane;
 pub mod route53_control_plane;
 pub mod transitgateway_control_plane;
 pub mod secretsmanager_control_plane;
+// Batch 11: Database Clusters, Streaming & Security Detection
+pub mod aurora_control_plane;
+pub mod msk_control_plane;
+pub mod guardduty_control_plane;

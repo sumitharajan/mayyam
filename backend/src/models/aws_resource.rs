@@ -135,6 +135,12 @@ pub enum AwsResourceType {
     TransitGateway,
     // Secrets Resources
     SecretsManagerSecret,
+    // Database Cluster Resources
+    AuroraCluster,
+    // Streaming Resources
+    MskCluster,
+    // Security Detection Resources
+    GuardDutyDetector,
 }
 
 impl ToString for AwsResourceType {
@@ -223,6 +229,12 @@ impl ToString for AwsResourceType {
             AwsResourceType::TransitGateway => "TransitGateway".to_string(),
             // Secrets Resources
             AwsResourceType::SecretsManagerSecret => "SecretsManagerSecret".to_string(),
+            // Database Cluster Resources
+            AwsResourceType::AuroraCluster => "AuroraCluster".to_string(),
+            // Streaming Resources
+            AwsResourceType::MskCluster => "MskCluster".to_string(),
+            // Security Detection Resources
+            AwsResourceType::GuardDutyDetector => "GuardDutyDetector".to_string(),
         }
     }
 }
@@ -313,6 +325,12 @@ impl From<&str> for AwsResourceType {
             "TransitGateway" => AwsResourceType::TransitGateway,
             // Secrets Resources
             "SecretsManagerSecret" => AwsResourceType::SecretsManagerSecret,
+            // Database Cluster Resources
+            "AuroraCluster" => AwsResourceType::AuroraCluster,
+            // Streaming Resources
+            "MskCluster" => AwsResourceType::MskCluster,
+            // Security Detection Resources
+            "GuardDutyDetector" => AwsResourceType::GuardDutyDetector,
             _ => panic!("Unknown resource type: {}", s),
         }
     }

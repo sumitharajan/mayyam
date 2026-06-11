@@ -75,6 +75,9 @@ use crate::services::aws::aws_control_plane::autoscaling_control_plane::AutoScal
 use crate::services::aws::aws_control_plane::route53_control_plane::Route53ControlPlane;
 use crate::services::aws::aws_control_plane::transitgateway_control_plane::TransitGatewayControlPlane;
 use crate::services::aws::aws_control_plane::secretsmanager_control_plane::SecretsManagerControlPlane;
+use crate::services::aws::aws_control_plane::aurora_control_plane::AuroraControlPlane;
+use crate::services::aws::aws_control_plane::msk_control_plane::MskControlPlane;
+use crate::services::aws::aws_control_plane::guardduty_control_plane::GuardDutyControlPlane;
 use crate::services::aws::aws_control_plane::storagegateway_control_plane::StorageGatewayControlPlane;
 use crate::services::aws::aws_control_plane::connect_control_plane::ConnectControlPlane;
 use crate::services::aws::aws_control_plane::appsync_control_plane::AppSyncControlPlane;
@@ -760,6 +763,10 @@ impl AwsControlPlane {
                 AwsResourceType::Route53HostedZone.to_string(),
                 AwsResourceType::TransitGateway.to_string(),
                 AwsResourceType::SecretsManagerSecret.to_string(),
+                // Batch 11: Database Clusters, Streaming & Security Detection
+                AwsResourceType::AuroraCluster.to_string(),
+                AwsResourceType::MskCluster.to_string(),
+                AwsResourceType::GuardDutyDetector.to_string(),
             ],
         };
 
@@ -985,6 +992,19 @@ impl AwsControlPlane {
                 "SecretsManagerSecret" => {
                     let cp = SecretsManagerControlPlane::new(self.aws_service.clone());
                     cp.sync_secrets(aws_account_dto, request.sync_id).await
+                }
+                // Batch 11: Database Clusters, Streaming & Security Detection
+                "AuroraCluster" => {
+                    let cp = AuroraControlPlane::new(self.aws_service.clone());
+                    cp.sync_clusters(aws_account_dto, request.sync_id).await
+                }
+                "MskCluster" => {
+                    let cp = MskControlPlane::new(self.aws_service.clone());
+                    cp.sync_clusters(aws_account_dto, request.sync_id).await
+                }
+                "GuardDutyDetector" => {
+                    let cp = GuardDutyControlPlane::new(self.aws_service.clone());
+                    cp.sync_detectors(aws_account_dto, request.sync_id).await
                 }
                 _ => Ok(vec![]),
             };
