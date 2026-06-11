@@ -92,19 +92,51 @@ impl AwsInventoryController {
 #[derive(Debug, Deserialize)]
 pub struct Ec2PillarQuery {
     pub account_id: String,
-    /// Optional: `cost`, `security`, or `resilience`. Omit for all three.
+    /// Optional pillar name (e.g. `cost`, `security`, `resilience`). Omit
+    /// for every pillar the service supports.
     pub pillar: Option<String>,
 }
 
-fn parse_pillars(raw: &Option<String>) -> Result<Vec<Pillar>, AppError> {
+/// Pillars every inventory evaluator implements.
+const BASE_PILLARS: &[Pillar] = &[Pillar::Cost, Pillar::Security, Pillar::Resilience];
+/// Full pillar set for services with extended evaluator coverage.
+const ALL_PILLARS: &[Pillar] = &[
+    Pillar::Cost,
+    Pillar::Security,
+    Pillar::Resilience,
+    Pillar::Performance,
+    Pillar::Scalability,
+    Pillar::DisasterRecovery,
+    Pillar::OperationalExcellence,
+];
+
+fn parse_pillars(raw: &Option<String>, supported: &[Pillar]) -> Result<Vec<Pillar>, AppError> {
+    let supported_names = || {
+        supported
+            .iter()
+            .map(|p| p.as_str())
+            .collect::<Vec<_>>()
+            .join(", ")
+    };
     match raw {
-        Some(raw) => Ok(vec![Pillar::parse(raw).ok_or_else(|| {
-            AppError::BadRequest(format!(
-                "Unknown pillar '{}'; expected one of: cost, security, resilience",
-                raw
-            ))
-        })?]),
-        None => Ok(vec![Pillar::Cost, Pillar::Security, Pillar::Resilience]),
+        Some(raw) => {
+            let pillar = Pillar::parse(raw).ok_or_else(|| {
+                AppError::BadRequest(format!(
+                    "Unknown pillar '{}'; expected one of: {}",
+                    raw,
+                    supported_names()
+                ))
+            })?;
+            if !supported.contains(&pillar) {
+                return Err(AppError::BadRequest(format!(
+                    "Pillar '{}' is not supported for this service yet; expected one of: {}",
+                    raw,
+                    supported_names()
+                )));
+            }
+            Ok(vec![pillar])
+        }
+        None => Ok(supported.to_vec()),
     }
 }
 
@@ -118,7 +150,37 @@ async fn pillar_reports(
         chrono::DateTime<Utc>,
     ) -> crate::services::aws::inventory::types::PillarReport,
 ) -> Result<HttpResponse, AppError> {
-    let pillars = parse_pillars(&query.pillar)?;
+    pillar_reports_for(controller, query, resource_type, BASE_PILLARS, evaluate).await
+}
+
+/// Same as [`pillar_reports`] for services whose evaluator also covers the
+/// performance, scalability, disaster-recovery, and operational-excellence
+/// pillars.
+async fn extended_pillar_reports(
+    controller: &AwsInventoryController,
+    query: Ec2PillarQuery,
+    resource_type: AwsResourceType,
+    evaluate: impl Fn(
+        &[crate::models::aws_resource::Model],
+        Pillar,
+        chrono::DateTime<Utc>,
+    ) -> crate::services::aws::inventory::types::PillarReport,
+) -> Result<HttpResponse, AppError> {
+    pillar_reports_for(controller, query, resource_type, ALL_PILLARS, evaluate).await
+}
+
+async fn pillar_reports_for(
+    controller: &AwsInventoryController,
+    query: Ec2PillarQuery,
+    resource_type: AwsResourceType,
+    supported: &[Pillar],
+    evaluate: impl Fn(
+        &[crate::models::aws_resource::Model],
+        Pillar,
+        chrono::DateTime<Utc>,
+    ) -> crate::services::aws::inventory::types::PillarReport,
+) -> Result<HttpResponse, AppError> {
+    let pillars = parse_pillars(&query.pillar, supported)?;
     let resources = controller
         .aws_resource_repo
         .find_by_account_and_type(&query.account_id, &resource_type.to_string())
@@ -156,7 +218,7 @@ async fn multi_type_pillar_reports(
         chrono::DateTime<Utc>,
     ) -> crate::services::aws::inventory::types::PillarReport,
 ) -> Result<HttpResponse, AppError> {
-    let pillars = parse_pillars(&query.pillar)?;
+    let pillars = parse_pillars(&query.pillar, BASE_PILLARS)?;
 
     let mut resources = Vec::new();
     for resource_type in resource_types {
@@ -248,7 +310,7 @@ pub async fn get_ecs_pillar_reports(
 ) -> Result<HttpResponse, AppError> {
     let query = query.into_inner();
     debug!("ECS pillar report request: {:?}", query);
-    let pillars = parse_pillars(&query.pillar)?;
+    let pillars = parse_pillars(&query.pillar, BASE_PILLARS)?;
 
     let mut resources = controller
         .aws_resource_repo
@@ -609,7 +671,8 @@ pub async fn get_config_pillar_reports(
 ) -> Result<HttpResponse, AppError> {
     let query = query.into_inner();
     debug!("AWS Config pillar report request: {:?}", query);
-    pillar_reports(&controller, query, AwsResourceType::ConfigRule, evaluate_config_fleet).await
+    extended_pillar_reports(&controller, query, AwsResourceType::ConfigRule, evaluate_config_fleet)
+        .await
 }
 
 pub async fn get_eventbridge_pillar_reports(
@@ -618,7 +681,7 @@ pub async fn get_eventbridge_pillar_reports(
 ) -> Result<HttpResponse, AppError> {
     let query = query.into_inner();
     debug!("EventBridge pillar report request: {:?}", query);
-    pillar_reports(
+    extended_pillar_reports(
         &controller,
         query,
         AwsResourceType::EventBridgeRule,
@@ -633,7 +696,7 @@ pub async fn get_stepfunctions_pillar_reports(
 ) -> Result<HttpResponse, AppError> {
     let query = query.into_inner();
     debug!("Step Functions pillar report request: {:?}", query);
-    pillar_reports(
+    extended_pillar_reports(
         &controller,
         query,
         AwsResourceType::StepFunction,

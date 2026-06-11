@@ -13,7 +13,8 @@
 // limitations under the License.
 
 // Deterministic AWS Config rule inventory evaluators for the cost, security,
-// and resilience pillars.
+// resilience, performance, scalability, disaster-recovery, and
+// operational-excellence pillars.
 //
 // Evaluates fields persisted by config_control_plane: config_rule_state,
 // maximum_execution_frequency, evaluation_status_collected,
@@ -29,7 +30,7 @@ use serde_json::json;
 use crate::models::aws_resource::Model as AwsResourceModel;
 use crate::services::aws::inventory::types::{
     check_stale, data_str, has_any_tag, score_pillar, InventoryFinding, Pillar, PillarReport,
-    Severity, COST_ALLOCATION_TAG_KEYS,
+    Severity, COST_ALLOCATION_TAG_KEYS, OWNER_TAG_KEYS,
 };
 
 /// Only rows of this resource type are evaluated.
@@ -48,6 +49,11 @@ pub const REASON_SEC_RULE_NOT_ACTIVE: &str = "CONFIG_SEC_RULE_NOT_ACTIVE";
 pub const REASON_RES_EVALUATION_STALE: &str = "CONFIG_RES_EVALUATION_STALE";
 pub const REASON_RES_LAST_EVALUATION_FAILED: &str = "CONFIG_RES_LAST_EVALUATION_FAILED";
 pub const REASON_RES_EVALUATION_TIME_UNPARSEABLE: &str = "CONFIG_RES_EVALUATION_TIME_UNPARSEABLE";
+pub const REASON_PERF_INTERMITTENT_EVALUATION_FAILURES: &str =
+    "CONFIG_PERF_INTERMITTENT_EVALUATION_FAILURES";
+pub const REASON_SCALE_HOURLY_EVALUATION: &str = "CONFIG_SCALE_HOURLY_EVALUATION";
+pub const REASON_DR_NEVER_EVALUATED: &str = "CONFIG_DR_NEVER_EVALUATED";
+pub const REASON_OPEX_NO_OWNER_TAG: &str = "CONFIG_OPEX_NO_OWNER_TAG";
 pub const REASON_DATA_GAP_EVALUATION_STATUS: &str = "CONFIG_DATA_GAP_EVALUATION_STATUS";
 pub const REASON_INV_STALE_DATA: &str = "CONFIG_INV_STALE_DATA";
 
@@ -76,6 +82,12 @@ pub fn evaluate_config_fleet(
             Pillar::Cost => evaluate_cost(resource, &mut findings),
             Pillar::Security => evaluate_security(resource, &mut findings),
             Pillar::Resilience => evaluate_resilience(resource, now, &mut findings),
+            Pillar::Performance => evaluate_performance(resource, &mut findings),
+            Pillar::Scalability => evaluate_scalability(resource, &mut findings),
+            Pillar::DisasterRecovery => evaluate_disaster_recovery(resource, &mut findings),
+            Pillar::OperationalExcellence => {
+                evaluate_operational_excellence(resource, &mut findings)
+            }
         }
     }
 
@@ -337,6 +349,123 @@ fn evaluate_resilience(
     }
 }
 
+fn evaluate_performance(resource: &AwsResourceModel, findings: &mut Vec<InventoryFinding>) {
+    if !evaluation_status_collected(resource) {
+        findings.push(data_gap_finding(resource, Pillar::Performance));
+        return;
+    }
+
+    // An error that a later evaluation recovered from is not a compliance
+    // blind spot (the security pillar covers unrecovered errors), but it
+    // means detection latency degraded while evaluations were failing.
+    if let Some(code) = data_str(&resource.resource_data, "last_error_code") {
+        let success = parse_time(resource, "last_successful_evaluation_time").and_then(|r| r.ok());
+        let failed = parse_time(resource, "last_failed_evaluation_time").and_then(|r| r.ok());
+        let recovered = match (failed, success) {
+            (_, None) => false,
+            (Some(f), Some(s)) => s > f,
+            (None, Some(_)) => true,
+        };
+        if recovered {
+            findings.push(InventoryFinding {
+                resource_id: resource.resource_id.clone(),
+                arn: resource.arn.clone(),
+                pillar: Pillar::Performance,
+                reason_code: REASON_PERF_INTERMITTENT_EVALUATION_FAILURES.to_string(),
+                severity: Severity::Low,
+                message: format!(
+                    "Config rule {} recovered after evaluation error {}; detection latency was degraded while evaluations failed",
+                    resource.resource_id, code
+                ),
+                evidence: json!({
+                    "last_error_code": code,
+                    "last_error_message": data_str(&resource.resource_data, "last_error_message"),
+                    "last_failed_evaluation_time": data_str(&resource.resource_data, "last_failed_evaluation_time"),
+                    "last_successful_evaluation_time": data_str(&resource.resource_data, "last_successful_evaluation_time"),
+                }),
+            });
+        }
+    }
+}
+
+fn evaluate_scalability(resource: &AwsResourceModel, findings: &mut Vec<InventoryFinding>) {
+    // An hourly periodic rule re-evaluates its full resource scope every
+    // hour; evaluation volume grows linearly with the resource inventory.
+    if let Some((frequency, _)) = frequency_hours(resource) {
+        if frequency == "One_Hour" {
+            findings.push(InventoryFinding {
+                resource_id: resource.resource_id.clone(),
+                arn: resource.arn.clone(),
+                pillar: Pillar::Scalability,
+                reason_code: REASON_SCALE_HOURLY_EVALUATION.to_string(),
+                severity: Severity::Low,
+                message: format!(
+                    "Config rule {} evaluates its full scope every hour; evaluation volume grows linearly with the resource inventory, so consider a change-triggered scope instead",
+                    resource.resource_id
+                ),
+                evidence: json!({ "maximum_execution_frequency": frequency }),
+            });
+        }
+    }
+}
+
+fn evaluate_disaster_recovery(resource: &AwsResourceModel, findings: &mut Vec<InventoryFinding>) {
+    if !evaluation_status_collected(resource) {
+        findings.push(data_gap_finding(resource, Pillar::DisasterRecovery));
+        return;
+    }
+
+    // An ACTIVE rule that has never evaluated successfully has produced no
+    // compliance baseline; after an incident there is nothing recorded to
+    // validate recovery against.
+    if rule_state(resource).as_deref() == Some("ACTIVE")
+        && resource
+            .resource_data
+            .get("last_successful_evaluation_time")
+            .is_none()
+    {
+        findings.push(InventoryFinding {
+            resource_id: resource.resource_id.clone(),
+            arn: resource.arn.clone(),
+            pillar: Pillar::DisasterRecovery,
+            reason_code: REASON_DR_NEVER_EVALUATED.to_string(),
+            severity: Severity::Medium,
+            message: format!(
+                "Config rule {} is ACTIVE but has never evaluated successfully; no compliance baseline exists to validate recovery against",
+                resource.resource_id
+            ),
+            evidence: json!({
+                "config_rule_state": "ACTIVE",
+                "last_successful_evaluation_time": null,
+                "last_error_code": data_str(&resource.resource_data, "last_error_code"),
+            }),
+        });
+    }
+}
+
+fn evaluate_operational_excellence(
+    resource: &AwsResourceModel,
+    findings: &mut Vec<InventoryFinding>,
+) {
+    if !has_any_tag(&resource.tags, OWNER_TAG_KEYS) {
+        findings.push(InventoryFinding {
+            resource_id: resource.resource_id.clone(),
+            arn: resource.arn.clone(),
+            pillar: Pillar::OperationalExcellence,
+            reason_code: REASON_OPEX_NO_OWNER_TAG.to_string(),
+            severity: Severity::Medium,
+            message: format!(
+                "Config rule {} carries no owner or team tag; findings and incidents for it cannot be routed to an owner",
+                resource.resource_id
+            ),
+            evidence: json!({
+                "tags": resource.tags,
+                "accepted_tag_keys": OWNER_TAG_KEYS,
+            }),
+        });
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -560,9 +689,103 @@ mod tests {
     }
 
     #[test]
+    fn performance_flags_recovered_evaluation_errors() {
+        let mut data = healthy_rule_data();
+        data["last_error_code"] = json!("INTERNAL_ERROR");
+        data["last_failed_evaluation_time"] = json!("2026-06-09T10:00:00Z");
+        // last_successful_evaluation_time is 2026-06-09T20:00:00Z: recovered.
+        let r = fixture("rule-perf-recovered", json!({"team": "sre"}), data, now());
+        let report = evaluate_config_fleet(&[r], Pillar::Performance, now());
+        assert_eq!(
+            codes(&report),
+            vec![REASON_PERF_INTERMITTENT_EVALUATION_FAILURES]
+        );
+        assert!(matches!(report.findings[0].severity, Severity::Low));
+    }
+
+    #[test]
+    fn performance_does_not_flag_unrecovered_errors_and_reports_data_gap() {
+        // Unrecovered errors belong to the security pillar.
+        let mut data = healthy_rule_data();
+        data["last_error_code"] = json!("INTERNAL_ERROR");
+        data["last_failed_evaluation_time"] = json!("2026-06-09T23:00:00Z");
+        let r = fixture("rule-perf-failing", json!({"team": "sre"}), data, now());
+        let report = evaluate_config_fleet(&[r], Pillar::Performance, now());
+        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+
+        let mut gap = healthy_rule_data();
+        gap.as_object_mut().unwrap().remove("evaluation_status_collected");
+        let r2 = fixture("rule-perf-gap", json!({"team": "sre"}), gap, now());
+        let report = evaluate_config_fleet(&[r2], Pillar::Performance, now());
+        assert_eq!(codes(&report), vec![REASON_DATA_GAP_EVALUATION_STATUS]);
+    }
+
+    #[test]
+    fn scalability_flags_hourly_evaluation_cadence() {
+        let mut data = healthy_rule_data();
+        data["maximum_execution_frequency"] = json!("One_Hour");
+        let r = fixture("rule-hourly", json!({"team": "sre"}), data, now());
+        let report = evaluate_config_fleet(&[r], Pillar::Scalability, now());
+        assert_eq!(codes(&report), vec![REASON_SCALE_HOURLY_EVALUATION]);
+
+        // Change-triggered rules (no frequency) have no cadence to flag.
+        let mut change_triggered = healthy_rule_data();
+        change_triggered
+            .as_object_mut()
+            .unwrap()
+            .remove("maximum_execution_frequency");
+        let r2 = fixture("rule-ct", json!({"team": "sre"}), change_triggered, now());
+        let report = evaluate_config_fleet(&[r2], Pillar::Scalability, now());
+        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+    }
+
+    #[test]
+    fn disaster_recovery_flags_active_rule_never_evaluated() {
+        let mut data = healthy_rule_data();
+        data.as_object_mut()
+            .unwrap()
+            .remove("last_successful_evaluation_time");
+        let r = fixture("rule-dr-never", json!({"team": "sre"}), data, now());
+        let report = evaluate_config_fleet(&[r], Pillar::DisasterRecovery, now());
+        assert_eq!(codes(&report), vec![REASON_DR_NEVER_EVALUATED]);
+        assert!(matches!(report.findings[0].severity, Severity::Medium));
+    }
+
+    #[test]
+    fn disaster_recovery_reports_data_gap_when_status_not_collected() {
+        let mut data = healthy_rule_data();
+        let map = data.as_object_mut().unwrap();
+        map.remove("evaluation_status_collected");
+        map.remove("last_successful_evaluation_time");
+        let r = fixture("rule-dr-gap", json!({"team": "sre"}), data, now());
+        let report = evaluate_config_fleet(&[r], Pillar::DisasterRecovery, now());
+        assert_eq!(codes(&report), vec![REASON_DATA_GAP_EVALUATION_STATUS]);
+    }
+
+    #[test]
+    fn operational_excellence_flags_missing_owner_tag() {
+        let r = fixture(
+            "rule-unowned",
+            json!({"environment": "prod"}),
+            healthy_rule_data(),
+            now(),
+        );
+        let report = evaluate_config_fleet(&[r], Pillar::OperationalExcellence, now());
+        assert_eq!(codes(&report), vec![REASON_OPEX_NO_OWNER_TAG]);
+    }
+
+    #[test]
     fn healthy_rule_passes_all_pillars() {
         let r = fixture("rule-ok", json!({"team": "sre"}), healthy_rule_data(), now());
-        for pillar in [Pillar::Cost, Pillar::Security, Pillar::Resilience] {
+        for pillar in [
+            Pillar::Cost,
+            Pillar::Security,
+            Pillar::Resilience,
+            Pillar::Performance,
+            Pillar::Scalability,
+            Pillar::DisasterRecovery,
+            Pillar::OperationalExcellence,
+        ] {
             let report = evaluate_config_fleet(std::slice::from_ref(&r), pillar, now());
             assert!(
                 report.findings.is_empty(),

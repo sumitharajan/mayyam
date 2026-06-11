@@ -65,6 +65,8 @@ pub fn evaluate_subnet_fleet(
             Pillar::Cost => evaluate_cost(resource, &mut findings),
             Pillar::Security => evaluate_security(resource, &mut findings),
             Pillar::Resilience => evaluate_resilience(resource, &mut findings),
+            // Pillars without checks for this service yet produce no findings.
+            _ => {}
         }
     }
 

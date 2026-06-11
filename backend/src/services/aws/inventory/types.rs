@@ -27,6 +27,12 @@ pub enum Pillar {
     Cost,
     Security,
     Resilience,
+    Performance,
+    Scalability,
+    #[serde(rename = "disaster-recovery")]
+    DisasterRecovery,
+    #[serde(rename = "operational-excellence")]
+    OperationalExcellence,
 }
 
 impl Pillar {
@@ -35,6 +41,10 @@ impl Pillar {
             Pillar::Cost => "cost",
             Pillar::Security => "security",
             Pillar::Resilience => "resilience",
+            Pillar::Performance => "performance",
+            Pillar::Scalability => "scalability",
+            Pillar::DisasterRecovery => "disaster-recovery",
+            Pillar::OperationalExcellence => "operational-excellence",
         }
     }
 
@@ -43,6 +53,12 @@ impl Pillar {
             "cost" => Some(Pillar::Cost),
             "security" => Some(Pillar::Security),
             "resilience" => Some(Pillar::Resilience),
+            "performance" => Some(Pillar::Performance),
+            "scalability" => Some(Pillar::Scalability),
+            "disaster-recovery" | "disaster_recovery" => Some(Pillar::DisasterRecovery),
+            "operational-excellence" | "operational_excellence" => {
+                Some(Pillar::OperationalExcellence)
+            }
             _ => None,
         }
     }

@@ -68,6 +68,8 @@ pub fn evaluate_acm_fleet(
             Pillar::Cost => evaluate_cost(resource, &mut findings),
             Pillar::Security => evaluate_security(resource, &mut findings),
             Pillar::Resilience => evaluate_resilience(resource, now, &mut findings),
+            // Pillars without checks for this service yet produce no findings.
+            _ => {}
         }
     }
 

@@ -13,7 +13,8 @@
 // limitations under the License.
 
 // Deterministic EventBridge rule inventory evaluators for the cost,
-// security, and resilience pillars.
+// security, resilience, performance, scalability, disaster-recovery, and
+// operational-excellence pillars.
 //
 // Evaluates fields persisted by eventbridge_control_plane: state,
 // schedule_expression, event_bus_name, managed_by, target_count, and the
@@ -27,7 +28,8 @@ use serde_json::json;
 
 use crate::models::aws_resource::Model as AwsResourceModel;
 use crate::services::aws::inventory::types::{
-    check_stale, data_str, score_pillar, InventoryFinding, Pillar, PillarReport, Severity,
+    check_stale, data_str, has_any_tag, score_pillar, InventoryFinding, Pillar, PillarReport,
+    Severity, OWNER_TAG_KEYS,
 };
 
 /// Only rows of this resource type are evaluated.
@@ -41,8 +43,17 @@ pub const REASON_SEC_MANAGED_RULE_DISABLED: &str = "EVENTBRIDGE_SEC_MANAGED_RULE
 pub const REASON_RES_TARGET_NO_DLQ: &str = "EVENTBRIDGE_RES_TARGET_NO_DLQ";
 pub const REASON_RES_TARGET_NO_RETRY_POLICY: &str = "EVENTBRIDGE_RES_TARGET_NO_RETRY_POLICY";
 pub const REASON_RES_SCHEDULED_RULE_DISABLED: &str = "EVENTBRIDGE_RES_SCHEDULED_RULE_DISABLED";
+pub const REASON_PERF_BROAD_EVENT_PATTERN: &str = "EVENTBRIDGE_PERF_BROAD_EVENT_PATTERN";
+pub const REASON_PERF_PATTERN_UNPARSEABLE: &str = "EVENTBRIDGE_PERF_PATTERN_UNPARSEABLE";
+pub const REASON_SCALE_TARGET_QUOTA_REACHED: &str = "EVENTBRIDGE_SCALE_TARGET_QUOTA_REACHED";
+pub const REASON_DR_SCHEDULED_NO_DLQ: &str = "EVENTBRIDGE_DR_SCHEDULED_NO_DLQ";
+pub const REASON_OPEX_NO_OWNER_TAG: &str = "EVENTBRIDGE_OPEX_NO_OWNER_TAG";
 pub const REASON_DATA_GAP_TARGETS: &str = "EVENTBRIDGE_DATA_GAP_TARGETS";
 pub const REASON_INV_STALE_DATA: &str = "EVENTBRIDGE_INV_STALE_DATA";
+
+/// Per-rule target quota in EventBridge; a rule at this count cannot gain
+/// more consumers without a fan-out redesign.
+pub const TARGET_QUOTA_PER_RULE: u64 = 5;
 
 /// Evaluate every EventBridge rule in the fleet for one pillar. Rows whose
 /// `resource_type` is not `EventBridgeRule` are skipped and not counted.
@@ -69,6 +80,12 @@ pub fn evaluate_eventbridge_fleet(
             Pillar::Cost => evaluate_cost(resource, &mut findings),
             Pillar::Security => evaluate_security(resource, &mut findings),
             Pillar::Resilience => evaluate_resilience(resource, &mut findings),
+            Pillar::Performance => evaluate_performance(resource, &mut findings),
+            Pillar::Scalability => evaluate_scalability(resource, &mut findings),
+            Pillar::DisasterRecovery => evaluate_disaster_recovery(resource, &mut findings),
+            Pillar::OperationalExcellence => {
+                evaluate_operational_excellence(resource, &mut findings)
+            }
         }
     }
 
@@ -326,6 +343,155 @@ fn evaluate_resilience(resource: &AwsResourceModel, findings: &mut Vec<Inventory
     }
 }
 
+fn evaluate_performance(resource: &AwsResourceModel, findings: &mut Vec<InventoryFinding>) {
+    // A pattern with neither `source` nor `detail-type` is matched against
+    // every event on the bus and ships an unfiltered stream to targets;
+    // filtering work the bus could do is pushed onto every consumer.
+    let pattern = data_str(&resource.resource_data, "event_pattern");
+    let Some(raw) = pattern else {
+        // Schedule-only rules have no pattern to assess.
+        return;
+    };
+    match serde_json::from_str::<serde_json::Value>(&raw) {
+        Ok(serde_json::Value::Object(map)) => {
+            if !map.contains_key("source") && !map.contains_key("detail-type") {
+                findings.push(InventoryFinding {
+                    resource_id: resource.resource_id.clone(),
+                    arn: resource.arn.clone(),
+                    pillar: Pillar::Performance,
+                    reason_code: REASON_PERF_BROAD_EVENT_PATTERN.to_string(),
+                    severity: Severity::Low,
+                    message: format!(
+                        "Rule {} matches without a source or detail-type filter; every event on the bus is evaluated against it and targets receive an unfiltered stream",
+                        resource.resource_id
+                    ),
+                    evidence: json!({
+                        "event_pattern": raw,
+                        "pattern_keys": map.keys().collect::<Vec<_>>(),
+                    }),
+                });
+            }
+        }
+        _ => {
+            findings.push(InventoryFinding {
+                resource_id: resource.resource_id.clone(),
+                arn: resource.arn.clone(),
+                pillar: Pillar::Performance,
+                reason_code: REASON_PERF_PATTERN_UNPARSEABLE.to_string(),
+                severity: Severity::Low,
+                message: format!(
+                    "Event pattern for rule {} is not a parseable JSON object; pattern breadth cannot be assessed",
+                    resource.resource_id
+                ),
+                evidence: json!({ "event_pattern": raw }),
+            });
+        }
+    }
+}
+
+fn evaluate_scalability(resource: &AwsResourceModel, findings: &mut Vec<InventoryFinding>) {
+    if !is_enabled(resource) {
+        return;
+    }
+    match target_count(resource) {
+        Some(count) if count >= TARGET_QUOTA_PER_RULE => {
+            findings.push(InventoryFinding {
+                resource_id: resource.resource_id.clone(),
+                arn: resource.arn.clone(),
+                pillar: Pillar::Scalability,
+                reason_code: REASON_SCALE_TARGET_QUOTA_REACHED.to_string(),
+                severity: Severity::Medium,
+                message: format!(
+                    "Rule {} has {} targets, at the per-rule quota of {}; adding a consumer requires another rule or an SNS/SQS fan-out",
+                    resource.resource_id, count, TARGET_QUOTA_PER_RULE
+                ),
+                evidence: json!({
+                    "target_count": count,
+                    "target_quota_per_rule": TARGET_QUOTA_PER_RULE,
+                }),
+            });
+        }
+        Some(_) => {}
+        None => findings.push(data_gap_targets(resource, Pillar::Scalability)),
+    }
+}
+
+fn evaluate_disaster_recovery(resource: &AwsResourceModel, findings: &mut Vec<InventoryFinding>) {
+    // Schedule-generated events have no upstream producer to replay them; a
+    // failed scheduled invocation without a DLQ is unrecoverable work.
+    let schedule = data_str(&resource.resource_data, "schedule_expression");
+    let Some(expression) = schedule else {
+        return;
+    };
+    if !is_enabled(resource) {
+        // A disabled scheduled rule is already a resilience finding.
+        return;
+    }
+    let targets = resource
+        .resource_data
+        .get("targets")
+        .and_then(|v| v.as_array());
+    match (target_count(resource), targets) {
+        (Some(0), _) => {}
+        (Some(count), Some(targets)) => {
+            let no_dlq: Vec<String> = targets
+                .iter()
+                .filter(|t| t.get("has_dead_letter_config").and_then(|v| v.as_bool()) == Some(false))
+                .map(|t| {
+                    t.get("id")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("")
+                        .to_string()
+                })
+                .collect();
+            if !no_dlq.is_empty() {
+                findings.push(InventoryFinding {
+                    resource_id: resource.resource_id.clone(),
+                    arn: resource.arn.clone(),
+                    pillar: Pillar::DisasterRecovery,
+                    reason_code: REASON_DR_SCHEDULED_NO_DLQ.to_string(),
+                    severity: Severity::Medium,
+                    message: format!(
+                        "Scheduled rule {} ({}) has {} target(s) without a dead-letter queue; schedule-generated events have no producer to replay them, so failed invocations are unrecoverable",
+                        resource.resource_id,
+                        expression,
+                        no_dlq.len()
+                    ),
+                    evidence: json!({
+                        "schedule_expression": expression,
+                        "targets_without_dead_letter_config": no_dlq,
+                        "target_count": count,
+                    }),
+                });
+            }
+        }
+        _ => findings.push(data_gap_targets(resource, Pillar::DisasterRecovery)),
+    }
+}
+
+fn evaluate_operational_excellence(
+    resource: &AwsResourceModel,
+    findings: &mut Vec<InventoryFinding>,
+) {
+    if !has_any_tag(&resource.tags, OWNER_TAG_KEYS) {
+        findings.push(InventoryFinding {
+            resource_id: resource.resource_id.clone(),
+            arn: resource.arn.clone(),
+            pillar: Pillar::OperationalExcellence,
+            reason_code: REASON_OPEX_NO_OWNER_TAG.to_string(),
+            severity: Severity::Medium,
+            message: format!(
+                "Rule {} carries no owner or team tag; findings and incidents for it cannot be routed to an owner",
+                resource.resource_id
+            ),
+            evidence: json!({
+                "tags": resource.tags,
+                "accepted_tag_keys": OWNER_TAG_KEYS,
+            }),
+        });
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -549,9 +715,124 @@ mod tests {
     }
 
     #[test]
+    fn performance_flags_pattern_without_source_or_detail_type() {
+        let mut data = healthy_rule_data();
+        data["event_pattern"] = json!("{\"region\":[\"us-east-1\"]}");
+        let r = fixture("rule-broad", json!({"team": "sre"}), data, now());
+        let report = evaluate_eventbridge_fleet(&[r], Pillar::Performance, now());
+        assert_eq!(codes(&report), vec![REASON_PERF_BROAD_EVENT_PATTERN]);
+        assert!(matches!(report.findings[0].severity, Severity::Low));
+    }
+
+    #[test]
+    fn performance_accepts_detail_type_filter_and_skips_schedule_only_rules() {
+        let mut data = healthy_rule_data();
+        data["event_pattern"] = json!("{\"detail-type\":[\"EC2 Instance State-change Notification\"]}");
+        let r = fixture("rule-dt", json!({"team": "sre"}), data, now());
+        let report = evaluate_eventbridge_fleet(&[r], Pillar::Performance, now());
+        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+
+        let mut scheduled = healthy_rule_data();
+        scheduled.as_object_mut().unwrap().remove("event_pattern");
+        scheduled["schedule_expression"] = json!("rate(5 minutes)");
+        let r2 = fixture("rule-cron", json!({"team": "sre"}), scheduled, now());
+        let report = evaluate_eventbridge_fleet(&[r2], Pillar::Performance, now());
+        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+    }
+
+    #[test]
+    fn performance_flags_unparseable_pattern() {
+        let mut data = healthy_rule_data();
+        data["event_pattern"] = json!("not-json");
+        let r = fixture("rule-badpattern", json!({"team": "sre"}), data, now());
+        let report = evaluate_eventbridge_fleet(&[r], Pillar::Performance, now());
+        assert_eq!(codes(&report), vec![REASON_PERF_PATTERN_UNPARSEABLE]);
+    }
+
+    #[test]
+    fn scalability_flags_rule_at_target_quota() {
+        let mut data = healthy_rule_data();
+        data["target_count"] = json!(5);
+        let r = fixture("rule-quota", json!({"team": "sre"}), data, now());
+        let report = evaluate_eventbridge_fleet(&[r], Pillar::Scalability, now());
+        assert_eq!(codes(&report), vec![REASON_SCALE_TARGET_QUOTA_REACHED]);
+        assert!(matches!(report.findings[0].severity, Severity::Medium));
+    }
+
+    #[test]
+    fn scalability_reports_data_gap_and_skips_disabled_rules() {
+        let mut data = healthy_rule_data();
+        data.as_object_mut().unwrap().remove("target_count");
+        let r = fixture("rule-scalegap", json!({"team": "sre"}), data, now());
+        let report = evaluate_eventbridge_fleet(&[r], Pillar::Scalability, now());
+        assert_eq!(codes(&report), vec![REASON_DATA_GAP_TARGETS]);
+
+        let mut disabled = healthy_rule_data();
+        disabled["state"] = json!("DISABLED");
+        disabled["target_count"] = json!(5);
+        let r2 = fixture("rule-off", json!({"team": "sre"}), disabled, now());
+        let report = evaluate_eventbridge_fleet(&[r2], Pillar::Scalability, now());
+        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+    }
+
+    #[test]
+    fn disaster_recovery_flags_scheduled_rule_with_target_missing_dlq() {
+        let mut data = healthy_rule_data();
+        data.as_object_mut().unwrap().remove("event_pattern");
+        data["schedule_expression"] = json!("rate(1 hour)");
+        data["targets"][0]["has_dead_letter_config"] = json!(false);
+        let r = fixture("rule-cron-nodlq", json!({"team": "sre"}), data, now());
+        let report = evaluate_eventbridge_fleet(&[r], Pillar::DisasterRecovery, now());
+        assert_eq!(codes(&report), vec![REASON_DR_SCHEDULED_NO_DLQ]);
+        assert_eq!(
+            report.findings[0].evidence["targets_without_dead_letter_config"],
+            json!(["target-1"])
+        );
+    }
+
+    #[test]
+    fn disaster_recovery_ignores_pattern_rules_and_reports_schedule_data_gap() {
+        let mut data = healthy_rule_data();
+        data["targets"][0]["has_dead_letter_config"] = json!(false);
+        let r = fixture("rule-pattern-nodlq", json!({"team": "sre"}), data, now());
+        let report = evaluate_eventbridge_fleet(&[r], Pillar::DisasterRecovery, now());
+        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+
+        let mut gap = healthy_rule_data();
+        gap.as_object_mut().unwrap().remove("event_pattern");
+        gap["schedule_expression"] = json!("rate(1 hour)");
+        gap.as_object_mut().unwrap().remove("target_count");
+        gap.as_object_mut().unwrap().remove("targets");
+        let r2 = fixture("rule-cron-gap", json!({"team": "sre"}), gap, now());
+        let report = evaluate_eventbridge_fleet(&[r2], Pillar::DisasterRecovery, now());
+        assert_eq!(codes(&report), vec![REASON_DATA_GAP_TARGETS]);
+    }
+
+    #[test]
+    fn operational_excellence_flags_missing_owner_tag() {
+        let r = fixture(
+            "rule-unowned",
+            json!({"environment": "prod"}),
+            healthy_rule_data(),
+            now(),
+        );
+        let report = evaluate_eventbridge_fleet(&[r], Pillar::OperationalExcellence, now());
+        assert_eq!(codes(&report), vec![REASON_OPEX_NO_OWNER_TAG]);
+        assert!(matches!(report.findings[0].severity, Severity::Medium));
+    }
+
+    #[test]
     fn healthy_rule_passes_all_pillars() {
         let r = fixture("rule-ok", json!({"team": "sre"}), healthy_rule_data(), now());
-        for pillar in [Pillar::Cost, Pillar::Security, Pillar::Resilience] {
+        for pillar in [
+            Pillar::Cost,
+            Pillar::Security,
+            Pillar::Resilience,
+            Pillar::Performance,
+            Pillar::Scalability,
+            Pillar::DisasterRecovery,
+            Pillar::OperationalExcellence,
+        ] {
             let report = evaluate_eventbridge_fleet(std::slice::from_ref(&r), pillar, now());
             assert!(
                 report.findings.is_empty(),

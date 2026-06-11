@@ -13,7 +13,8 @@
 // limitations under the License.
 
 // Deterministic Step Functions inventory evaluators for the cost, security,
-// and resilience pillars.
+// resilience, performance, scalability, disaster-recovery, and
+// operational-excellence pillars.
 //
 // Evaluates fields persisted by stepfunctions_control_plane: status,
 // state_machine_type, role_arn, logging_level, logging_include_execution_data,
@@ -27,7 +28,8 @@ use serde_json::json;
 
 use crate::models::aws_resource::Model as AwsResourceModel;
 use crate::services::aws::inventory::types::{
-    check_stale, data_str, score_pillar, InventoryFinding, Pillar, PillarReport, Severity,
+    check_stale, data_str, has_any_tag, score_pillar, InventoryFinding, Pillar, PillarReport,
+    Severity, OWNER_TAG_KEYS,
 };
 
 /// Only rows of this resource type are evaluated.
@@ -43,6 +45,12 @@ pub const REASON_SEC_TRACING_DISABLED: &str = "SFN_SEC_TRACING_DISABLED";
 pub const REASON_SEC_NO_ROLE_ARN: &str = "SFN_SEC_NO_ROLE_ARN";
 pub const REASON_RES_MACHINE_NOT_ACTIVE: &str = "SFN_RES_MACHINE_NOT_ACTIVE";
 pub const REASON_RES_LOG_DESTINATIONS_MISSING: &str = "SFN_RES_LOG_DESTINATIONS_MISSING";
+pub const REASON_PERF_TRACING_DISABLED: &str = "SFN_PERF_TRACING_DISABLED";
+pub const REASON_PERF_EXPRESS_ALL_LOGGING: &str = "SFN_PERF_EXPRESS_ALL_LOGGING";
+pub const REASON_SCALE_FULL_EXECUTION_LOGGING: &str = "SFN_SCALE_FULL_EXECUTION_LOGGING";
+pub const REASON_DR_LOGGING_OFF: &str = "SFN_DR_LOGGING_OFF";
+pub const REASON_OPEX_NO_OWNER_TAG: &str = "SFN_OPEX_NO_OWNER_TAG";
+pub const REASON_DATA_GAP_MACHINE_TYPE: &str = "SFN_DATA_GAP_MACHINE_TYPE";
 pub const REASON_DATA_GAP_LOGGING: &str = "SFN_DATA_GAP_LOGGING";
 pub const REASON_DATA_GAP_TRACING: &str = "SFN_DATA_GAP_TRACING";
 pub const REASON_DATA_GAP_STATUS: &str = "SFN_DATA_GAP_STATUS";
@@ -74,6 +82,12 @@ pub fn evaluate_stepfunctions_fleet(
             Pillar::Cost => evaluate_cost(resource, &mut findings),
             Pillar::Security => evaluate_security(resource, &mut findings),
             Pillar::Resilience => evaluate_resilience(resource, &mut findings),
+            Pillar::Performance => evaluate_performance(resource, &mut findings),
+            Pillar::Scalability => evaluate_scalability(resource, &mut findings),
+            Pillar::DisasterRecovery => evaluate_disaster_recovery(resource, &mut findings),
+            Pillar::OperationalExcellence => {
+                evaluate_operational_excellence(resource, &mut findings)
+            }
         }
     }
 
@@ -315,6 +329,173 @@ fn evaluate_resilience(resource: &AwsResourceModel, findings: &mut Vec<Inventory
     }
 }
 
+fn evaluate_performance(resource: &AwsResourceModel, findings: &mut Vec<InventoryFinding>) {
+    // Without X-Ray tracing, latency bottlenecks across the machine's
+    // downstream calls cannot be located.
+    let tracing_enabled = resource
+        .resource_data
+        .get("tracing_enabled")
+        .and_then(|v| v.as_bool());
+    match tracing_enabled {
+        Some(false) => {
+            findings.push(InventoryFinding {
+                resource_id: resource.resource_id.clone(),
+                arn: resource.arn.clone(),
+                pillar: Pillar::Performance,
+                reason_code: REASON_PERF_TRACING_DISABLED.to_string(),
+                severity: Severity::Low,
+                message: format!(
+                    "State machine {} has X-Ray tracing disabled; latency bottlenecks across its downstream calls cannot be located",
+                    resource.resource_id
+                ),
+                evidence: json!({ "tracing_enabled": false }),
+            });
+        }
+        Some(true) => {}
+        None => {
+            findings.push(InventoryFinding {
+                resource_id: resource.resource_id.clone(),
+                arn: resource.arn.clone(),
+                pillar: Pillar::Performance,
+                reason_code: REASON_DATA_GAP_TRACING.to_string(),
+                severity: Severity::Low,
+                message: format!(
+                    "Tracing configuration for state machine {} is not collected yet; the performance pillar cannot be fully assessed",
+                    resource.resource_id
+                ),
+                evidence: json!({ "tracing_enabled_collected": false }),
+            });
+        }
+    }
+
+    // EXPRESS workflows are chosen for low-latency, high-volume work;
+    // ALL-level logging writes per-state-transition log events on that hot
+    // path.
+    if machine_type(resource).as_deref() == Some("EXPRESS")
+        && logging_level(resource).as_deref() == Some("ALL")
+    {
+        findings.push(InventoryFinding {
+            resource_id: resource.resource_id.clone(),
+            arn: resource.arn.clone(),
+            pillar: Pillar::Performance,
+            reason_code: REASON_PERF_EXPRESS_ALL_LOGGING.to_string(),
+            severity: Severity::Low,
+            message: format!(
+                "EXPRESS state machine {} logs at ALL level; per-state-transition log writes add latency on the hot path it was chosen for",
+                resource.resource_id
+            ),
+            evidence: json!({
+                "state_machine_type": "EXPRESS",
+                "logging_level": "ALL",
+            }),
+        });
+    }
+}
+
+fn evaluate_scalability(resource: &AwsResourceModel, findings: &mut Vec<InventoryFinding>) {
+    // ALL-level logging with execution data grows log volume linearly with
+    // execution count and payload size; CloudWatch Logs ingestion quotas
+    // become the ceiling before the workflow itself does.
+    if logging_level(resource).as_deref() == Some("ALL")
+        && resource
+            .resource_data
+            .get("logging_include_execution_data")
+            .and_then(|v| v.as_bool())
+            == Some(true)
+    {
+        findings.push(InventoryFinding {
+            resource_id: resource.resource_id.clone(),
+            arn: resource.arn.clone(),
+            pillar: Pillar::Scalability,
+            reason_code: REASON_SCALE_FULL_EXECUTION_LOGGING.to_string(),
+            severity: Severity::Low,
+            message: format!(
+                "State machine {} logs at ALL level with execution data included; log volume scales linearly with executions and CloudWatch Logs ingestion quotas become the scaling ceiling",
+                resource.resource_id
+            ),
+            evidence: json!({
+                "logging_level": "ALL",
+                "logging_include_execution_data": true,
+            }),
+        });
+    }
+
+    if machine_type(resource).is_none() {
+        findings.push(InventoryFinding {
+            resource_id: resource.resource_id.clone(),
+            arn: resource.arn.clone(),
+            pillar: Pillar::Scalability,
+            reason_code: REASON_DATA_GAP_MACHINE_TYPE.to_string(),
+            severity: Severity::Low,
+            message: format!(
+                "Workflow type for state machine {} is not collected yet; throughput characteristics cannot be assessed",
+                resource.resource_id
+            ),
+            evidence: json!({ "state_machine_type_collected": false }),
+        });
+    }
+}
+
+fn evaluate_disaster_recovery(resource: &AwsResourceModel, findings: &mut Vec<InventoryFinding>) {
+    // With logging OFF there is no execution record outside the service's
+    // bounded execution history; after an outage, lost or in-flight work
+    // cannot be identified and replayed.
+    match logging_level(resource).as_deref() {
+        Some("OFF") => {
+            findings.push(InventoryFinding {
+                resource_id: resource.resource_id.clone(),
+                arn: resource.arn.clone(),
+                pillar: Pillar::DisasterRecovery,
+                reason_code: REASON_DR_LOGGING_OFF.to_string(),
+                severity: Severity::Medium,
+                message: format!(
+                    "State machine {} has execution logging OFF; after an outage there is no durable execution record to identify and replay lost work",
+                    resource.resource_id
+                ),
+                evidence: json!({ "logging_level": "OFF" }),
+            });
+        }
+        Some(_) => {}
+        None => {
+            findings.push(InventoryFinding {
+                resource_id: resource.resource_id.clone(),
+                arn: resource.arn.clone(),
+                pillar: Pillar::DisasterRecovery,
+                reason_code: REASON_DATA_GAP_LOGGING.to_string(),
+                severity: Severity::Low,
+                message: format!(
+                    "Logging configuration for state machine {} is not collected yet; the disaster-recovery pillar cannot be fully assessed",
+                    resource.resource_id
+                ),
+                evidence: json!({ "logging_level_collected": false }),
+            });
+        }
+    }
+}
+
+fn evaluate_operational_excellence(
+    resource: &AwsResourceModel,
+    findings: &mut Vec<InventoryFinding>,
+) {
+    if !has_any_tag(&resource.tags, OWNER_TAG_KEYS) {
+        findings.push(InventoryFinding {
+            resource_id: resource.resource_id.clone(),
+            arn: resource.arn.clone(),
+            pillar: Pillar::OperationalExcellence,
+            reason_code: REASON_OPEX_NO_OWNER_TAG.to_string(),
+            severity: Severity::Medium,
+            message: format!(
+                "State machine {} carries no owner or team tag; findings and incidents for it cannot be routed to an owner",
+                resource.resource_id
+            ),
+            evidence: json!({
+                "tags": resource.tags,
+                "accepted_tag_keys": OWNER_TAG_KEYS,
+            }),
+        });
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -541,9 +722,90 @@ mod tests {
     }
 
     #[test]
+    fn performance_flags_tracing_disabled() {
+        let mut data = healthy_machine_data();
+        data["tracing_enabled"] = json!(false);
+        let r = fixture("sm-perf-notrace", json!({"team": "sre"}), data, now());
+        let report = evaluate_stepfunctions_fleet(&[r], Pillar::Performance, now());
+        assert_eq!(codes(&report), vec![REASON_PERF_TRACING_DISABLED]);
+        assert!(matches!(report.findings[0].severity, Severity::Low));
+    }
+
+    #[test]
+    fn performance_flags_express_all_logging_and_reports_tracing_gap() {
+        let mut data = healthy_machine_data();
+        data["state_machine_type"] = json!("EXPRESS");
+        data["logging_level"] = json!("ALL");
+        let r = fixture("sm-perf-express", json!({"team": "sre"}), data, now());
+        let report = evaluate_stepfunctions_fleet(&[r], Pillar::Performance, now());
+        assert_eq!(codes(&report), vec![REASON_PERF_EXPRESS_ALL_LOGGING]);
+
+        let mut gap = healthy_machine_data();
+        gap.as_object_mut().unwrap().remove("tracing_enabled");
+        let r2 = fixture("sm-perf-gap", json!({"team": "sre"}), gap, now());
+        let report = evaluate_stepfunctions_fleet(&[r2], Pillar::Performance, now());
+        assert_eq!(codes(&report), vec![REASON_DATA_GAP_TRACING]);
+    }
+
+    #[test]
+    fn scalability_flags_full_execution_logging_on_any_machine_type() {
+        let mut data = healthy_machine_data();
+        data["logging_level"] = json!("ALL");
+        data["logging_include_execution_data"] = json!(true);
+        let r = fixture("sm-scale-logs", json!({"team": "sre"}), data, now());
+        let report = evaluate_stepfunctions_fleet(&[r], Pillar::Scalability, now());
+        assert_eq!(codes(&report), vec![REASON_SCALE_FULL_EXECUTION_LOGGING]);
+    }
+
+    #[test]
+    fn scalability_reports_machine_type_data_gap() {
+        let mut data = healthy_machine_data();
+        data.as_object_mut().unwrap().remove("state_machine_type");
+        let r = fixture("sm-scale-gap", json!({"team": "sre"}), data, now());
+        let report = evaluate_stepfunctions_fleet(&[r], Pillar::Scalability, now());
+        assert_eq!(codes(&report), vec![REASON_DATA_GAP_MACHINE_TYPE]);
+    }
+
+    #[test]
+    fn disaster_recovery_flags_logging_off_and_reports_logging_gap() {
+        let mut data = healthy_machine_data();
+        data["logging_level"] = json!("OFF");
+        let r = fixture("sm-dr-off", json!({"team": "sre"}), data, now());
+        let report = evaluate_stepfunctions_fleet(&[r], Pillar::DisasterRecovery, now());
+        assert_eq!(codes(&report), vec![REASON_DR_LOGGING_OFF]);
+        assert!(matches!(report.findings[0].severity, Severity::Medium));
+
+        let mut gap = healthy_machine_data();
+        gap.as_object_mut().unwrap().remove("logging_level");
+        let r2 = fixture("sm-dr-gap", json!({"team": "sre"}), gap, now());
+        let report = evaluate_stepfunctions_fleet(&[r2], Pillar::DisasterRecovery, now());
+        assert_eq!(codes(&report), vec![REASON_DATA_GAP_LOGGING]);
+    }
+
+    #[test]
+    fn operational_excellence_flags_missing_owner_tag() {
+        let r = fixture(
+            "sm-unowned",
+            json!({"environment": "prod"}),
+            healthy_machine_data(),
+            now(),
+        );
+        let report = evaluate_stepfunctions_fleet(&[r], Pillar::OperationalExcellence, now());
+        assert_eq!(codes(&report), vec![REASON_OPEX_NO_OWNER_TAG]);
+    }
+
+    #[test]
     fn healthy_machine_passes_all_pillars() {
         let r = fixture("sm-ok", json!({"team": "sre"}), healthy_machine_data(), now());
-        for pillar in [Pillar::Cost, Pillar::Security, Pillar::Resilience] {
+        for pillar in [
+            Pillar::Cost,
+            Pillar::Security,
+            Pillar::Resilience,
+            Pillar::Performance,
+            Pillar::Scalability,
+            Pillar::DisasterRecovery,
+            Pillar::OperationalExcellence,
+        ] {
             let report = evaluate_stepfunctions_fleet(std::slice::from_ref(&r), pillar, now());
             assert!(
                 report.findings.is_empty(),
