@@ -31,6 +31,7 @@ greenfield pending: no always-on Linux host companion or agent module was found 
 ## Target Operating Model
 
 - One normalized resource identity per cloud service, Kubernetes object, database domain, or Kafka domain.
+- Each backlog row is a shippable vertical slice with release phase, size, API contract, telemetry, tests, rollout guardrail, and runbook documentation.
 - Deterministic collectors produce evidence before any LLM summary is generated.
 - Findings are scored by pillar: cost, resilience, performance, scalability, security, disaster-recovery, operational-excellence.
 - Each resource supports deterministic triage and bounded agentic investigation as separate workflows.

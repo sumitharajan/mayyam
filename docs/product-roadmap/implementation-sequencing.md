@@ -43,3 +43,20 @@
 | Azure Cloud | 3,654 |
 | Google Cloud | 3,465 |
 | Linux Companion | 3,675 |
+| Universal Resource Graph | 1,715 |
+| Service Catalog and Ownership | 1,372 |
+| Incident Command Center | 1,372 |
+| SLO and Error Budget | 1,127 |
+| OpenTelemetry Ingestion | 1,274 |
+| Workflow and Action Engine | 1,568 |
+| IaC Drift and Change Intelligence | 1,323 |
+| Security and Compliance Packs | 1,176 |
+| FinOps and Unit Economics | 1,225 |
+| Digital Experience and Synthetic Checks | 833 |
+| Plugin and Action Marketplace | 1,078 |
+| Evidence Store and Time Machine | 1,176 |
+| Learning and Runbook System | 1,029 |
+| Fleet Management Control Plane | 1,176 |
+| Kubernetes Cost Allocation | 980 |
+| Applications and Microservices APM | 1,127 |
+| AI and LLM Observability | 1,078 |

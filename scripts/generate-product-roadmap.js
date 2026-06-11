@@ -58,6 +58,10 @@ function table(headers, rows) {
   ].join("\n");
 }
 
+function plannedItems(entries) {
+  return entries.map(([category, name]) => ({ category, name, status: "planned" }));
+}
+
 const cloudTemplates = [
   {
     workstream: "inventory",
@@ -506,6 +510,478 @@ const linuxItems = [
   ["Observability", "eBPF signals"],
 ].map(([category, name]) => ({ category, name, status: "planned" }));
 
+const resourceGraphItems = plannedItems([
+  ["Identity", "global resource identity"],
+  ["Identity", "identity merge and split"],
+  ["Identity", "resource aliases"],
+  ["Identity", "external identifiers"],
+  ["Ingestion", "cloud resource nodes"],
+  ["Ingestion", "Kubernetes object nodes"],
+  ["Ingestion", "Linux host nodes"],
+  ["Ingestion", "database nodes"],
+  ["Ingestion", "Kafka nodes"],
+  ["Relationships", "dependency edge model"],
+  ["Relationships", "runtime call edges"],
+  ["Relationships", "network flow edges"],
+  ["Relationships", "ownership edges"],
+  ["Relationships", "cost allocation edges"],
+  ["Relationships", "deployment edges"],
+  ["Relationships", "incident impact edges"],
+  ["Analysis", "blast radius traversal"],
+  ["Analysis", "root cause path ranking"],
+  ["Analysis", "change impact graph"],
+  ["Analysis", "orphan resource detection"],
+  ["Analysis", "stale edge cleanup"],
+  ["Analysis", "critical path detection"],
+  ["Timeline", "graph snapshots"],
+  ["Timeline", "graph diff"],
+  ["Timeline", "before and after incident view"],
+  ["Query", "graph query API"],
+  ["Query", "saved graph views"],
+  ["Query", "graph export"],
+  ["UI", "interactive topology map"],
+  ["UI", "pillar overlay"],
+  ["UI", "cost overlay"],
+  ["UI", "security overlay"],
+  ["UI", "SLO overlay"],
+  ["Governance", "graph permissions"],
+  ["Governance", "graph audit trail"],
+]);
+
+const serviceCatalogItems = plannedItems([
+  ["Service Record", "service profile"],
+  ["Service Record", "environment model"],
+  ["Service Record", "lifecycle status"],
+  ["Ownership", "team ownership"],
+  ["Ownership", "on-call mapping"],
+  ["Ownership", "secondary owner"],
+  ["Ownership", "ownership review"],
+  ["Ownership", "orphan resource assignment"],
+  ["Engineering", "repository links"],
+  ["Engineering", "CI/CD pipeline links"],
+  ["Engineering", "deployment history"],
+  ["Engineering", "feature flag links"],
+  ["Operations", "runbook links"],
+  ["Operations", "SLO links"],
+  ["Operations", "incident links"],
+  ["Operations", "support contacts"],
+  ["FinOps", "cost center"],
+  ["FinOps", "business capability"],
+  ["FinOps", "unit economics owner"],
+  ["Compliance", "data classification"],
+  ["Compliance", "regulatory scope"],
+  ["Compliance", "service criticality"],
+  ["Automation", "service onboarding wizard"],
+  ["Automation", "tag normalization"],
+  ["Automation", "catalog drift detection"],
+  ["UI", "service scorecard"],
+  ["UI", "service dependency view"],
+  ["UI", "service health timeline"],
+]);
+
+const incidentItems = plannedItems([
+  ["Intake", "manual incident creation"],
+  ["Intake", "alert triggered incident"],
+  ["Intake", "security signal incident"],
+  ["Intake", "cost anomaly incident"],
+  ["Grouping", "alert deduplication"],
+  ["Grouping", "resource correlation"],
+  ["Grouping", "symptom clustering"],
+  ["Severity", "severity policy"],
+  ["Severity", "customer impact estimate"],
+  ["Timeline", "incident event timeline"],
+  ["Timeline", "change correlation"],
+  ["Timeline", "agent investigation timeline"],
+  ["Timeline", "action timeline"],
+  ["Response", "responder roles"],
+  ["Response", "war room notes"],
+  ["Response", "handoff workflow"],
+  ["Response", "status updates"],
+  ["Response", "stakeholder notifications"],
+  ["Diagnosis", "blast radius panel"],
+  ["Diagnosis", "likely root cause ranking"],
+  ["Diagnosis", "related resource graph"],
+  ["Actions", "approved remediation list"],
+  ["Actions", "rollback tracking"],
+  ["Postmortem", "postmortem draft"],
+  ["Postmortem", "action item extraction"],
+  ["Postmortem", "learning to rule conversion"],
+  ["Reporting", "MTTA and MTTR metrics"],
+  ["Reporting", "incident review dashboard"],
+]);
+
+const sloItems = plannedItems([
+  ["SLI", "availability SLI"],
+  ["SLI", "latency SLI"],
+  ["SLI", "error rate SLI"],
+  ["SLI", "throughput SLI"],
+  ["SLI", "freshness SLI"],
+  ["SLI", "queue lag SLI"],
+  ["SLI", "database query SLI"],
+  ["SLI", "Kafka consumer lag SLI"],
+  ["SLI", "synthetic check SLI"],
+  ["SLO", "service SLO policy"],
+  ["SLO", "resource SLO policy"],
+  ["SLO", "dependency SLO policy"],
+  ["SLO", "multi-region SLO policy"],
+  ["Budget", "error budget burn rate"],
+  ["Budget", "multi-window burn alert"],
+  ["Budget", "budget exhaustion forecast"],
+  ["Budget", "release gate on burn"],
+  ["Reporting", "SLO scorecard"],
+  ["Reporting", "executive reliability report"],
+  ["Reporting", "SLO history"],
+  ["Actions", "SLO breach investigation"],
+  ["Actions", "SLO-driven remediation"],
+  ["Actions", "post-incident SLO review"],
+]);
+
+const otelItems = plannedItems([
+  ["Signals", "metrics ingestion"],
+  ["Signals", "trace ingestion"],
+  ["Signals", "log ingestion"],
+  ["Signals", "baggage ingestion"],
+  ["Signals", "profile ingestion"],
+  ["Signals", "event ingestion"],
+  ["Schema", "OpenTelemetry resource attributes"],
+  ["Schema", "semantic conventions"],
+  ["Schema", "service name normalization"],
+  ["Pipeline", "collector enrollment"],
+  ["Pipeline", "collector configuration"],
+  ["Pipeline", "tail sampling"],
+  ["Pipeline", "head sampling"],
+  ["Pipeline", "cardinality control"],
+  ["Pipeline", "PII redaction"],
+  ["Pipeline", "log parsing"],
+  ["Pipeline", "metric transforms"],
+  ["Correlation", "trace to log correlation"],
+  ["Correlation", "metric exemplar linking"],
+  ["Correlation", "service map from traces"],
+  ["Storage", "retention tiers"],
+  ["Storage", "hot and cold telemetry"],
+  ["UI", "trace waterfall"],
+  ["UI", "log explorer"],
+  ["UI", "metric explorer"],
+  ["UI", "profile flamegraph"],
+]);
+
+const workflowItems = plannedItems([
+  ["Core", "workflow definition"],
+  ["Core", "workflow versioning"],
+  ["Core", "workflow execution history"],
+  ["Core", "workflow cancellation"],
+  ["Core", "workflow replay"],
+  ["Triggers", "manual trigger"],
+  ["Triggers", "schedule trigger"],
+  ["Triggers", "finding trigger"],
+  ["Triggers", "incident trigger"],
+  ["Triggers", "webhook trigger"],
+  ["Actions", "HTTP action"],
+  ["Actions", "cloud API action"],
+  ["Actions", "Kubernetes action"],
+  ["Actions", "database diagnostic action"],
+  ["Actions", "Kafka admin action"],
+  ["Actions", "Linux diagnostic action"],
+  ["Logic", "branching"],
+  ["Logic", "conditions"],
+  ["Logic", "loops with limits"],
+  ["Logic", "timeouts"],
+  ["Logic", "retries and backoff"],
+  ["Safety", "dry-run action"],
+  ["Safety", "approval action"],
+  ["Safety", "change window"],
+  ["Safety", "rollback note"],
+  ["Safety", "blast radius check"],
+  ["Secrets", "scoped secret access"],
+  ["Templates", "incident blueprint"],
+  ["Templates", "remediation blueprint"],
+  ["Templates", "security response blueprint"],
+  ["UI", "workflow builder"],
+  ["UI", "execution monitor"],
+]);
+
+const iacDriftItems = plannedItems([
+  ["Sources", "Terraform state"],
+  ["Sources", "Terraform plan"],
+  ["Sources", "CloudFormation stack"],
+  ["Sources", "Pulumi stack"],
+  ["Sources", "Helm release"],
+  ["Sources", "Kustomize overlay"],
+  ["Sources", "Argo CD app"],
+  ["Sources", "Flux Kustomization"],
+  ["Sources", "raw Kubernetes YAML"],
+  ["Detection", "resource drift"],
+  ["Detection", "deleted managed resource"],
+  ["Detection", "unmanaged resource"],
+  ["Detection", "configuration drift"],
+  ["Detection", "tag drift"],
+  ["Detection", "security drift"],
+  ["Detection", "cost drift"],
+  ["Analysis", "drift blast radius"],
+  ["Analysis", "drift owner mapping"],
+  ["Analysis", "change source attribution"],
+  ["Actions", "reconcile recommendation"],
+  ["Actions", "PR proposal"],
+  ["Actions", "rollback PR"],
+  ["Actions", "import resource plan"],
+  ["Governance", "policy-as-code gate"],
+  ["Governance", "exception workflow"],
+  ["UI", "drift diff viewer"],
+  ["UI", "IaC lineage view"],
+]);
+
+const complianceItems = plannedItems([
+  ["Framework", "CIS AWS Benchmark"],
+  ["Framework", "CIS Kubernetes Benchmark"],
+  ["Framework", "CIS Linux Benchmark"],
+  ["Framework", "NIST control mapping"],
+  ["Framework", "SOC2 control mapping"],
+  ["Framework", "HIPAA control mapping"],
+  ["Framework", "PCI DSS control mapping"],
+  ["Framework", "AWS Foundational Security Best Practices"],
+  ["Identity", "IAM privilege audit"],
+  ["Identity", "CIEM entitlement review"],
+  ["Identity", "stale principal detection"],
+  ["Secrets", "secret exposure detection"],
+  ["Secrets", "secret rotation posture"],
+  ["Network", "public exposure audit"],
+  ["Network", "firewall policy audit"],
+  ["Workload", "container image vulnerability"],
+  ["Workload", "package vulnerability"],
+  ["Workload", "runtime protection finding"],
+  ["Evidence", "control evidence snapshot"],
+  ["Evidence", "exception approval"],
+  ["Evidence", "audit export"],
+  ["Reporting", "compliance dashboard"],
+  ["Reporting", "control owner report"],
+  ["Actions", "security remediation workflow"],
+]);
+
+const finopsItems = plannedItems([
+  ["Ingestion", "AWS bill ingestion"],
+  ["Ingestion", "Azure cost ingestion"],
+  ["Ingestion", "Google Cloud billing ingestion"],
+  ["Ingestion", "custom cost upload"],
+  ["Allocation", "tag normalization"],
+  ["Allocation", "cost center mapping"],
+  ["Allocation", "service allocation"],
+  ["Allocation", "team allocation"],
+  ["Allocation", "customer allocation"],
+  ["Allocation", "Kubernetes namespace allocation"],
+  ["Allocation", "Kafka topic allocation"],
+  ["Allocation", "database workload allocation"],
+  ["Unit Economics", "cost per request"],
+  ["Unit Economics", "cost per customer"],
+  ["Unit Economics", "cost per job"],
+  ["Unit Economics", "cost per query family"],
+  ["Optimization", "rightsizing opportunity"],
+  ["Optimization", "idle resource opportunity"],
+  ["Optimization", "commitment discount opportunity"],
+  ["Optimization", "storage tier opportunity"],
+  ["Optimization", "network egress opportunity"],
+  ["Governance", "budget policy"],
+  ["Governance", "forecast"],
+  ["Governance", "anomaly alert"],
+  ["Verification", "realized savings tracking"],
+]);
+
+const syntheticItems = plannedItems([
+  ["HTTP", "HTTP availability check"],
+  ["HTTP", "API contract check"],
+  ["HTTP", "latency percentile check"],
+  ["Browser", "browser journey check"],
+  ["Browser", "login journey check"],
+  ["Browser", "checkout journey check"],
+  ["Network", "DNS resolution check"],
+  ["Network", "TLS expiry check"],
+  ["Network", "TCP connect check"],
+  ["Network", "regional latency check"],
+  ["Network", "private location check"],
+  ["Service", "dependency availability check"],
+  ["Service", "third-party API check"],
+  ["Service", "status page correlation"],
+  ["Incident", "synthetic-triggered incident"],
+  ["SLO", "synthetic SLI"],
+  ["Reporting", "user journey health"],
+]);
+
+const pluginItems = plannedItems([
+  ["SDK", "connector SDK"],
+  ["SDK", "action SDK"],
+  ["SDK", "rule pack SDK"],
+  ["SDK", "UI extension SDK"],
+  ["Manifest", "plugin manifest"],
+  ["Manifest", "permission declaration"],
+  ["Manifest", "compatibility declaration"],
+  ["Manifest", "risk declaration"],
+  ["Distribution", "private registry"],
+  ["Distribution", "plugin signing"],
+  ["Distribution", "install workflow"],
+  ["Distribution", "update workflow"],
+  ["Distribution", "rollback workflow"],
+  ["Governance", "plugin review workflow"],
+  ["Governance", "plugin audit events"],
+  ["Governance", "plugin sandbox policy"],
+  ["Templates", "resource connector template"],
+  ["Templates", "remediation action template"],
+  ["Templates", "compliance pack template"],
+  ["Marketplace", "plugin catalog"],
+  ["Marketplace", "action pack catalog"],
+  ["Marketplace", "rule pack catalog"],
+]);
+
+const evidenceStoreItems = plannedItems([
+  ["Storage", "resource config snapshot"],
+  ["Storage", "metric snapshot"],
+  ["Storage", "log event snapshot"],
+  ["Storage", "finding snapshot"],
+  ["Storage", "action execution snapshot"],
+  ["Storage", "agent trace snapshot"],
+  ["Storage", "cost snapshot"],
+  ["Storage", "graph snapshot"],
+  ["Query", "evidence query API"],
+  ["Query", "time range query"],
+  ["Query", "resource timeline query"],
+  ["Query", "incident evidence query"],
+  ["Diff", "config diff"],
+  ["Diff", "finding diff"],
+  ["Diff", "cost diff"],
+  ["Replay", "investigation replay"],
+  ["Replay", "workflow replay"],
+  ["Governance", "retention policy"],
+  ["Governance", "immutability policy"],
+  ["Governance", "legal hold"],
+  ["Governance", "access control"],
+  ["Export", "CSV export"],
+  ["Export", "JSON export"],
+  ["Export", "postmortem evidence bundle"],
+]);
+
+const learningItems = plannedItems([
+  ["Capture", "manual fix capture"],
+  ["Capture", "incident learning capture"],
+  ["Capture", "agent suggestion capture"],
+  ["Conversion", "case to deterministic rule"],
+  ["Conversion", "case to runbook"],
+  ["Conversion", "case to workflow"],
+  ["Conversion", "case to knowledge article"],
+  ["Runbook", "runbook editor"],
+  ["Runbook", "runbook versioning"],
+  ["Runbook", "runbook approval"],
+  ["Runbook", "runbook schedule"],
+  ["Runbook", "runbook execution history"],
+  ["Quality", "runbook success rate"],
+  ["Quality", "rule false positive feedback"],
+  ["Quality", "recommendation usefulness feedback"],
+  ["Knowledge", "known issue library"],
+  ["Knowledge", "diagnostic recipe library"],
+  ["Knowledge", "team playbook library"],
+  ["Automation", "learning backlog"],
+  ["Automation", "owner assignment"],
+  ["Automation", "verification task"],
+]);
+
+const fleetItems = plannedItems([
+  ["Enrollment", "host enrollment token"],
+  ["Enrollment", "host identity proof"],
+  ["Enrollment", "fleet grouping"],
+  ["Enrollment", "air-gapped enrollment"],
+  ["Health", "agent heartbeat"],
+  ["Health", "agent self diagnostics"],
+  ["Health", "agent resource usage"],
+  ["Policy", "policy bundle"],
+  ["Policy", "local allowlist"],
+  ["Policy", "command denylist"],
+  ["Updates", "agent version inventory"],
+  ["Updates", "rolling agent update"],
+  ["Updates", "agent rollback"],
+  ["Connectivity", "proxy support"],
+  ["Connectivity", "offline buffering"],
+  ["Connectivity", "mTLS rotation"],
+  ["Actions", "remote diagnostic request"],
+  ["Actions", "approved command execution"],
+  ["Actions", "file collection request"],
+  ["Actions", "package patch request"],
+  ["Security", "host revocation"],
+  ["Security", "credential rotation"],
+  ["UI", "fleet dashboard"],
+  ["UI", "host detail page"],
+]);
+
+const k8sCostItems = plannedItems([
+  ["Ingestion", "OpenCost integration"],
+  ["Ingestion", "cloud bill integration"],
+  ["Allocation", "namespace cost"],
+  ["Allocation", "workload cost"],
+  ["Allocation", "pod cost"],
+  ["Allocation", "node cost"],
+  ["Allocation", "persistent volume cost"],
+  ["Allocation", "GPU cost"],
+  ["Allocation", "network cost"],
+  ["Waste", "idle request cost"],
+  ["Waste", "over-requested CPU"],
+  ["Waste", "over-requested memory"],
+  ["Waste", "orphaned volume cost"],
+  ["Optimization", "rightsizing recommendation"],
+  ["Optimization", "cluster autoscaler recommendation"],
+  ["Optimization", "spot node opportunity"],
+  ["Governance", "namespace budget"],
+  ["Governance", "showback report"],
+  ["Governance", "chargeback report"],
+  ["Forecast", "workload cost forecast"],
+]);
+
+const apmItems = plannedItems([
+  ["Discovery", "service auto-discovery"],
+  ["Discovery", "endpoint inventory"],
+  ["Discovery", "dependency map"],
+  ["Metrics", "RED metrics"],
+  ["Metrics", "USE metrics"],
+  ["Metrics", "Apdex score"],
+  ["Traces", "distributed trace view"],
+  ["Traces", "slow span detection"],
+  ["Traces", "database span analysis"],
+  ["Traces", "external call analysis"],
+  ["Errors", "error tracking"],
+  ["Errors", "exception grouping"],
+  ["Errors", "release regression detection"],
+  ["Profiling", "CPU profiling"],
+  ["Profiling", "memory profiling"],
+  ["Profiling", "hot path detection"],
+  ["Runtime", "JVM runtime metrics"],
+  ["Runtime", "Node.js runtime metrics"],
+  ["Runtime", "Python runtime metrics"],
+  ["Deployment", "deploy marker"],
+  ["Deployment", "feature flag correlation"],
+  ["SLO", "service health score"],
+  ["UI", "service workbench"],
+]);
+
+const aiObservabilityItems = plannedItems([
+  ["Inventory", "model inventory"],
+  ["Inventory", "prompt inventory"],
+  ["Inventory", "agent inventory"],
+  ["Telemetry", "LLM latency"],
+  ["Telemetry", "LLM error rate"],
+  ["Telemetry", "token usage"],
+  ["Telemetry", "model cost"],
+  ["Telemetry", "tool call trace"],
+  ["Quality", "evaluation dataset"],
+  ["Quality", "response quality score"],
+  ["Quality", "grounding score"],
+  ["Quality", "hallucination feedback"],
+  ["Safety", "prompt injection detection"],
+  ["Safety", "sensitive data leakage"],
+  ["Safety", "unsafe tool call prevention"],
+  ["Agent", "agent trace replay"],
+  ["Agent", "agent budget controls"],
+  ["Agent", "agent stop condition"],
+  ["Governance", "model routing policy"],
+  ["Governance", "provider failover"],
+  ["Governance", "approval policy"],
+  ["Reporting", "AI spend report"],
+]);
+
 const modules = [
   {
     folder: "01-aws-cloud",
@@ -717,6 +1193,221 @@ const modules = [
   },
 ];
 
+function platformModule(folder, title, mission, services, gaps) {
+  return {
+    folder,
+    title,
+    maturity: "greenfield pending: platform primitive is not yet implemented as a first-class Mayyam module",
+    mission,
+    codeRefs: [
+      "README.md",
+      "backend/src/api/routes/mod.rs",
+      "backend/src/controllers/mod.rs",
+      "backend/src/services/mod.rs",
+      "frontend/src/App.js",
+      "frontend/src/components/layout/AppLayout.js",
+    ],
+    now: [
+      "Related capabilities exist in separate product areas, but this platform primitive is not yet unified.",
+      "The current roadmap foundation gives this module shared resource identity, evidence, findings, actions, and audit concepts to build on.",
+      "This module should be implemented as reusable infrastructure for all resource families rather than a one-off page.",
+    ],
+    gaps,
+    services,
+    templates: platformTemplates,
+  };
+}
+
+modules.push(
+  platformModule(
+    "09-universal-resource-graph",
+    "Universal Resource Graph",
+    "Create the live dependency graph that connects resources, services, owners, costs, incidents, deployments, telemetry, and actions across the whole platform.",
+    resourceGraphItems,
+    [
+      "Need a normalized graph model for nodes, edges, snapshots, and time-aware diffs.",
+      "Need blast-radius, root-cause path ranking, ownership overlays, cost overlays, security overlays, and incident overlays.",
+      "Need UI and API support for graph query, saved views, exports, permissions, and stale-edge governance.",
+    ],
+  ),
+  platformModule(
+    "10-service-catalog-ownership",
+    "Service Catalog and Ownership",
+    "Make every resource operationally accountable by linking it to a service, owner, team, on-call path, repository, SLO, cost center, runbook, and business context.",
+    serviceCatalogItems,
+    [
+      "Need service ownership records and orphan-resource assignment workflows.",
+      "Need team, on-call, repository, runbook, cost-center, compliance, and service-criticality mapping.",
+      "Need service scorecards that roll up resource posture into owner-facing accountability.",
+    ],
+  ),
+  platformModule(
+    "11-incident-command-center",
+    "Incident Command Center",
+    "Turn findings and alerts into coordinated incident response with timeline, blast radius, agent investigation, actions, postmortems, and learning loops.",
+    incidentItems,
+    [
+      "Need incident intake, grouping, deduplication, severity, timeline, responder roles, and status updates.",
+      "Need automatic correlation with resource graph, recent changes, cost anomalies, security signals, and agent investigations.",
+      "Need postmortem generation and conversion of lessons into runbooks, rules, and workflows.",
+    ],
+  ),
+  platformModule(
+    "12-slo-error-budget",
+    "SLO and Error Budget",
+    "Connect resource posture to user-facing reliability by tracking SLIs, SLOs, burn rates, dependency health, and release risk.",
+    sloItems,
+    [
+      "Need generic SLI definitions for availability, latency, error rate, throughput, lag, freshness, and synthetic checks.",
+      "Need burn-rate policies, release gates, dependency SLOs, resource SLOs, and executive reliability reporting.",
+      "Need SLO-driven triage and remediation that prioritizes customer-impacting failures.",
+    ],
+  ),
+  platformModule(
+    "13-opentelemetry-ingestion",
+    "OpenTelemetry Ingestion",
+    "Ingest and correlate open telemetry signals so Mayyam can see applications, infrastructure, and resource behavior without a closed instrumentation model.",
+    otelItems,
+    [
+      "Need metrics, traces, logs, baggage, events, profiles, semantic conventions, and resource attribute normalization.",
+      "Need collector enrollment, sampling, cardinality control, PII redaction, retention tiers, and pipeline health.",
+      "Need trace-log-metric-profile correlation that feeds service maps, incidents, SLOs, and agent investigations.",
+    ],
+  ),
+  platformModule(
+    "14-workflow-action-engine",
+    "Workflow and Action Engine",
+    "Provide the automation backbone for safe resource interaction: triggers, approvals, branches, actions, retries, dry-runs, rollback notes, and audit trails.",
+    workflowItems,
+    [
+      "Need workflow definitions, versioning, execution history, replay, cancellation, and observability.",
+      "Need action adapters for HTTP, cloud APIs, Kubernetes, databases, Kafka, and Linux diagnostics.",
+      "Need safety primitives: dry-run, approval, change window, blast-radius check, scoped secrets, and rollback notes.",
+    ],
+  ),
+  platformModule(
+    "15-iac-drift-change-intelligence",
+    "IaC Drift and Change Intelligence",
+    "Tie resource findings to infrastructure-as-code, drift, recent changes, deployment history, and safe reconciliation.",
+    iacDriftItems,
+    [
+      "Need Terraform, CloudFormation, Pulumi, Helm, Kustomize, Argo CD, Flux, and YAML source ingestion.",
+      "Need resource drift, unmanaged resource, deleted managed resource, tag drift, security drift, and cost drift detection.",
+      "Need PR proposal, rollback PR, import plan, policy-as-code gates, and drift ownership workflows.",
+    ],
+  ),
+  platformModule(
+    "16-security-compliance-packs",
+    "Security and Compliance Packs",
+    "Ship reusable control packs for cloud, Kubernetes, Linux, databases, Kafka, secrets, identity, workload, and audit evidence.",
+    complianceItems,
+    [
+      "Need CIS, NIST, SOC2, HIPAA, PCI, AWS security best-practice, identity, secret, network, workload, and vulnerability controls.",
+      "Need evidence snapshots, exception approvals, control owners, audit exports, and remediation workflows.",
+      "Need compliance packs to feed the same findings, scorecards, action engine, and evidence store as all other modules.",
+    ],
+  ),
+  platformModule(
+    "17-finops-unit-economics",
+    "FinOps and Unit Economics",
+    "Convert cost visibility into allocation, unit economics, savings opportunities, realized savings, and owner accountability.",
+    finopsItems,
+    [
+      "Need multi-cloud billing ingestion, custom cost upload, tag normalization, and allocation by service, team, customer, namespace, topic, and workload.",
+      "Need unit economics such as cost per request, customer, job, query family, and business capability.",
+      "Need opportunities with estimated savings, confidence, effort, risk, owner, verification, and realized savings tracking.",
+    ],
+  ),
+  platformModule(
+    "18-digital-experience-synthetic-checks",
+    "Digital Experience and Synthetic Checks",
+    "Measure user-visible health through API, browser, DNS, TLS, network, private-location, third-party, and regional synthetic checks.",
+    syntheticItems,
+    [
+      "Need synthetic probes that map back to services, resources, SLOs, incidents, and root-cause investigations.",
+      "Need private locations for internal endpoints and regional checks for customer-impact visibility.",
+      "Need synthetic results to generate SLIs, incidents, and remediation workflows.",
+    ],
+  ),
+  platformModule(
+    "19-plugin-action-marketplace",
+    "Plugin and Action Marketplace",
+    "Make Mayyam extensible through connector SDKs, action SDKs, rule packs, UI extensions, private registries, signed plugins, and action catalogs.",
+    pluginItems,
+    [
+      "Need plugin manifest, permission declaration, compatibility, risk declaration, signing, install, update, rollback, and audit events.",
+      "Need SDK templates for resource connectors, remediation actions, compliance packs, and UI extensions.",
+      "Need private marketplace support so teams can ship internal integrations safely.",
+    ],
+  ),
+  platformModule(
+    "20-evidence-store-time-machine",
+    "Evidence Store and Time Machine",
+    "Preserve resource state, findings, metrics, logs, actions, graph snapshots, costs, and agent traces so teams can compare and replay any incident or change.",
+    evidenceStoreItems,
+    [
+      "Need durable evidence snapshots across resource config, metrics, logs, findings, actions, costs, graph state, and agent traces.",
+      "Need query, diff, replay, retention, immutability, access control, legal hold, and export capabilities.",
+      "Need evidence bundles for incidents, postmortems, audits, and verification.",
+    ],
+  ),
+  platformModule(
+    "21-learning-runbook-system",
+    "Learning and Runbook System",
+    "Turn manual fixes, incidents, and agent investigations into deterministic rules, runbooks, workflows, knowledge articles, and recurring automation.",
+    learningItems,
+    [
+      "Need capture flows for manual fixes, incidents, and agent suggestions.",
+      "Need conversion workflows from cases to rules, runbooks, workflows, and knowledge articles.",
+      "Need feedback metrics for runbook success, rule false positives, and recommendation usefulness.",
+    ],
+  ),
+  platformModule(
+    "22-fleet-management-control-plane",
+    "Fleet Management Control Plane",
+    "Manage the Linux companion fleet with enrollment, heartbeat, policy bundles, updates, offline buffering, secure diagnostics, and approved host actions.",
+    fleetItems,
+    [
+      "Need secure host enrollment, grouping, identity proof, air-gapped support, and revocation.",
+      "Need agent heartbeat, self-diagnostics, policy bundles, update rollout, rollback, proxy support, and mTLS rotation.",
+      "Need approved remote diagnostics, file collection, package patching, and fleet dashboards.",
+    ],
+  ),
+  platformModule(
+    "23-kubernetes-cost-allocation",
+    "Kubernetes Cost Allocation",
+    "Add Kubernetes-native cost allocation, idle cost detection, rightsizing, budgets, showback, chargeback, and forecast workflows.",
+    k8sCostItems,
+    [
+      "Need OpenCost-style allocation across namespaces, workloads, pods, nodes, volumes, GPUs, and network.",
+      "Need waste detection for idle requests, over-requested CPU/memory, orphaned volumes, and inefficient node shapes.",
+      "Need showback, chargeback, budgets, rightsizing, autoscaler recommendations, spot opportunities, and forecasts.",
+    ],
+  ),
+  platformModule(
+    "24-applications-microservices-apm",
+    "Applications and Microservices APM",
+    "Add application-aware observability and operations: service discovery, RED/USE metrics, traces, errors, profiles, deployments, runtime metrics, and service workbench.",
+    apmItems,
+    [
+      "Need service discovery, endpoint inventory, dependency maps, RED/USE metrics, traces, error tracking, and profiling.",
+      "Need deploy markers, release regression detection, feature flag correlation, runtime metrics, and service health scoring.",
+      "Need APM evidence to feed incidents, SLOs, resource graph, cost attribution, and agent investigations.",
+    ],
+  ),
+  platformModule(
+    "25-ai-llm-observability",
+    "AI and LLM Observability",
+    "Make Mayyam observable to itself and to AI-heavy workloads: model inventory, prompt traces, token cost, quality, safety, tool calls, and agent replay.",
+    aiObservabilityItems,
+    [
+      "Need model, prompt, and agent inventory with latency, error, token, cost, and tool-call telemetry.",
+      "Need quality, grounding, hallucination feedback, prompt-injection detection, sensitive data leakage controls, and unsafe-tool prevention.",
+      "Need agent trace replay, budget controls, stop conditions, model routing policy, provider failover, and AI spend reporting.",
+    ],
+  ),
+);
+
 function priority(status, pillar, workstream) {
   if (status === "existing" && ["posture", "telemetry", "ai-triage"].includes(workstream)) return "P0";
   if (pillar === "security" || pillar === "cost" || pillar === "resilience") return "P0";
@@ -729,6 +1420,21 @@ function sourceStatus(module, item) {
   if (item.status === "existing") return "implemented-foundation";
   if (item.status === "partial") return "partial-foundation";
   return "planned-gap";
+}
+
+function releasePhase(workstream) {
+  if (workstream === "inventory") return "M1 inventory";
+  if (workstream === "telemetry" || workstream === "health") return "M2 observable";
+  if (workstream === "posture" || workstream === "ai-triage" || workstream === "tests") return "M3 explainable";
+  if (["operations", "remediation", "automation", "slo-policy", "forecasting", "reporting"].includes(workstream)) return "M4 interactive";
+  if (workstream === "agentic-investigation") return "M5 autonomous-assist";
+  return "M2 observable";
+}
+
+function shipSize(workstream) {
+  if (workstream === "inventory" || workstream === "tests") return "S";
+  if (workstream === "agentic-investigation" || workstream === "remediation") return "L";
+  return "M";
 }
 
 function generateRows(module) {
@@ -747,10 +1453,14 @@ function generateRows(module) {
           pillar,
           workstream: template.workstream,
           feature,
+          release_phase: releasePhase(template.workstream),
+          ship_size: shipSize(template.workstream),
           user_story: `As an operator, I can understand and act on ${item.name} ${pillar} posture without leaving Mayyam.`,
+          ship_slice: `Ship as one vertical slice for ${item.name}: data contract, collector or tool adapter, backend API, deterministic evaluator, UI surface, tests, documentation, and operator runbook.`,
           implementation_detail: template.detail(item, pillar),
           backend_scope: template.backend(item),
           frontend_scope: template.frontend(item),
+          api_contract: `Expose authenticated API endpoints for ${module.title} ${item.name} ${template.workstream} with pagination, freshness metadata, audit IDs, error codes, and export support.`,
           data_model: `${slug(item.name)}_${slug(pillar)}_${slug(template.workstream)} evidence, score, finding, recommendation, owner, suppression, audit event`,
           deterministic_scope: `Implement deterministic checks for ${item.name} ${pillar} that can run without an LLM, emit reason codes, and preserve raw evidence.`,
           agentic_scope: `Allow agentic investigation only through registered tools for ${item.name}; read-only diagnostics are default, mutations require explicit approval, and every tool call is replayable.`,
@@ -759,6 +1469,10 @@ function generateRows(module) {
             ? `Identify savings opportunities for ${item.name}, quantify estimated monthly impact, confidence, effort, risk, and verification steps.`
             : `Record any cost side effect for ${item.name} recommendations so non-cost changes do not create hidden spend regressions.`,
           risk_controls: `Require RBAC, scoped credentials, rate limits, stale-data detection, blast-radius summary, suppression policy, and rollback or recovery notes for ${item.name}.`,
+          telemetry_contract: `Emit collection duration, freshness age, success/failure counts, rule evaluation count, AI/tool-call count when applicable, and user action audit metrics for ${item.name}.`,
+          test_plan: `Add unit tests for evaluator logic, fixture tests for collected evidence, API contract tests, UI render/action tests, and one failure-path test for stale or missing ${item.name} data.`,
+          rollout_guardrail: `Gate behind a feature flag, support read-only mode first, document required permissions, and add rollback or disable instructions before enabling ${item.name} ${template.workstream} broadly.`,
+          docs_runbook: `Document prerequisites, permissions, setup, known limits, common failure modes, triage commands, remediation approval path, and verification checks for ${item.name}.`,
           acceptance_criteria: `Given ${item.name} data exists, when the ${pillar} ${template.workstream} workflow runs, then Mayyam stores evidence, shows status, explains gaps, and exposes API/UI tests for the happy path and one failure path.`,
           priority: priority(item.status, pillar, template.workstream),
           dependency: `${item.name} connector credentials, normalized resource identity, sync-run freshness, RBAC, audit logging`,
@@ -780,16 +1494,24 @@ function writeBacklog(module, rows) {
     "pillar",
     "workstream",
     "feature",
+    "release_phase",
+    "ship_size",
     "user_story",
+    "ship_slice",
     "implementation_detail",
     "backend_scope",
     "frontend_scope",
+    "api_contract",
     "data_model",
     "deterministic_scope",
     "agentic_scope",
     "interaction_model",
     "cost_opportunity",
     "risk_controls",
+    "telemetry_contract",
+    "test_plan",
+    "rollout_guardrail",
+    "docs_runbook",
     "acceptance_criteria",
     "priority",
     "dependency",
@@ -828,6 +1550,7 @@ ${module.codeRefs.map((item) => `- \`${item}\``).join("\n")}
 ## Target Operating Model
 
 - One normalized resource identity per cloud service, Kubernetes object, database domain, or Kafka domain.
+- Each backlog row is a shippable vertical slice with release phase, size, API contract, telemetry, tests, rollout guardrail, and runbook documentation.
 - Deterministic collectors produce evidence before any LLM summary is generated.
 - Findings are scored by pillar: ${pillars.join(", ")}.
 - Each resource supports deterministic triage and bounded agentic investigation as separate workflows.
@@ -923,7 +1646,7 @@ ${module.gaps.map((item) => `- ${item}`).join("\n")}
 - \`current-state.md\` explains source modules reviewed, current maturity, gaps, and target operating model.
 - \`capability-map.md\` lists the service/domain coverage and feature-row counts.
 - \`epics.md\` breaks delivery into implementation slices.
-- \`feature-backlog.csv\` contains ${rows.length.toLocaleString()} implementation-ready feature rows.
+- \`feature-backlog.csv\` contains ${rows.length.toLocaleString()} implementation-ready feature rows with release phase, ship size, API contract, tests, rollout guardrail, and runbook scope.
 
 ## Build Order
 
@@ -1079,6 +1802,19 @@ For every backlog row, implementation should prove:
 - Cost impact is captured.
 - The happy path and one failure path are tested.
 - The user can export or share the result.
+
+## Backlog Row Contract
+
+Every generated CSV row is intended to be shippable. A row is not a vague capability label; it carries:
+
+- Release phase: M1 inventory, M2 observable, M3 explainable, M4 interactive, or M5 autonomous-assist.
+- Ship size: S, M, or L based on the operational risk and engineering scope.
+- Vertical slice: data contract, collector or tool adapter, backend API, deterministic evaluator, UI, tests, docs, and runbook.
+- API contract: authenticated endpoint behavior, pagination, freshness, audit IDs, error codes, and export support.
+- Telemetry contract: collection health, freshness, evaluator counts, AI/tool counts, and action audit metrics.
+- Test plan: unit, fixture, API contract, UI, and failure-path coverage.
+- Rollout guardrail: feature flag, read-only mode first, permissions, rollback or disable instructions.
+- Documentation/runbook: setup, permissions, limits, known failures, triage, approval path, and verification.
 
 ## Product Confirmation Questions
 

@@ -16,8 +16,25 @@ Mayyam should become a broad SRE/DBA/cloud engineering platform: Datadog/Dynatra
 | `06-azure-cloud` | Azure Cloud | 3,654 | greenfield pending: README says Azure is a goal, but no Azure connector surface was found in the active backend routes |
 | `07-google-cloud` | Google Cloud | 3,465 | greenfield pending: no Google Cloud connector surface was found in active backend routes |
 | `08-linux-companion` | Linux Companion | 3,675 | greenfield pending: no always-on Linux host companion or agent module was found in the active repository |
+| `09-universal-resource-graph` | Universal Resource Graph | 1,715 | greenfield pending: platform primitive is not yet implemented as a first-class Mayyam module |
+| `10-service-catalog-ownership` | Service Catalog and Ownership | 1,372 | greenfield pending: platform primitive is not yet implemented as a first-class Mayyam module |
+| `11-incident-command-center` | Incident Command Center | 1,372 | greenfield pending: platform primitive is not yet implemented as a first-class Mayyam module |
+| `12-slo-error-budget` | SLO and Error Budget | 1,127 | greenfield pending: platform primitive is not yet implemented as a first-class Mayyam module |
+| `13-opentelemetry-ingestion` | OpenTelemetry Ingestion | 1,274 | greenfield pending: platform primitive is not yet implemented as a first-class Mayyam module |
+| `14-workflow-action-engine` | Workflow and Action Engine | 1,568 | greenfield pending: platform primitive is not yet implemented as a first-class Mayyam module |
+| `15-iac-drift-change-intelligence` | IaC Drift and Change Intelligence | 1,323 | greenfield pending: platform primitive is not yet implemented as a first-class Mayyam module |
+| `16-security-compliance-packs` | Security and Compliance Packs | 1,176 | greenfield pending: platform primitive is not yet implemented as a first-class Mayyam module |
+| `17-finops-unit-economics` | FinOps and Unit Economics | 1,225 | greenfield pending: platform primitive is not yet implemented as a first-class Mayyam module |
+| `18-digital-experience-synthetic-checks` | Digital Experience and Synthetic Checks | 833 | greenfield pending: platform primitive is not yet implemented as a first-class Mayyam module |
+| `19-plugin-action-marketplace` | Plugin and Action Marketplace | 1,078 | greenfield pending: platform primitive is not yet implemented as a first-class Mayyam module |
+| `20-evidence-store-time-machine` | Evidence Store and Time Machine | 1,176 | greenfield pending: platform primitive is not yet implemented as a first-class Mayyam module |
+| `21-learning-runbook-system` | Learning and Runbook System | 1,029 | greenfield pending: platform primitive is not yet implemented as a first-class Mayyam module |
+| `22-fleet-management-control-plane` | Fleet Management Control Plane | 1,176 | greenfield pending: platform primitive is not yet implemented as a first-class Mayyam module |
+| `23-kubernetes-cost-allocation` | Kubernetes Cost Allocation | 980 | greenfield pending: platform primitive is not yet implemented as a first-class Mayyam module |
+| `24-applications-microservices-apm` | Applications and Microservices APM | 1,127 | greenfield pending: platform primitive is not yet implemented as a first-class Mayyam module |
+| `25-ai-llm-observability` | AI and LLM Observability | 1,078 | greenfield pending: platform primitive is not yet implemented as a first-class Mayyam module |
 
-Total generated backlog rows: 23,590.
+Total generated backlog rows: 44,219.
 
 ## Foundational Docs
 

@@ -19,7 +19,7 @@ Build a multi-cluster Kubernetes control center that combines dashboard, ops wor
 - `current-state.md` explains source modules reviewed, current maturity, gaps, and target operating model.
 - `capability-map.md` lists the service/domain coverage and feature-row counts.
 - `epics.md` breaks delivery into implementation slices.
-- `feature-backlog.csv` contains 2,009 implementation-ready feature rows.
+- `feature-backlog.csv` contains 2,009 implementation-ready feature rows with release phase, ship size, API contract, tests, rollout guardrail, and runbook scope.
 
 ## Build Order
 

@@ -19,7 +19,7 @@ Add Azure as a first-class cloud provider with Azure Well-Architected posture, A
 - `current-state.md` explains source modules reviewed, current maturity, gaps, and target operating model.
 - `capability-map.md` lists the service/domain coverage and feature-row counts.
 - `epics.md` breaks delivery into implementation slices.
-- `feature-backlog.csv` contains 3,654 implementation-ready feature rows.
+- `feature-backlog.csv` contains 3,654 implementation-ready feature rows with release phase, ship size, API contract, tests, rollout guardrail, and runbook scope.
 
 ## Build Order
 

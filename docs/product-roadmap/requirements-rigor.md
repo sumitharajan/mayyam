@@ -40,6 +40,19 @@ For every backlog row, implementation should prove:
 - The happy path and one failure path are tested.
 - The user can export or share the result.
 
+## Backlog Row Contract
+
+Every generated CSV row is intended to be shippable. A row is not a vague capability label; it carries:
+
+- Release phase: M1 inventory, M2 observable, M3 explainable, M4 interactive, or M5 autonomous-assist.
+- Ship size: S, M, or L based on the operational risk and engineering scope.
+- Vertical slice: data contract, collector or tool adapter, backend API, deterministic evaluator, UI, tests, docs, and runbook.
+- API contract: authenticated endpoint behavior, pagination, freshness, audit IDs, error codes, and export support.
+- Telemetry contract: collection health, freshness, evaluator counts, AI/tool counts, and action audit metrics.
+- Test plan: unit, fixture, API contract, UI, and failure-path coverage.
+- Rollout guardrail: feature flag, read-only mode first, permissions, rollback or disable instructions.
+- Documentation/runbook: setup, permissions, limits, known failures, triage, approval path, and verification.
+
 ## Product Confirmation Questions
 
 These are not blockers for the roadmap, but they should be confirmed before implementation:
