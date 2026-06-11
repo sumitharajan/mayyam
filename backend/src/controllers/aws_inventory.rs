@@ -28,6 +28,7 @@ use crate::models::aws_resource::AwsResourceType;
 use crate::repositories::aws_resource::AwsResourceRepository;
 use crate::services::aws::inventory::ec2_pillar_evaluator::evaluate_ec2_fleet;
 use crate::services::aws::inventory::lambda_pillar_evaluator::evaluate_lambda_fleet;
+use crate::services::aws::inventory::s3_pillar_evaluator::evaluate_s3_fleet;
 use crate::services::aws::inventory::types::{Pillar, DEFAULT_STALE_AFTER_HOURS};
 
 #[derive(Clone)]
@@ -110,4 +111,13 @@ pub async fn get_lambda_pillar_reports(
     let query = query.into_inner();
     debug!("Lambda pillar report request: {:?}", query);
     pillar_reports(&controller, query, AwsResourceType::LambdaFunction, evaluate_lambda_fleet).await
+}
+
+pub async fn get_s3_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("S3 pillar report request: {:?}", query);
+    pillar_reports(&controller, query, AwsResourceType::S3Bucket, evaluate_s3_fleet).await
 }

@@ -17,4 +17,5 @@
 
 pub mod ec2_pillar_evaluator;
 pub mod lambda_pillar_evaluator;
+pub mod s3_pillar_evaluator;
 pub mod types;
