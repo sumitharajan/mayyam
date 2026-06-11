@@ -17,6 +17,7 @@ use crate::models::aws_account::AwsAccountDto;
 use crate::models::aws_resource::{AwsResourceDto, AwsResourceType, Model as AwsResourceModel};
 use crate::services::aws::client_factory::AwsClientFactory;
 use crate::services::AwsService;
+use chrono::Utc;
 use serde_json::json;
 use std::sync::Arc;
 use tracing::{debug, error};
@@ -55,10 +56,13 @@ impl AutoScalingControlPlane {
                 request = request.next_token(token);
             }
 
+            let collection_started_at = Utc::now();
             let response = request.send().await.map_err(|e| {
                 error!("Failed to describe Auto Scaling groups: {}", e);
                 AppError::ExternalService(format!("Failed to describe Auto Scaling groups: {}", e))
             })?;
+            let collection_completed_at = Utc::now();
+            let duration_ms = (collection_completed_at - collection_started_at).num_milliseconds();
 
             for group in response.auto_scaling_groups() {
                 let name = match group.auto_scaling_group_name() {
@@ -74,6 +78,26 @@ impl AutoScalingControlPlane {
                 let mut resource_data = serde_json::Map::new();
                 resource_data.insert("auto_scaling_group_name".to_string(), json!(name));
                 resource_data.insert("arn".to_string(), json!(arn));
+                resource_data.insert(
+                    "telemetry_source".to_string(),
+                    json!("autoscaling:DescribeAutoScalingGroups"),
+                );
+                resource_data.insert(
+                    "telemetry_collection_started_at".to_string(),
+                    json!(collection_started_at.to_rfc3339()),
+                );
+                resource_data.insert(
+                    "telemetry_collection_completed_at".to_string(),
+                    json!(collection_completed_at.to_rfc3339()),
+                );
+                resource_data.insert(
+                    "telemetry_collection_duration_ms".to_string(),
+                    json!(duration_ms.max(0)),
+                );
+                resource_data.insert("telemetry_collection_success_count".to_string(), json!(1));
+                resource_data.insert("telemetry_collection_failure_count".to_string(), json!(0));
+                resource_data.insert("telemetry_collection_error_count".to_string(), json!(0));
+                resource_data.insert("telemetry_collection_errors".to_string(), json!([]));
 
                 if let Some(min_size) = group.min_size() {
                     resource_data.insert("min_size".to_string(), json!(min_size));
@@ -126,7 +150,62 @@ impl AutoScalingControlPlane {
                     json!(group.mixed_instances_policy().is_some()),
                 );
 
+                let enabled_metrics = group
+                    .enabled_metrics()
+                    .iter()
+                    .filter_map(|metric| metric.metric().map(String::from))
+                    .collect::<Vec<_>>();
+                resource_data.insert(
+                    "enabled_metric_count".to_string(),
+                    json!(enabled_metrics.len()),
+                );
+                resource_data.insert("enabled_metrics".to_string(), json!(enabled_metrics));
+
                 resource_data.insert("instance_count".to_string(), json!(group.instances().len()));
+                let instance_health = group
+                    .instances()
+                    .iter()
+                    .map(|instance| {
+                        json!({
+                            "instance_id": instance.instance_id(),
+                            "health_status": instance.health_status(),
+                            "lifecycle_state": instance.lifecycle_state().map(|state| state.as_str()),
+                        })
+                    })
+                    .collect::<Vec<_>>();
+                let healthy_instance_count = group
+                    .instances()
+                    .iter()
+                    .filter(|instance| instance.health_status() == Some("Healthy"))
+                    .count();
+                let unhealthy_instance_count = group
+                    .instances()
+                    .iter()
+                    .filter(|instance| instance.health_status() != Some("Healthy"))
+                    .count();
+                let in_service_instance_count = group
+                    .instances()
+                    .iter()
+                    .filter(|instance| {
+                        instance
+                            .lifecycle_state()
+                            .map(|state| state.as_str() == "InService")
+                            .unwrap_or(false)
+                    })
+                    .count();
+                resource_data.insert("instance_health".to_string(), json!(instance_health));
+                resource_data.insert(
+                    "healthy_instance_count".to_string(),
+                    json!(healthy_instance_count),
+                );
+                resource_data.insert(
+                    "unhealthy_instance_count".to_string(),
+                    json!(unhealthy_instance_count),
+                );
+                resource_data.insert(
+                    "in_service_instance_count".to_string(),
+                    json!(in_service_instance_count),
+                );
 
                 resource_data.insert(
                     "suspended_process_count".to_string(),
