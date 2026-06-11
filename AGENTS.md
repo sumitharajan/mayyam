@@ -100,6 +100,27 @@ When the task is to execute the Mayyam product roadmap, do not ask the user whic
 - Commit each completed, verified batch when the task definition requires commits.
 - Never claim the whole roadmap is complete unless every row has been processed and verified.
 
+## Roadmap Batch Loop
+
+When a roadmap execution prompt asks for loop behavior, continue through up to 3 completed and committed batches in the same run unless the user provides a different batch limit.
+
+- After each verified batch commit, update `checkpoint.sqlite` and `RESUME.md`.
+- Re-read the active checkpoint before choosing more work.
+- Verify `git status --short`, `runs.last_commit`, `current_batch_id`, `next_action`, and the roadmap hash.
+- Select and atomically claim the next deterministic batch using the same P0, then P1, then P2 priority rules.
+- Implement, validate, checkpoint, commit, and repeat until a stop condition is hit.
+
+Stop the loop when any of these conditions is true:
+
+- No pending roadmap rows remain.
+- The configured batch limit is reached.
+- Validation fails and cannot be fixed within the current batch.
+- Unrelated worktree changes conflict with the next batch.
+- A real blocker prevents progress.
+- Context, token, rate-limit, or timeout pressure makes another implementation batch unsafe.
+
+Before stopping, write a complete checkpoint with the current batch, feature IDs, changed files, commands run, verification state, last commit, blocker if any, and exact next action. Codex cannot restart itself after API token, context, or rate limits; for a truly continuous loop, rely on an external harness to relaunch Codex with the one-shot prompt. SQLite and `RESUME.md` are the handoff contract.
+
 ## Parallel Batch Execution
 
 Speed matters, but parallelism must not corrupt the worktree.
@@ -206,11 +227,19 @@ Rules:
 - Use clear, specific commit messages.
 - Leave the working tree clean after a commit when possible.
 
+## Sandbox-Aware Git Handling
+
+- Read-only git commands such as `git status`, `git diff`, `git log`, `git show`, and `git branch --show-current` should run normally in the sandbox.
+- Mutating git commands such as `git add`, `git commit`, `git tag`, `git merge`, `git rebase`, `git cherry-pick`, `git stash`, and `git reset` write to `.git` and may require escalated permissions in restricted workspaces.
+- If a required mutating git command fails with a sandbox-style error such as `Permission denied`, `Operation not permitted`, or `Unable to create .git/index.lock`, rerun only the necessary git command with escalated permissions and a concise justification.
+- Do not work around git sandbox failures by copying the repository, manually editing `.git`, using `sudo`, or running destructive cleanup.
+- Stage explicitly with `git add <path>...`, review `git status --short`, then commit with a clear message.
+
 ## Context and Resume Discipline
 
 For long roadmap execution runs, context pressure is expected. Do not keep dragging stale context after a completed batch.
 
-- After every committed batch, update `checkpoint.sqlite` and `RESUME.md`, then prefer ending the current agent session so the next run can start from a compact checkpoint.
+- After every committed batch, update `checkpoint.sqlite` and `RESUME.md`. If the active prompt requests loop behavior and the next batch is safe, continue until the configured batch limit or a stop condition; otherwise prefer ending the current agent session so the next run can start from a compact checkpoint.
 - If context is running low, stop doing new implementation work and write a complete checkpoint before ending.
 - Before stopping for context pressure, write objective, current batch, feature IDs, changed files, commands run, verification state, last commit, blocker if any, and exact next action.
 - On resume, read `AGENTS.md`, the active `RESUME.md`, and the SQLite checkpoint. Verify roadmap hash, last commit, and `git status --short`, then continue from `runs.next_action`.
