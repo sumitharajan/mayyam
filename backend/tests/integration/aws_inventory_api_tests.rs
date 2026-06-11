@@ -171,6 +171,9 @@ async fn storage_and_database_pillar_reports_contract() {
         ("apprunner", "AppRunnerService"),
         ("athena", "AthenaWorkgroup"),
         ("ssm", "SsmDocument"),
+        ("backup", "BackupVault"),
+        ("batch", "BatchComputeEnv"),
+        ("emr", "EmrCluster"),
     ] {
         let resp = client
             .get(format!(

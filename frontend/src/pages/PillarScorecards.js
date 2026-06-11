@@ -57,6 +57,9 @@ const SERVICES = [
   { key: "apprunner", label: "App Runner" },
   { key: "athena", label: "Athena" },
   { key: "ssm", label: "Systems Manager" },
+  { key: "backup", label: "AWS Backup" },
+  { key: "batch", label: "Batch" },
+  { key: "emr", label: "EMR" },
 ];
 
 // Well-Architected pillar scorecards from deterministic inventory

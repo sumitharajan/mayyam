@@ -31,6 +31,9 @@ use crate::services::aws::inventory::api_gateway_pillar_evaluator::evaluate_api_
 use crate::services::aws::inventory::apprunner_pillar_evaluator::evaluate_apprunner_fleet;
 use crate::services::aws::inventory::appsync_pillar_evaluator::evaluate_appsync_fleet;
 use crate::services::aws::inventory::athena_pillar_evaluator::evaluate_athena_fleet;
+use crate::services::aws::inventory::backup_pillar_evaluator::evaluate_backup_fleet;
+use crate::services::aws::inventory::batch_pillar_evaluator::evaluate_batch_fleet;
+use crate::services::aws::inventory::emr_pillar_evaluator::evaluate_emr_fleet;
 use crate::services::aws::inventory::ssm_pillar_evaluator::evaluate_ssm_fleet;
 use crate::services::aws::inventory::cloudfront_pillar_evaluator::evaluate_cloudfront_fleet;
 use crate::services::aws::inventory::cloudtrail_pillar_evaluator::evaluate_cloudtrail_fleet;
@@ -673,6 +676,51 @@ pub async fn get_ssm_pillar_reports(
         query,
         AwsResourceType::SsmDocument,
         evaluate_ssm_fleet,
+    )
+    .await
+}
+
+pub async fn get_backup_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("AWS Backup pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::BackupVault,
+        evaluate_backup_fleet,
+    )
+    .await
+}
+
+pub async fn get_batch_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Batch pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::BatchComputeEnv,
+        evaluate_batch_fleet,
+    )
+    .await
+}
+
+pub async fn get_emr_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("EMR pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::EmrCluster,
+        evaluate_emr_fleet,
     )
     .await
 }
