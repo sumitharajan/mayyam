@@ -23,6 +23,8 @@ const SERVICES = [
   { key: "rds", label: "RDS" },
   { key: "ebs", label: "EBS" },
   { key: "efs", label: "EFS" },
+  { key: "ecs", label: "ECS" },
+  { key: "eks", label: "EKS" },
 ];
 
 // Well-Architected pillar scorecards from deterministic inventory

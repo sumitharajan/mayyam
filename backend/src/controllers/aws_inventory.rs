@@ -28,6 +28,8 @@ use crate::models::aws_resource::AwsResourceType;
 use crate::repositories::aws_resource::AwsResourceRepository;
 use crate::services::aws::inventory::ebs_pillar_evaluator::evaluate_ebs_fleet;
 use crate::services::aws::inventory::ec2_pillar_evaluator::evaluate_ec2_fleet;
+use crate::services::aws::inventory::ecs_pillar_evaluator::evaluate_ecs_fleet;
+use crate::services::aws::inventory::eks_pillar_evaluator::evaluate_eks_fleet;
 use crate::services::aws::inventory::efs_pillar_evaluator::evaluate_efs_fleet;
 use crate::services::aws::inventory::lambda_pillar_evaluator::evaluate_lambda_fleet;
 use crate::services::aws::inventory::rds_pillar_evaluator::evaluate_rds_fleet;
@@ -150,4 +152,52 @@ pub async fn get_efs_pillar_reports(
     let query = query.into_inner();
     debug!("EFS pillar report request: {:?}", query);
     pillar_reports(&controller, query, AwsResourceType::EfsFileSystem, evaluate_efs_fleet).await
+}
+
+/// ECS pillar reports span clusters and services, so this handler loads
+/// both resource types before evaluating.
+pub async fn get_ecs_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("ECS pillar report request: {:?}", query);
+    let pillars = parse_pillars(&query.pillar)?;
+
+    let mut resources = controller
+        .aws_resource_repo
+        .find_by_account_and_type(&query.account_id, &AwsResourceType::EcsCluster.to_string())
+        .await?;
+    resources.extend(
+        controller
+            .aws_resource_repo
+            .find_by_account_and_type(&query.account_id, &AwsResourceType::EcsService.to_string())
+            .await?,
+    );
+
+    let now = Utc::now();
+    let reports: Vec<_> = pillars
+        .iter()
+        .map(|pillar| evaluate_ecs_fleet(&resources, *pillar, now))
+        .collect();
+    let oldest_refresh = resources.iter().map(|r| r.last_refreshed).min();
+
+    Ok(HttpResponse::Ok().json(json!({
+        "account_id": query.account_id,
+        "resource_type": "EcsClusterAndService",
+        "evaluated_at": now,
+        "stale_after_hours": DEFAULT_STALE_AFTER_HOURS,
+        "resources_evaluated": resources.len(),
+        "oldest_refresh": oldest_refresh,
+        "reports": reports,
+    })))
+}
+
+pub async fn get_eks_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("EKS pillar report request: {:?}", query);
+    pillar_reports(&controller, query, AwsResourceType::EksCluster, evaluate_eks_fleet).await
 }

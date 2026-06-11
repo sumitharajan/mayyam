@@ -17,6 +17,8 @@
 
 pub mod ebs_pillar_evaluator;
 pub mod ec2_pillar_evaluator;
+pub mod ecs_pillar_evaluator;
+pub mod eks_pillar_evaluator;
 pub mod efs_pillar_evaluator;
 pub mod lambda_pillar_evaluator;
 pub mod rds_pillar_evaluator;

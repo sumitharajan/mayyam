@@ -137,6 +137,8 @@ async fn storage_and_database_pillar_reports_contract() {
         ("rds", "RdsInstance"),
         ("ebs", "EbsVolume"),
         ("efs", "EfsFileSystem"),
+        ("ecs", "EcsClusterAndService"),
+        ("eks", "EksCluster"),
     ] {
         let resp = client
             .get(format!(
