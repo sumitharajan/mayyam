@@ -202,7 +202,7 @@ mod aws_resource_model_tests {
             "ec2", "s3", "rds", "lambda", "dynamodb", "kinesis",
             "sqs", "sns", "elasticache", "opensearch", "cloudwatch",
             // Networking
-            "Vpc", "Subnet", "SecurityGroup", "RouteTable", "InternetGateway", 
+            "Vpc", "Subnet", "SecurityGroup", "RouteTable", "InternetGateway",
             "NatGateway", "NetworkAcl",
             // Load Balancers & Edge
             "Alb", "Nlb", "Elb", "CloudFrontDistribution", "ApiGatewayRestApi",
@@ -236,6 +236,8 @@ mod aws_resource_model_tests {
             "LakeFormationDataLake",
             // Simplified Compute
             "LightsailResource",
+            // BI & Analytics Assets
+            "QuickSightAsset",
         ];
 
         for resource_type in valid_types {

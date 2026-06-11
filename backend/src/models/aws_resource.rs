@@ -156,6 +156,8 @@ pub enum AwsResourceType {
     LakeFormationDataLake,
     // Simplified Compute Resources
     LightsailResource,
+    // BI & Analytics Assets
+    QuickSightAsset,
 }
 
 impl ToString for AwsResourceType {
@@ -268,6 +270,8 @@ impl ToString for AwsResourceType {
             AwsResourceType::LakeFormationDataLake => "LakeFormationDataLake".to_string(),
             // Simplified Compute Resources
             AwsResourceType::LightsailResource => "LightsailResource".to_string(),
+            // BI & Analytics Assets
+            AwsResourceType::QuickSightAsset => "QuickSightAsset".to_string(),
         }
     }
 }
@@ -380,6 +384,8 @@ impl From<&str> for AwsResourceType {
             "LakeFormationDataLake" => AwsResourceType::LakeFormationDataLake,
             // Simplified Compute Resources
             "LightsailResource" => AwsResourceType::LightsailResource,
+            // BI & Analytics Assets
+            "QuickSightAsset" => AwsResourceType::QuickSightAsset,
             _ => panic!("Unknown resource type: {}", s),
         }
     }

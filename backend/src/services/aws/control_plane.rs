@@ -86,6 +86,7 @@ use crate::services::aws::aws_control_plane::lightsail_control_plane::LightsailC
 use crate::services::aws::aws_control_plane::memorydb_control_plane::MemoryDbControlPlane;
 use crate::services::aws::aws_control_plane::msk_control_plane::MskControlPlane;
 use crate::services::aws::aws_control_plane::neptune_control_plane::NeptuneControlPlane;
+use crate::services::aws::aws_control_plane::quicksight_control_plane::QuickSightControlPlane;
 use crate::services::aws::aws_control_plane::route53_control_plane::Route53ControlPlane;
 use crate::services::aws::aws_control_plane::secretsmanager_control_plane::SecretsManagerControlPlane;
 use crate::services::aws::aws_control_plane::storagegateway_control_plane::StorageGatewayControlPlane;
@@ -796,6 +797,8 @@ impl AwsControlPlane {
                 AwsResourceType::LakeFormationDataLake.to_string(),
                 // Simplified Compute
                 AwsResourceType::LightsailResource.to_string(),
+                // BI & Analytics Assets
+                AwsResourceType::QuickSightAsset.to_string(),
             ],
         };
 
@@ -1086,6 +1089,11 @@ impl AwsControlPlane {
                 "LightsailResource" => {
                     let cp = LightsailControlPlane::new(self.aws_service.clone());
                     cp.sync_resources(aws_account_dto, request.sync_id).await
+                }
+                // BI & Analytics Assets
+                "QuickSightAsset" => {
+                    let cp = QuickSightControlPlane::new(self.aws_service.clone());
+                    cp.sync_assets(aws_account_dto, request.sync_id).await
                 }
                 _ => Ok(vec![]),
             };

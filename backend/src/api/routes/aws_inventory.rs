@@ -284,4 +284,8 @@ pub fn configure(controller: Arc<AwsInventoryController>) -> Scope {
             "/lightsail/pillars",
             web::get().to(aws_inventory::get_lightsail_pillar_reports),
         )
+        .route(
+            "/quicksight/pillars",
+            web::get().to(aws_inventory::get_quicksight_pillar_reports),
+        )
 }

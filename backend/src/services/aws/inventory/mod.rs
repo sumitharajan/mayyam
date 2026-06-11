@@ -64,6 +64,7 @@ pub mod nat_gateway_pillar_evaluator;
 pub mod neptune_pillar_evaluator;
 pub mod network_acl_pillar_evaluator;
 pub mod opensearch_pillar_evaluator;
+pub mod quicksight_pillar_evaluator;
 pub mod rds_pillar_evaluator;
 pub mod redshift_pillar_evaluator;
 pub mod route53_pillar_evaluator;

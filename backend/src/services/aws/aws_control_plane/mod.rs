@@ -24,6 +24,7 @@ pub mod kinesis_control_plane;
 pub mod lambda_control_plane;
 pub mod load_balancer_control_plane;
 pub mod opensearch_control_plane;
+pub mod quicksight_control_plane;
 pub mod rds_control_plane;
 pub mod s3_control_plane;
 pub mod sns_control_plane;

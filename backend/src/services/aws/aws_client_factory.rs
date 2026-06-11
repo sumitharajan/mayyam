@@ -56,6 +56,7 @@ use aws_sdk_lambda::Client as LambdaClient;
 use aws_sdk_lightsail::Client as LightsailClient;
 use aws_sdk_memorydb::Client as MemoryDbClient;
 use aws_sdk_opensearch::Client as OpenSearchClient;
+use aws_sdk_quicksight::Client as QuickSightClient;
 use aws_sdk_rds::Client as RdsClient;
 use aws_sdk_redshift::Client as RedshiftClient;
 use aws_sdk_route53::Client as Route53Client;
@@ -303,4 +304,8 @@ pub trait AwsClientFactory {
         &self,
         aws_account_dto: &AwsAccountDto,
     ) -> Result<LightsailClient, AppError>;
+    async fn create_quicksight_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<QuickSightClient, AppError>;
 }

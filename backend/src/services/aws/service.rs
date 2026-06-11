@@ -42,6 +42,7 @@ use aws_sdk_lakeformation::Client as LakeFormationClient;
 use aws_sdk_lambda::Client as LambdaClient;
 use aws_sdk_lightsail::Client as LightsailClient;
 use aws_sdk_opensearch::Client as OpenSearchClient;
+use aws_sdk_quicksight::Client as QuickSightClient;
 use aws_sdk_rds::Client as RdsClient;
 use aws_sdk_s3::Client as S3Client;
 use aws_sdk_sns::Client as SnsClient;
@@ -795,5 +796,13 @@ impl AwsClientFactory for AwsService {
     ) -> Result<LightsailClient, AppError> {
         let config = self.get_aws_sdk_config(aws_account_dto).await?;
         Ok(LightsailClient::new(&config))
+    }
+
+    async fn create_quicksight_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<QuickSightClient, AppError> {
+        let config = self.get_aws_sdk_config(aws_account_dto).await?;
+        Ok(QuickSightClient::new(&config))
     }
 }
