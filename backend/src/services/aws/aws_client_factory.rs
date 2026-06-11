@@ -48,6 +48,7 @@ use aws_sdk_glacier::Client as GlacierClient;
 use aws_sdk_globalaccelerator::Client as GlobalAcceleratorClient;
 use aws_sdk_glue::Client as GlueClient;
 use aws_sdk_guardduty::Client as GuardDutyClient;
+use aws_sdk_health::Client as HealthClient;
 use aws_sdk_iam::Client as IamClient;
 use aws_sdk_inspector2::Client as InspectorClient;
 use aws_sdk_kafka::Client as MskClient;
@@ -314,6 +315,10 @@ pub trait AwsClientFactory {
         &self,
         aws_account_dto: &AwsAccountDto,
     ) -> Result<ComputeOptimizerClient, AppError>;
+    async fn create_health_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<HealthClient, AppError>;
     async fn create_memorydb_client(
         &self,
         aws_account_dto: &AwsAccountDto,

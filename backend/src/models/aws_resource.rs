@@ -151,6 +151,7 @@ pub enum AwsResourceType {
     ServiceCatalogPortfolio,
     TrustedAdvisorAccount,
     ComputeOptimizerAccount,
+    HealthAccount,
     // Document Database Resources
     DocumentDbCluster,
     // Graph Database Resources
@@ -274,6 +275,7 @@ impl ToString for AwsResourceType {
             AwsResourceType::ServiceCatalogPortfolio => "ServiceCatalogPortfolio".to_string(),
             AwsResourceType::TrustedAdvisorAccount => "TrustedAdvisorAccount".to_string(),
             AwsResourceType::ComputeOptimizerAccount => "ComputeOptimizerAccount".to_string(),
+            AwsResourceType::HealthAccount => "HealthAccount".to_string(),
             // Document Database Resources
             AwsResourceType::DocumentDbCluster => "DocumentDbCluster".to_string(),
             // Graph Database Resources
@@ -401,6 +403,7 @@ impl From<&str> for AwsResourceType {
             "ServiceCatalogPortfolio" => AwsResourceType::ServiceCatalogPortfolio,
             "TrustedAdvisorAccount" => AwsResourceType::TrustedAdvisorAccount,
             "ComputeOptimizerAccount" => AwsResourceType::ComputeOptimizerAccount,
+            "HealthAccount" => AwsResourceType::HealthAccount,
             // Document Database Resources
             "DocumentDbCluster" => AwsResourceType::DocumentDbCluster,
             // Graph Database Resources

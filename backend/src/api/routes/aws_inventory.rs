@@ -277,6 +277,10 @@ pub fn configure(controller: Arc<AwsInventoryController>) -> Scope {
             web::get().to(aws_inventory::get_computeoptimizer_pillar_reports),
         )
         .route(
+            "/health/pillars",
+            web::get().to(aws_inventory::get_health_pillar_reports),
+        )
+        .route(
             "/documentdb/pillars",
             web::get().to(aws_inventory::get_documentdb_pillar_reports),
         )

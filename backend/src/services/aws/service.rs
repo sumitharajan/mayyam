@@ -38,6 +38,7 @@ use aws_sdk_elasticache::Client as ElasticacheClient;
 use aws_sdk_elasticloadbalancing::Client as ElbClient;
 use aws_sdk_elasticloadbalancingv2::Client as Elbv2Client;
 use aws_sdk_firehose::Client as FirehoseClient;
+use aws_sdk_health::Client as HealthClient;
 use aws_sdk_iam::Client as IamClient;
 use aws_sdk_inspector2::Client as InspectorClient;
 use aws_sdk_kinesis::Client as KinesisClient;
@@ -805,6 +806,14 @@ impl AwsClientFactory for AwsService {
     ) -> Result<ComputeOptimizerClient, AppError> {
         let config = self.get_aws_sdk_config(aws_account_dto).await?;
         Ok(ComputeOptimizerClient::new(&config))
+    }
+
+    async fn create_health_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<HealthClient, AppError> {
+        let config = self.get_aws_sdk_config(aws_account_dto).await?;
+        Ok(HealthClient::new(&config))
     }
 
     async fn create_memorydb_client(

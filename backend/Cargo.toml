@@ -185,6 +185,7 @@ aws-sdk-controltower = "1.22.0"
 aws-sdk-servicecatalog = "1.22.0"
 aws-sdk-trustedadvisor = "1.22.0"
 aws-sdk-computeoptimizer = "1.22.0"
+aws-sdk-health = "1.22.0"
 
 [dev-dependencies]
 mockall = "0.11"

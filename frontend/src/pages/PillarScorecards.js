@@ -81,6 +81,7 @@ const SERVICES = [
   { key: "servicecatalog", label: "Service Catalog" },
   { key: "trustedadvisor", label: "Trusted Advisor" },
   { key: "computeoptimizer", label: "Compute Optimizer" },
+  { key: "health", label: "AWS Health" },
   { key: "documentdb", label: "DocumentDB" },
   { key: "neptune", label: "Neptune" },
   { key: "memorydb", label: "MemoryDB" },

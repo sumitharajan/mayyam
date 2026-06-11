@@ -63,6 +63,7 @@ use crate::services::aws::inventory::glacier_pillar_evaluator::evaluate_glacier_
 use crate::services::aws::inventory::globalaccelerator_pillar_evaluator::evaluate_globalaccelerator_fleet;
 use crate::services::aws::inventory::glue_pillar_evaluator::evaluate_glue_fleet;
 use crate::services::aws::inventory::guardduty_pillar_evaluator::evaluate_guardduty_fleet;
+use crate::services::aws::inventory::health_pillar_evaluator::evaluate_health_fleet;
 use crate::services::aws::inventory::iam_pillar_evaluator::evaluate_iam_fleet;
 use crate::services::aws::inventory::inspector_pillar_evaluator::evaluate_inspector_fleet;
 use crate::services::aws::inventory::internet_gateway_pillar_evaluator::evaluate_internet_gateway_fleet;
@@ -1270,6 +1271,21 @@ pub async fn get_computeoptimizer_pillar_reports(
         query,
         AwsResourceType::ComputeOptimizerAccount,
         evaluate_computeoptimizer_fleet,
+    )
+    .await
+}
+
+pub async fn get_health_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("AWS Health pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::HealthAccount,
+        evaluate_health_fleet,
     )
     .await
 }

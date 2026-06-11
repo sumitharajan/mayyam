@@ -83,6 +83,7 @@ use crate::services::aws::aws_control_plane::firehose_control_plane::FirehoseCon
 use crate::services::aws::aws_control_plane::fsx_control_plane::FsxControlPlane;
 use crate::services::aws::aws_control_plane::glacier_control_plane::GlacierControlPlane;
 use crate::services::aws::aws_control_plane::guardduty_control_plane::GuardDutyControlPlane;
+use crate::services::aws::aws_control_plane::health_control_plane::HealthControlPlane;
 use crate::services::aws::aws_control_plane::inspector_control_plane::InspectorControlPlane;
 use crate::services::aws::aws_control_plane::kinesisanalytics_control_plane::KinesisAnalyticsControlPlane;
 use crate::services::aws::aws_control_plane::lakeformation_control_plane::LakeFormationControlPlane;
@@ -805,6 +806,7 @@ impl AwsControlPlane {
                 AwsResourceType::ServiceCatalogPortfolio.to_string(),
                 AwsResourceType::TrustedAdvisorAccount.to_string(),
                 AwsResourceType::ComputeOptimizerAccount.to_string(),
+                AwsResourceType::HealthAccount.to_string(),
                 // Batch 12: Document DB, Graph DB & In-Memory DB
                 AwsResourceType::DocumentDbCluster.to_string(),
                 AwsResourceType::NeptuneCluster.to_string(),
@@ -1111,6 +1113,10 @@ impl AwsControlPlane {
                 }
                 "ComputeOptimizerAccount" => {
                     let cp = ComputeOptimizerControlPlane::new(self.aws_service.clone());
+                    cp.sync_accounts(aws_account_dto, request.sync_id).await
+                }
+                "HealthAccount" => {
+                    let cp = HealthControlPlane::new(self.aws_service.clone());
                     cp.sync_accounts(aws_account_dto, request.sync_id).await
                 }
                 // Batch 12: Document DB, Graph DB & In-Memory DB

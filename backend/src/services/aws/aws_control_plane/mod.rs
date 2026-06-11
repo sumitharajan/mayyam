@@ -75,6 +75,7 @@ pub mod aurora_control_plane;
 pub mod computeoptimizer_control_plane;
 pub mod controltower_control_plane;
 pub mod guardduty_control_plane;
+pub mod health_control_plane;
 pub mod inspector_control_plane;
 pub mod macie_control_plane;
 pub mod msk_control_plane;
