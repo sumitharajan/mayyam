@@ -58,4 +58,7 @@ pub fn configure(controller: Arc<AwsInventoryController>) -> Scope {
         .route("/config/pillars", web::get().to(aws_inventory::get_config_pillar_reports))
         .route("/eventbridge/pillars", web::get().to(aws_inventory::get_eventbridge_pillar_reports))
         .route("/stepfunctions/pillars", web::get().to(aws_inventory::get_stepfunctions_pillar_reports))
+        .route("/apprunner/pillars", web::get().to(aws_inventory::get_apprunner_pillar_reports))
+        .route("/athena/pillars", web::get().to(aws_inventory::get_athena_pillar_reports))
+        .route("/ssm/pillars", web::get().to(aws_inventory::get_ssm_pillar_reports))
 }

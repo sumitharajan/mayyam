@@ -168,6 +168,9 @@ async fn storage_and_database_pillar_reports_contract() {
         ("config", "ConfigRule"),
         ("eventbridge", "EventBridgeRule"),
         ("stepfunctions", "StepFunction"),
+        ("apprunner", "AppRunnerService"),
+        ("athena", "AthenaWorkgroup"),
+        ("ssm", "SsmDocument"),
     ] {
         let resp = client
             .get(format!(

@@ -28,7 +28,10 @@ use crate::models::aws_resource::AwsResourceType;
 use crate::repositories::aws_resource::AwsResourceRepository;
 use crate::services::aws::inventory::acm_pillar_evaluator::evaluate_acm_fleet;
 use crate::services::aws::inventory::api_gateway_pillar_evaluator::evaluate_api_gateway_fleet;
+use crate::services::aws::inventory::apprunner_pillar_evaluator::evaluate_apprunner_fleet;
 use crate::services::aws::inventory::appsync_pillar_evaluator::evaluate_appsync_fleet;
+use crate::services::aws::inventory::athena_pillar_evaluator::evaluate_athena_fleet;
+use crate::services::aws::inventory::ssm_pillar_evaluator::evaluate_ssm_fleet;
 use crate::services::aws::inventory::cloudfront_pillar_evaluator::evaluate_cloudfront_fleet;
 use crate::services::aws::inventory::cloudtrail_pillar_evaluator::evaluate_cloudtrail_fleet;
 use crate::services::aws::inventory::cloudwatch_pillar_evaluator::evaluate_cloudwatch_fleet;
@@ -625,6 +628,51 @@ pub async fn get_stepfunctions_pillar_reports(
         query,
         AwsResourceType::StepFunction,
         evaluate_stepfunctions_fleet,
+    )
+    .await
+}
+
+pub async fn get_apprunner_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("App Runner pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::AppRunnerService,
+        evaluate_apprunner_fleet,
+    )
+    .await
+}
+
+pub async fn get_athena_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Athena pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::AthenaWorkgroup,
+        evaluate_athena_fleet,
+    )
+    .await
+}
+
+pub async fn get_ssm_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("SSM document pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::SsmDocument,
+        evaluate_ssm_fleet,
     )
     .await
 }

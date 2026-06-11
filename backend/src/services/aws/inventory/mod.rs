@@ -17,7 +17,9 @@
 
 pub mod acm_pillar_evaluator;
 pub mod api_gateway_pillar_evaluator;
+pub mod apprunner_pillar_evaluator;
 pub mod appsync_pillar_evaluator;
+pub mod athena_pillar_evaluator;
 pub mod cloudfront_pillar_evaluator;
 pub mod cloudtrail_pillar_evaluator;
 pub mod cloudwatch_pillar_evaluator;
@@ -48,6 +50,7 @@ pub mod s3_pillar_evaluator;
 pub mod security_group_pillar_evaluator;
 pub mod sns_pillar_evaluator;
 pub mod sqs_pillar_evaluator;
+pub mod ssm_pillar_evaluator;
 pub mod stepfunctions_pillar_evaluator;
 pub mod storagegateway_pillar_evaluator;
 pub mod subnet_pillar_evaluator;

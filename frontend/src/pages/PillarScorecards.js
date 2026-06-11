@@ -54,6 +54,9 @@ const SERVICES = [
   { key: "config", label: "AWS Config" },
   { key: "eventbridge", label: "EventBridge" },
   { key: "stepfunctions", label: "Step Functions" },
+  { key: "apprunner", label: "App Runner" },
+  { key: "athena", label: "Athena" },
+  { key: "ssm", label: "Systems Manager" },
 ];
 
 // Well-Architected pillar scorecards from deterministic inventory
