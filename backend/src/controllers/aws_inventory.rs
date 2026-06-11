@@ -94,6 +94,7 @@ use crate::services::aws::inventory::resiliencehub_pillar_evaluator::evaluate_re
 use crate::services::aws::inventory::route53_pillar_evaluator::evaluate_route53_fleet;
 use crate::services::aws::inventory::route_table_pillar_evaluator::evaluate_route_table_fleet;
 use crate::services::aws::inventory::s3_pillar_evaluator::evaluate_s3_fleet;
+use crate::services::aws::inventory::sagemaker_pillar_evaluator::evaluate_sagemaker_fleet;
 use crate::services::aws::inventory::secretsmanager_pillar_evaluator::evaluate_secretsmanager_fleet;
 use crate::services::aws::inventory::security_group_pillar_evaluator::evaluate_security_group_fleet;
 use crate::services::aws::inventory::securityhub_pillar_evaluator::evaluate_securityhub_fleet;
@@ -1537,6 +1538,21 @@ pub async fn get_bedrock_pillar_reports(
         query,
         AwsResourceType::BedrockResource,
         evaluate_bedrock_fleet,
+    )
+    .await
+}
+
+pub async fn get_sagemaker_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("SageMaker AI pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::SageMakerResource,
+        evaluate_sagemaker_fleet,
     )
     .await
 }

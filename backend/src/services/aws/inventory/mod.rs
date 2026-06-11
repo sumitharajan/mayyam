@@ -83,6 +83,7 @@ pub mod resiliencehub_pillar_evaluator;
 pub mod route53_pillar_evaluator;
 pub mod route_table_pillar_evaluator;
 pub mod s3_pillar_evaluator;
+pub mod sagemaker_pillar_evaluator;
 pub mod secretsmanager_pillar_evaluator;
 pub mod security_group_pillar_evaluator;
 pub mod securityhub_pillar_evaluator;

@@ -29,6 +29,7 @@ pub mod opensearch_control_plane;
 pub mod quicksight_control_plane;
 pub mod rds_control_plane;
 pub mod s3_control_plane;
+pub mod sagemaker_control_plane;
 pub mod sns_control_plane;
 pub mod sqs_control_plane;
 pub mod vpc_control_plane;

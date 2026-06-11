@@ -101,6 +101,7 @@ use crate::services::aws::aws_control_plane::privatelink_control_plane::PrivateL
 use crate::services::aws::aws_control_plane::quicksight_control_plane::QuickSightControlPlane;
 use crate::services::aws::aws_control_plane::resiliencehub_control_plane::ResilienceHubControlPlane;
 use crate::services::aws::aws_control_plane::route53_control_plane::Route53ControlPlane;
+use crate::services::aws::aws_control_plane::sagemaker_control_plane::SageMakerControlPlane;
 use crate::services::aws::aws_control_plane::secretsmanager_control_plane::SecretsManagerControlPlane;
 use crate::services::aws::aws_control_plane::securityhub_control_plane::SecurityHubControlPlane;
 use crate::services::aws::aws_control_plane::servicecatalog_control_plane::ServiceCatalogControlPlane;
@@ -831,6 +832,7 @@ impl AwsControlPlane {
                 AwsResourceType::QuickSightAsset.to_string(),
                 // AI & ML
                 AwsResourceType::BedrockResource.to_string(),
+                AwsResourceType::SageMakerResource.to_string(),
                 // Migration & DR
                 AwsResourceType::DmsResource.to_string(),
                 AwsResourceType::MgnResource.to_string(),
@@ -1201,6 +1203,10 @@ impl AwsControlPlane {
                 }
                 "BedrockResource" => {
                     let cp = BedrockControlPlane::new(self.aws_service.clone());
+                    cp.sync_resources(aws_account_dto, request.sync_id).await
+                }
+                "SageMakerResource" => {
+                    let cp = SageMakerControlPlane::new(self.aws_service.clone());
                     cp.sync_resources(aws_account_dto, request.sync_id).await
                 }
                 _ => Ok(vec![]),

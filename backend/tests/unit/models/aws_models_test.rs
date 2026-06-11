@@ -244,6 +244,7 @@ mod aws_resource_model_tests {
             "QuickSightAsset",
             // AI & ML
             "BedrockResource",
+            "SageMakerResource",
             // Migration & DR
             "DmsResource",
             "MgnResource",
