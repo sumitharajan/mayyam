@@ -40,6 +40,7 @@ use aws_sdk_iam::Client as IamClient;
 use aws_sdk_kinesis::Client as KinesisClient;
 use aws_sdk_lakeformation::Client as LakeFormationClient;
 use aws_sdk_lambda::Client as LambdaClient;
+use aws_sdk_lightsail::Client as LightsailClient;
 use aws_sdk_opensearch::Client as OpenSearchClient;
 use aws_sdk_rds::Client as RdsClient;
 use aws_sdk_s3::Client as S3Client;
@@ -786,5 +787,13 @@ impl AwsClientFactory for AwsService {
     ) -> Result<LakeFormationClient, AppError> {
         let config = self.get_aws_sdk_config(aws_account_dto).await?;
         Ok(LakeFormationClient::new(&config))
+    }
+
+    async fn create_lightsail_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<LightsailClient, AppError> {
+        let config = self.get_aws_sdk_config(aws_account_dto).await?;
+        Ok(LightsailClient::new(&config))
     }
 }

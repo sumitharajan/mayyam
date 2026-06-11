@@ -196,6 +196,7 @@ async fn storage_and_database_pillar_reports_contract() {
         ("timestream", "TimestreamTable", 3),
         ("firehose", "FirehoseDeliveryStream", 3),
         ("lakeformation", "LakeFormationDataLake", 3),
+        ("lightsail", "LightsailResource", 3),
     ] {
         let resp = client
             .get(format!(

@@ -280,4 +280,8 @@ pub fn configure(controller: Arc<AwsInventoryController>) -> Scope {
             "/lakeformation/pillars",
             web::get().to(aws_inventory::get_lakeformation_pillar_reports),
         )
+        .route(
+            "/lightsail/pillars",
+            web::get().to(aws_inventory::get_lightsail_pillar_reports),
+        )
 }

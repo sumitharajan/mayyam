@@ -234,6 +234,8 @@ mod aws_resource_model_tests {
             "TimestreamTable",
             "FirehoseDeliveryStream",
             "LakeFormationDataLake",
+            // Simplified Compute
+            "LightsailResource",
         ];
 
         for resource_type in valid_types {

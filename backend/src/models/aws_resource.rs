@@ -154,6 +154,8 @@ pub enum AwsResourceType {
     TimestreamTable,
     FirehoseDeliveryStream,
     LakeFormationDataLake,
+    // Simplified Compute Resources
+    LightsailResource,
 }
 
 impl ToString for AwsResourceType {
@@ -264,6 +266,8 @@ impl ToString for AwsResourceType {
             AwsResourceType::TimestreamTable => "TimestreamTable".to_string(),
             AwsResourceType::FirehoseDeliveryStream => "FirehoseDeliveryStream".to_string(),
             AwsResourceType::LakeFormationDataLake => "LakeFormationDataLake".to_string(),
+            // Simplified Compute Resources
+            AwsResourceType::LightsailResource => "LightsailResource".to_string(),
         }
     }
 }
@@ -374,6 +378,8 @@ impl From<&str> for AwsResourceType {
             "TimestreamTable" => AwsResourceType::TimestreamTable,
             "FirehoseDeliveryStream" => AwsResourceType::FirehoseDeliveryStream,
             "LakeFormationDataLake" => AwsResourceType::LakeFormationDataLake,
+            // Simplified Compute Resources
+            "LightsailResource" => AwsResourceType::LightsailResource,
             _ => panic!("Unknown resource type: {}", s),
         }
     }

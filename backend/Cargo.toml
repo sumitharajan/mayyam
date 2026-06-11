@@ -173,6 +173,7 @@ aws-sdk-fsx = "1.22.0"
 aws-sdk-timestreamwrite = "1.22.0"
 aws-sdk-firehose = "1.22.0"
 aws-sdk-lakeformation = "1.22.0"
+aws-sdk-lightsail = "1.22.0"
 
 [dev-dependencies]
 mockall = "0.11"

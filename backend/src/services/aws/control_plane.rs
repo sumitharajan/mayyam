@@ -82,6 +82,7 @@ use crate::services::aws::aws_control_plane::glacier_control_plane::GlacierContr
 use crate::services::aws::aws_control_plane::guardduty_control_plane::GuardDutyControlPlane;
 use crate::services::aws::aws_control_plane::kinesisanalytics_control_plane::KinesisAnalyticsControlPlane;
 use crate::services::aws::aws_control_plane::lakeformation_control_plane::LakeFormationControlPlane;
+use crate::services::aws::aws_control_plane::lightsail_control_plane::LightsailControlPlane;
 use crate::services::aws::aws_control_plane::memorydb_control_plane::MemoryDbControlPlane;
 use crate::services::aws::aws_control_plane::msk_control_plane::MskControlPlane;
 use crate::services::aws::aws_control_plane::neptune_control_plane::NeptuneControlPlane;
@@ -793,6 +794,8 @@ impl AwsControlPlane {
                 AwsResourceType::TimestreamTable.to_string(),
                 AwsResourceType::FirehoseDeliveryStream.to_string(),
                 AwsResourceType::LakeFormationDataLake.to_string(),
+                // Simplified Compute
+                AwsResourceType::LightsailResource.to_string(),
             ],
         };
 
@@ -1078,6 +1081,11 @@ impl AwsControlPlane {
                     let cp = LakeFormationControlPlane::new(self.aws_service.clone());
                     cp.sync_data_lake_resources(aws_account_dto, request.sync_id)
                         .await
+                }
+                // Simplified Compute
+                "LightsailResource" => {
+                    let cp = LightsailControlPlane::new(self.aws_service.clone());
+                    cp.sync_resources(aws_account_dto, request.sync_id).await
                 }
                 _ => Ok(vec![]),
             };

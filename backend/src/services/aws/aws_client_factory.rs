@@ -53,6 +53,7 @@ use aws_sdk_kinesisanalyticsv2::Client as KinesisAnalyticsClient;
 use aws_sdk_kms::Client as KmsClient;
 use aws_sdk_lakeformation::Client as LakeFormationClient;
 use aws_sdk_lambda::Client as LambdaClient;
+use aws_sdk_lightsail::Client as LightsailClient;
 use aws_sdk_memorydb::Client as MemoryDbClient;
 use aws_sdk_opensearch::Client as OpenSearchClient;
 use aws_sdk_rds::Client as RdsClient;
@@ -298,4 +299,8 @@ pub trait AwsClientFactory {
         &self,
         aws_account_dto: &AwsAccountDto,
     ) -> Result<LakeFormationClient, AppError>;
+    async fn create_lightsail_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<LightsailClient, AppError>;
 }
