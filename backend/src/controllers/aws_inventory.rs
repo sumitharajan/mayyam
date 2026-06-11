@@ -32,13 +32,16 @@ use crate::services::aws::inventory::ec2_pillar_evaluator::evaluate_ec2_fleet;
 use crate::services::aws::inventory::ecs_pillar_evaluator::evaluate_ecs_fleet;
 use crate::services::aws::inventory::eks_pillar_evaluator::evaluate_eks_fleet;
 use crate::services::aws::inventory::efs_pillar_evaluator::evaluate_efs_fleet;
+use crate::services::aws::inventory::elasticache_pillar_evaluator::evaluate_elasticache_fleet;
 use crate::services::aws::inventory::kinesis_pillar_evaluator::evaluate_kinesis_fleet;
 use crate::services::aws::inventory::lambda_pillar_evaluator::evaluate_lambda_fleet;
+use crate::services::aws::inventory::opensearch_pillar_evaluator::evaluate_opensearch_fleet;
 use crate::services::aws::inventory::rds_pillar_evaluator::evaluate_rds_fleet;
 use crate::services::aws::inventory::s3_pillar_evaluator::evaluate_s3_fleet;
 use crate::services::aws::inventory::sns_pillar_evaluator::evaluate_sns_fleet;
 use crate::services::aws::inventory::sqs_pillar_evaluator::evaluate_sqs_fleet;
 use crate::services::aws::inventory::types::{Pillar, DEFAULT_STALE_AFTER_HOURS};
+use crate::services::aws::inventory::vpc_pillar_evaluator::evaluate_vpc_fleet;
 
 #[derive(Clone)]
 pub struct AwsInventoryController {
@@ -222,6 +225,33 @@ pub async fn get_kinesis_pillar_reports(
     let query = query.into_inner();
     debug!("Kinesis pillar report request: {:?}", query);
     pillar_reports(&controller, query, AwsResourceType::KinesisStream, evaluate_kinesis_fleet).await
+}
+
+pub async fn get_elasticache_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("ElastiCache pillar report request: {:?}", query);
+    pillar_reports(&controller, query, AwsResourceType::ElasticacheCluster, evaluate_elasticache_fleet).await
+}
+
+pub async fn get_opensearch_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("OpenSearch pillar report request: {:?}", query);
+    pillar_reports(&controller, query, AwsResourceType::OpenSearchDomain, evaluate_opensearch_fleet).await
+}
+
+pub async fn get_vpc_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("VPC pillar report request: {:?}", query);
+    pillar_reports(&controller, query, AwsResourceType::Vpc, evaluate_vpc_fleet).await
 }
 
 pub async fn get_dynamodb_pillar_reports(

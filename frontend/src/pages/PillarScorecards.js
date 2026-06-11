@@ -29,6 +29,9 @@ const SERVICES = [
   { key: "sqs", label: "SQS" },
   { key: "sns", label: "SNS" },
   { key: "kinesis", label: "Kinesis" },
+  { key: "elasticache", label: "ElastiCache" },
+  { key: "opensearch", label: "OpenSearch" },
+  { key: "vpc", label: "VPC" },
 ];
 
 // Well-Architected pillar scorecards from deterministic inventory

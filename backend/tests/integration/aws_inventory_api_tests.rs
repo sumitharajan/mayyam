@@ -143,6 +143,9 @@ async fn storage_and_database_pillar_reports_contract() {
         ("sqs", "SqsQueue"),
         ("sns", "SnsTopic"),
         ("kinesis", "KinesisStream"),
+        ("elasticache", "ElasticacheCluster"),
+        ("opensearch", "OpenSearchDomain"),
+        ("vpc", "Vpc"),
     ] {
         let resp = client
             .get(format!(
