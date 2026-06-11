@@ -228,7 +228,7 @@ mod aws_resource_model_tests {
             // Database Clusters, Streaming & Security Detection
             "AuroraCluster", "MskCluster", "GuardDutyDetector", "SecurityHubHub",
             "InspectorAccountCoverage", "MacieAccount", "OrganizationsOrganization",
-            "ControlTowerLandingZone", "ServiceCatalogPortfolio",
+            "ControlTowerLandingZone", "ServiceCatalogPortfolio", "TrustedAdvisorAccount",
             // Document DB, Graph DB & In-Memory DB
             "DocumentDbCluster", "NeptuneCluster", "MemoryDbCluster",
             // Platform, Data Movement & File Systems

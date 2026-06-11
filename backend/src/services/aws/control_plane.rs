@@ -101,6 +101,7 @@ use crate::services::aws::aws_control_plane::shield_control_plane::ShieldControl
 use crate::services::aws::aws_control_plane::storagegateway_control_plane::StorageGatewayControlPlane;
 use crate::services::aws::aws_control_plane::timestream_control_plane::TimestreamControlPlane;
 use crate::services::aws::aws_control_plane::transitgateway_control_plane::TransitGatewayControlPlane;
+use crate::services::aws::aws_control_plane::trustedadvisor_control_plane::TrustedAdvisorControlPlane;
 
 use crate::services::aws::aws_types::resource_sync::{
     ResourceSyncRequest, ResourceSyncResponse, ResourceTypeSyncSummary,
@@ -801,6 +802,7 @@ impl AwsControlPlane {
                 AwsResourceType::OrganizationsOrganization.to_string(),
                 AwsResourceType::ControlTowerLandingZone.to_string(),
                 AwsResourceType::ServiceCatalogPortfolio.to_string(),
+                AwsResourceType::TrustedAdvisorAccount.to_string(),
                 // Batch 12: Document DB, Graph DB & In-Memory DB
                 AwsResourceType::DocumentDbCluster.to_string(),
                 AwsResourceType::NeptuneCluster.to_string(),
@@ -1100,6 +1102,10 @@ impl AwsControlPlane {
                 "ServiceCatalogPortfolio" => {
                     let cp = ServiceCatalogControlPlane::new(self.aws_service.clone());
                     cp.sync_portfolios(aws_account_dto, request.sync_id).await
+                }
+                "TrustedAdvisorAccount" => {
+                    let cp = TrustedAdvisorControlPlane::new(self.aws_service.clone());
+                    cp.sync_accounts(aws_account_dto, request.sync_id).await
                 }
                 // Batch 12: Document DB, Graph DB & In-Memory DB
                 "DocumentDbCluster" => {

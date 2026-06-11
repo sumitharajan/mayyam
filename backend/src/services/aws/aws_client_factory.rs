@@ -78,6 +78,7 @@ use aws_sdk_ssm::Client as SsmClient;
 use aws_sdk_storagegateway::Client as StorageGatewayClient;
 use aws_sdk_sts::Client as StsClient;
 use aws_sdk_timestreamwrite::Client as TimestreamWriteClient;
+use aws_sdk_trustedadvisor::Client as TrustedAdvisorClient;
 use aws_sdk_wafv2::Client as WafV2Client;
 
 use crate::errors::AppError;
@@ -304,6 +305,10 @@ pub trait AwsClientFactory {
         &self,
         aws_account_dto: &AwsAccountDto,
     ) -> Result<ServiceCatalogClient, AppError>;
+    async fn create_trustedadvisor_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<TrustedAdvisorClient, AppError>;
     async fn create_memorydb_client(
         &self,
         aws_account_dto: &AwsAccountDto,

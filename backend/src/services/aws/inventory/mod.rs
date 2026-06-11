@@ -89,6 +89,7 @@ pub mod storagegateway_pillar_evaluator;
 pub mod subnet_pillar_evaluator;
 pub mod timestream_pillar_evaluator;
 pub mod transitgateway_pillar_evaluator;
+pub mod trustedadvisor_pillar_evaluator;
 pub mod types;
 pub mod vpc_pillar_evaluator;
 pub mod waf_pillar_evaluator;

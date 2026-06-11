@@ -100,6 +100,7 @@ use crate::services::aws::inventory::storagegateway_pillar_evaluator::evaluate_s
 use crate::services::aws::inventory::subnet_pillar_evaluator::evaluate_subnet_fleet;
 use crate::services::aws::inventory::timestream_pillar_evaluator::evaluate_timestream_fleet;
 use crate::services::aws::inventory::transitgateway_pillar_evaluator::evaluate_transitgateway_fleet;
+use crate::services::aws::inventory::trustedadvisor_pillar_evaluator::evaluate_trustedadvisor_fleet;
 use crate::services::aws::inventory::types::{Pillar, DEFAULT_STALE_AFTER_HOURS};
 use crate::services::aws::inventory::vpc_pillar_evaluator::evaluate_vpc_fleet;
 use crate::services::aws::inventory::waf_pillar_evaluator::evaluate_waf_fleet;
@@ -1238,6 +1239,21 @@ pub async fn get_servicecatalog_pillar_reports(
         query,
         AwsResourceType::ServiceCatalogPortfolio,
         evaluate_servicecatalog_fleet,
+    )
+    .await
+}
+
+pub async fn get_trustedadvisor_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Trusted Advisor pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::TrustedAdvisorAccount,
+        evaluate_trustedadvisor_fleet,
     )
     .await
 }

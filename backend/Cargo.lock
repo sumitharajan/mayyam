@@ -2598,6 +2598,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-sdk-trustedadvisor"
+version = "1.98.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c4e8022947597239ae31f987ec765c67e6a7dcd05df751649abf5f4aabda7aac"
+dependencies = [
+ "aws-credential-types",
+ "aws-runtime",
+ "aws-smithy-async",
+ "aws-smithy-http 0.63.6",
+ "aws-smithy-json 0.62.5",
+ "aws-smithy-observability",
+ "aws-smithy-runtime",
+ "aws-smithy-runtime-api",
+ "aws-smithy-types",
+ "aws-types",
+ "bytes",
+ "fastrand 2.3.0",
+ "http 0.2.12",
+ "http 1.3.1",
+ "regex-lite",
+ "tracing",
+]
+
+[[package]]
 name = "aws-sdk-wafv2"
 version = "1.111.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5748,6 +5772,7 @@ dependencies = [
  "aws-sdk-storagegateway",
  "aws-sdk-sts",
  "aws-sdk-timestreamwrite",
+ "aws-sdk-trustedadvisor",
  "aws-sdk-wafv2",
  "aws-smithy-http 0.60.12",
  "aws-smithy-runtime-api",

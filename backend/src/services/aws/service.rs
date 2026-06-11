@@ -56,6 +56,7 @@ use aws_sdk_sns::Client as SnsClient;
 use aws_sdk_sqs::Client as SqsClient;
 use aws_sdk_sts::Client as StsClient;
 use aws_sdk_timestreamwrite::Client as TimestreamWriteClient;
+use aws_sdk_trustedadvisor::Client as TrustedAdvisorClient;
 use aws_types;
 use std::fs;
 use std::str::FromStr;
@@ -787,6 +788,14 @@ impl AwsClientFactory for AwsService {
     ) -> Result<ServiceCatalogClient, AppError> {
         let config = self.get_aws_sdk_config(aws_account_dto).await?;
         Ok(ServiceCatalogClient::new(&config))
+    }
+
+    async fn create_trustedadvisor_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<TrustedAdvisorClient, AppError> {
+        let config = self.get_aws_sdk_config(aws_account_dto).await?;
+        Ok(TrustedAdvisorClient::new(&config))
     }
 
     async fn create_memorydb_client(

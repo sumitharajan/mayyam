@@ -149,6 +149,7 @@ pub enum AwsResourceType {
     OrganizationsOrganization,
     ControlTowerLandingZone,
     ServiceCatalogPortfolio,
+    TrustedAdvisorAccount,
     // Document Database Resources
     DocumentDbCluster,
     // Graph Database Resources
@@ -270,6 +271,7 @@ impl ToString for AwsResourceType {
             AwsResourceType::OrganizationsOrganization => "OrganizationsOrganization".to_string(),
             AwsResourceType::ControlTowerLandingZone => "ControlTowerLandingZone".to_string(),
             AwsResourceType::ServiceCatalogPortfolio => "ServiceCatalogPortfolio".to_string(),
+            AwsResourceType::TrustedAdvisorAccount => "TrustedAdvisorAccount".to_string(),
             // Document Database Resources
             AwsResourceType::DocumentDbCluster => "DocumentDbCluster".to_string(),
             // Graph Database Resources
@@ -395,6 +397,7 @@ impl From<&str> for AwsResourceType {
             "OrganizationsOrganization" => AwsResourceType::OrganizationsOrganization,
             "ControlTowerLandingZone" => AwsResourceType::ControlTowerLandingZone,
             "ServiceCatalogPortfolio" => AwsResourceType::ServiceCatalogPortfolio,
+            "TrustedAdvisorAccount" => AwsResourceType::TrustedAdvisorAccount,
             // Document Database Resources
             "DocumentDbCluster" => AwsResourceType::DocumentDbCluster,
             // Graph Database Resources
