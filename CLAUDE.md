@@ -150,6 +150,18 @@ Warnings may already exist. Treat command exit codes and new failures as the sig
 - Use clear, specific commit messages.
 - Leave the working tree clean after a commit when possible.
 
+## Context Budget and Clear Discipline
+
+For long roadmap execution runs, context pressure is expected. Do not keep dragging stale context after a completed batch.
+
+- After every committed batch, update `checkpoint.sqlite` and `RESUME.md`, then prefer ending the current Claude session so the next run can start from a compact checkpoint.
+- If the visible token count is high, roughly above 120k tokens, or Claude enters a long context-compaction/metamorphosing phase, stop doing new implementation work.
+- Before stopping for context pressure, write a complete checkpoint: current batch, feature IDs, changed files, commands run, verification state, last commit, blocker if any, and exact next action.
+- Do not use `/permissions` as a fix for token/context pressure. Permissions affect tool access, not context size.
+- After the user runs `/clear`, resume by reading `CLAUDE.md`, `.claude/checkpoints/roadmap-run/RESUME.md`, and the SQLite checkpoint. Verify roadmap hash, last commit, and `git status --short`, then continue from `runs.next_action`.
+- Do not re-enumerate the full roadmap after `/clear` unless the roadmap hash changed or the checkpoint is invalid.
+- Keep progress updates short. Put durable state in SQLite and `RESUME.md`, not in chat.
+
 ## Long-Running and Token-Limit Behavior
 
 Claude cannot restart itself after an API hourly token or rate limit. The external harness must catch the limit response and requeue the task after the reset window.
