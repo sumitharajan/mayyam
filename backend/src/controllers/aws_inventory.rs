@@ -32,9 +32,12 @@ use crate::services::aws::inventory::ec2_pillar_evaluator::evaluate_ec2_fleet;
 use crate::services::aws::inventory::ecs_pillar_evaluator::evaluate_ecs_fleet;
 use crate::services::aws::inventory::eks_pillar_evaluator::evaluate_eks_fleet;
 use crate::services::aws::inventory::efs_pillar_evaluator::evaluate_efs_fleet;
+use crate::services::aws::inventory::kinesis_pillar_evaluator::evaluate_kinesis_fleet;
 use crate::services::aws::inventory::lambda_pillar_evaluator::evaluate_lambda_fleet;
 use crate::services::aws::inventory::rds_pillar_evaluator::evaluate_rds_fleet;
 use crate::services::aws::inventory::s3_pillar_evaluator::evaluate_s3_fleet;
+use crate::services::aws::inventory::sns_pillar_evaluator::evaluate_sns_fleet;
+use crate::services::aws::inventory::sqs_pillar_evaluator::evaluate_sqs_fleet;
 use crate::services::aws::inventory::types::{Pillar, DEFAULT_STALE_AFTER_HOURS};
 
 #[derive(Clone)]
@@ -192,6 +195,33 @@ pub async fn get_ecs_pillar_reports(
         "oldest_refresh": oldest_refresh,
         "reports": reports,
     })))
+}
+
+pub async fn get_sqs_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("SQS pillar report request: {:?}", query);
+    pillar_reports(&controller, query, AwsResourceType::SqsQueue, evaluate_sqs_fleet).await
+}
+
+pub async fn get_sns_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("SNS pillar report request: {:?}", query);
+    pillar_reports(&controller, query, AwsResourceType::SnsTopics, evaluate_sns_fleet).await
+}
+
+pub async fn get_kinesis_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Kinesis pillar report request: {:?}", query);
+    pillar_reports(&controller, query, AwsResourceType::KinesisStream, evaluate_kinesis_fleet).await
 }
 
 pub async fn get_dynamodb_pillar_reports(

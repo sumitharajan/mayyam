@@ -140,6 +140,9 @@ async fn storage_and_database_pillar_reports_contract() {
         ("ecs", "EcsClusterAndService"),
         ("eks", "EksCluster"),
         ("dynamodb", "DynamoDbTable"),
+        ("sqs", "SqsQueue"),
+        ("sns", "SnsTopic"),
+        ("kinesis", "KinesisStream"),
     ] {
         let resp = client
             .get(format!(
