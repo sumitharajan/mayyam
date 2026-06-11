@@ -24,6 +24,7 @@ mod integration {
     pub mod helpers;
     pub mod iam_api_tests;
     pub mod kafka;
+    pub mod kubernetes_smoke_tests;
     pub mod llm;
 }
 
@@ -36,4 +37,5 @@ pub use integration::ec2_api_tests::*;
 pub use integration::helpers;
 pub use integration::iam_api_tests::*;
 pub use integration::kafka::*;
+pub use integration::kubernetes_smoke_tests::*;
 pub use integration::llm::*;

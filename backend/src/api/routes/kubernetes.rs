@@ -36,6 +36,10 @@ pub fn configure(cfg: &mut web::ServiceConfig, db: Arc<DatabaseConnection>) {
             web::post().to(kube_controller::create_cluster_controller),
         )
         .route(
+            "/inventory/clusters/pillars",
+            web::get().to(kube_controller::get_cluster_inventory_pillar_reports_controller),
+        )
+        .route(
             "/clusters/{cluster_id}",
             web::get().to(kube_controller::get_cluster_controller),
         )

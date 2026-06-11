@@ -33,6 +33,7 @@ pub mod cronjobs_service;
 pub mod endpoints_service;
 pub mod hpa_service;
 pub mod ingress_service;
+pub mod inventory;
 pub mod jobs_service;
 pub mod limit_ranges_service;
 pub mod network_policies_service;

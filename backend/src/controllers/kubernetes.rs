@@ -15,17 +15,60 @@
 use crate::errors::AppError;
 use crate::middleware::auth::Claims; // Assuming you have auth middleware
 use crate::models::cluster::{CreateKubernetesClusterRequest, KubernetesClusterConfig};
+use crate::services::aws::inventory::types::{Pillar, DEFAULT_STALE_AFTER_HOURS};
+use crate::services::kubernetes::inventory::{evaluate_kubernetes_cluster_fleet, RESOURCE_TYPE};
 use crate::services::kubernetes::prelude::*;
 use actix_web::{web, HttpResponse, Responder};
 use actix_web_lab::sse;
+use chrono::Utc;
 use futures::StreamExt;
 use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
 use serde::Deserialize;
+use serde_json::json;
 use std::collections::BTreeMap;
 use std::sync::Arc;
 use std::time::Duration;
 use tracing::{debug, info};
 use uuid::Uuid;
+
+const KUBERNETES_INVENTORY_PILLARS: &[Pillar] =
+    &[Pillar::Cost, Pillar::Resilience, Pillar::Security];
+
+#[derive(Debug, Deserialize)]
+pub struct KubernetesInventoryQuery {
+    pub pillar: Option<String>,
+}
+
+fn parse_kubernetes_inventory_pillars(raw: &Option<String>) -> Result<Vec<Pillar>, AppError> {
+    let supported_names = || {
+        KUBERNETES_INVENTORY_PILLARS
+            .iter()
+            .map(|pillar| pillar.as_str())
+            .collect::<Vec<_>>()
+            .join(", ")
+    };
+
+    match raw {
+        Some(raw) => {
+            let pillar = Pillar::parse(raw).ok_or_else(|| {
+                AppError::BadRequest(format!(
+                    "Unknown pillar '{}'; expected one of: {}",
+                    raw,
+                    supported_names()
+                ))
+            })?;
+            if !KUBERNETES_INVENTORY_PILLARS.contains(&pillar) {
+                return Err(AppError::BadRequest(format!(
+                    "Pillar '{}' is not supported for Kubernetes cluster inventory yet; expected one of: {}",
+                    raw,
+                    supported_names()
+                )));
+            }
+            Ok(vec![pillar])
+        }
+        None => Ok(KUBERNETES_INVENTORY_PILLARS.to_vec()),
+    }
+}
 
 // Helper function to get cluster config (you'll need to implement this based on your DB structure)
 // This is a simplified example. You'd typically fetch this from a database.
@@ -91,6 +134,43 @@ pub async fn list_clusters_controller(
         .map_err(AppError::Database)?;
     debug!(target: "mayyam::controllers::kubernetes", user_id = %claims.username, count = clusters.len(), "Successfully listed clusters");
     Ok(HttpResponse::Ok().json(clusters))
+}
+
+pub async fn get_cluster_inventory_pillar_reports_controller(
+    claims: web::ReqData<Claims>,
+    db: web::Data<Arc<DatabaseConnection>>,
+    query: web::Query<KubernetesInventoryQuery>,
+) -> Result<impl Responder, AppError> {
+    let query = query.into_inner();
+    debug!(
+        target: "mayyam::controllers::kubernetes",
+        user_id = %claims.username,
+        ?query,
+        "Kubernetes cluster inventory pillar report request"
+    );
+
+    let pillars = parse_kubernetes_inventory_pillars(&query.pillar)?;
+    let clusters = crate::models::cluster::Entity::find()
+        .filter(crate::models::cluster::Column::ClusterType.eq("kubernetes"))
+        .all(db.get_ref().as_ref())
+        .await
+        .map_err(AppError::Database)?;
+
+    let now = Utc::now();
+    let reports = pillars
+        .iter()
+        .map(|pillar| evaluate_kubernetes_cluster_fleet(&clusters, *pillar, now))
+        .collect::<Vec<_>>();
+    let oldest_refresh = clusters.iter().map(|cluster| cluster.updated_at).min();
+
+    Ok(HttpResponse::Ok().json(json!({
+        "resource_type": RESOURCE_TYPE,
+        "evaluated_at": now,
+        "stale_after_hours": DEFAULT_STALE_AFTER_HOURS,
+        "resources_evaluated": clusters.len(),
+        "oldest_refresh": oldest_refresh,
+        "reports": reports,
+    })))
 }
 
 pub async fn create_cluster_controller(
