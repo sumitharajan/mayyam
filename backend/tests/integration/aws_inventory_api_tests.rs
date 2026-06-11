@@ -174,6 +174,10 @@ async fn storage_and_database_pillar_reports_contract() {
         ("backup", "BackupVault"),
         ("batch", "BatchComputeEnv"),
         ("emr", "EmrCluster"),
+        ("globalaccelerator", "GlobalAccelerator"),
+        ("glue", "GlueDatabase"),
+        ("redshift", "RedshiftCluster"),
+        ("waf", "WafWebAcl"),
     ] {
         let resp = client
             .get(format!(

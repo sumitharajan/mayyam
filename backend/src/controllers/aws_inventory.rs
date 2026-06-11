@@ -34,7 +34,11 @@ use crate::services::aws::inventory::athena_pillar_evaluator::evaluate_athena_fl
 use crate::services::aws::inventory::backup_pillar_evaluator::evaluate_backup_fleet;
 use crate::services::aws::inventory::batch_pillar_evaluator::evaluate_batch_fleet;
 use crate::services::aws::inventory::emr_pillar_evaluator::evaluate_emr_fleet;
+use crate::services::aws::inventory::globalaccelerator_pillar_evaluator::evaluate_globalaccelerator_fleet;
+use crate::services::aws::inventory::glue_pillar_evaluator::evaluate_glue_fleet;
+use crate::services::aws::inventory::redshift_pillar_evaluator::evaluate_redshift_fleet;
 use crate::services::aws::inventory::ssm_pillar_evaluator::evaluate_ssm_fleet;
+use crate::services::aws::inventory::waf_pillar_evaluator::evaluate_waf_fleet;
 use crate::services::aws::inventory::cloudfront_pillar_evaluator::evaluate_cloudfront_fleet;
 use crate::services::aws::inventory::cloudtrail_pillar_evaluator::evaluate_cloudtrail_fleet;
 use crate::services::aws::inventory::cloudwatch_pillar_evaluator::evaluate_cloudwatch_fleet;
@@ -721,6 +725,66 @@ pub async fn get_emr_pillar_reports(
         query,
         AwsResourceType::EmrCluster,
         evaluate_emr_fleet,
+    )
+    .await
+}
+
+pub async fn get_globalaccelerator_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Global Accelerator pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::GlobalAccelerator,
+        evaluate_globalaccelerator_fleet,
+    )
+    .await
+}
+
+pub async fn get_glue_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Glue pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::GlueDatabase,
+        evaluate_glue_fleet,
+    )
+    .await
+}
+
+pub async fn get_redshift_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Redshift pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::RedshiftCluster,
+        evaluate_redshift_fleet,
+    )
+    .await
+}
+
+pub async fn get_waf_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("WAF pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::WafWebAcl,
+        evaluate_waf_fleet,
     )
     .await
 }

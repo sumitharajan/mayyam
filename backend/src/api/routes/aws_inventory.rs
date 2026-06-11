@@ -64,4 +64,8 @@ pub fn configure(controller: Arc<AwsInventoryController>) -> Scope {
         .route("/backup/pillars", web::get().to(aws_inventory::get_backup_pillar_reports))
         .route("/batch/pillars", web::get().to(aws_inventory::get_batch_pillar_reports))
         .route("/emr/pillars", web::get().to(aws_inventory::get_emr_pillar_reports))
+        .route("/globalaccelerator/pillars", web::get().to(aws_inventory::get_globalaccelerator_pillar_reports))
+        .route("/glue/pillars", web::get().to(aws_inventory::get_glue_pillar_reports))
+        .route("/redshift/pillars", web::get().to(aws_inventory::get_redshift_pillar_reports))
+        .route("/waf/pillars", web::get().to(aws_inventory::get_waf_pillar_reports))
 }

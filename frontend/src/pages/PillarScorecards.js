@@ -60,6 +60,10 @@ const SERVICES = [
   { key: "backup", label: "AWS Backup" },
   { key: "batch", label: "Batch" },
   { key: "emr", label: "EMR" },
+  { key: "globalaccelerator", label: "Global Accelerator" },
+  { key: "glue", label: "Glue" },
+  { key: "redshift", label: "Redshift" },
+  { key: "waf", label: "WAF" },
 ];
 
 // Well-Architected pillar scorecards from deterministic inventory
