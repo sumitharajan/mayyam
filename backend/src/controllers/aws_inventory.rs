@@ -26,6 +26,7 @@ use tracing::debug;
 use crate::errors::AppError;
 use crate::models::aws_resource::AwsResourceType;
 use crate::repositories::aws_resource::AwsResourceRepository;
+use crate::services::aws::inventory::dynamodb_pillar_evaluator::evaluate_dynamodb_fleet;
 use crate::services::aws::inventory::ebs_pillar_evaluator::evaluate_ebs_fleet;
 use crate::services::aws::inventory::ec2_pillar_evaluator::evaluate_ec2_fleet;
 use crate::services::aws::inventory::ecs_pillar_evaluator::evaluate_ecs_fleet;
@@ -191,6 +192,15 @@ pub async fn get_ecs_pillar_reports(
         "oldest_refresh": oldest_refresh,
         "reports": reports,
     })))
+}
+
+pub async fn get_dynamodb_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("DynamoDB pillar report request: {:?}", query);
+    pillar_reports(&controller, query, AwsResourceType::DynamoDbTable, evaluate_dynamodb_fleet).await
 }
 
 pub async fn get_eks_pillar_reports(

@@ -139,6 +139,7 @@ async fn storage_and_database_pillar_reports_contract() {
         ("efs", "EfsFileSystem"),
         ("ecs", "EcsClusterAndService"),
         ("eks", "EksCluster"),
+        ("dynamodb", "DynamoDbTable"),
     ] {
         let resp = client
             .get(format!(

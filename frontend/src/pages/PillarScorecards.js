@@ -25,6 +25,7 @@ const SERVICES = [
   { key: "efs", label: "EFS" },
   { key: "ecs", label: "ECS" },
   { key: "eks", label: "EKS" },
+  { key: "dynamodb", label: "DynamoDB" },
 ];
 
 // Well-Architected pillar scorecards from deterministic inventory

@@ -15,6 +15,7 @@
 // Deterministic inventory pillar evaluators. These run without an LLM,
 // emit reason-coded findings, and preserve the raw evidence they used.
 
+pub mod dynamodb_pillar_evaluator;
 pub mod ebs_pillar_evaluator;
 pub mod ec2_pillar_evaluator;
 pub mod ecs_pillar_evaluator;
