@@ -78,6 +78,7 @@ const SERVICES = [
   { key: "macie", label: "Macie" },
   { key: "organizations", label: "Organizations" },
   { key: "controltower", label: "Control Tower" },
+  { key: "servicecatalog", label: "Service Catalog" },
   { key: "documentdb", label: "DocumentDB" },
   { key: "neptune", label: "Neptune" },
   { key: "memorydb", label: "MemoryDB" },

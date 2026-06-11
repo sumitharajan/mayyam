@@ -79,6 +79,7 @@ pub mod s3_pillar_evaluator;
 pub mod secretsmanager_pillar_evaluator;
 pub mod security_group_pillar_evaluator;
 pub mod securityhub_pillar_evaluator;
+pub mod servicecatalog_pillar_evaluator;
 pub mod shield_pillar_evaluator;
 pub mod sns_pillar_evaluator;
 pub mod sqs_pillar_evaluator;

@@ -50,6 +50,7 @@ use aws_sdk_organizations::Client as OrganizationsClient;
 use aws_sdk_quicksight::Client as QuickSightClient;
 use aws_sdk_rds::Client as RdsClient;
 use aws_sdk_s3::Client as S3Client;
+use aws_sdk_servicecatalog::Client as ServiceCatalogClient;
 use aws_sdk_shield::Client as ShieldClient;
 use aws_sdk_sns::Client as SnsClient;
 use aws_sdk_sqs::Client as SqsClient;
@@ -778,6 +779,14 @@ impl AwsClientFactory for AwsService {
     ) -> Result<ControlTowerClient, AppError> {
         let config = self.get_aws_sdk_config(aws_account_dto).await?;
         Ok(ControlTowerClient::new(&config))
+    }
+
+    async fn create_servicecatalog_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<ServiceCatalogClient, AppError> {
+        let config = self.get_aws_sdk_config(aws_account_dto).await?;
+        Ok(ServiceCatalogClient::new(&config))
     }
 
     async fn create_memorydb_client(

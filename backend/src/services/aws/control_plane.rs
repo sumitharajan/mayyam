@@ -96,6 +96,7 @@ use crate::services::aws::aws_control_plane::quicksight_control_plane::QuickSigh
 use crate::services::aws::aws_control_plane::route53_control_plane::Route53ControlPlane;
 use crate::services::aws::aws_control_plane::secretsmanager_control_plane::SecretsManagerControlPlane;
 use crate::services::aws::aws_control_plane::securityhub_control_plane::SecurityHubControlPlane;
+use crate::services::aws::aws_control_plane::servicecatalog_control_plane::ServiceCatalogControlPlane;
 use crate::services::aws::aws_control_plane::shield_control_plane::ShieldControlPlane;
 use crate::services::aws::aws_control_plane::storagegateway_control_plane::StorageGatewayControlPlane;
 use crate::services::aws::aws_control_plane::timestream_control_plane::TimestreamControlPlane;
@@ -799,6 +800,7 @@ impl AwsControlPlane {
                 AwsResourceType::MacieAccount.to_string(),
                 AwsResourceType::OrganizationsOrganization.to_string(),
                 AwsResourceType::ControlTowerLandingZone.to_string(),
+                AwsResourceType::ServiceCatalogPortfolio.to_string(),
                 // Batch 12: Document DB, Graph DB & In-Memory DB
                 AwsResourceType::DocumentDbCluster.to_string(),
                 AwsResourceType::NeptuneCluster.to_string(),
@@ -1094,6 +1096,10 @@ impl AwsControlPlane {
                     let cp = ControlTowerControlPlane::new(self.aws_service.clone());
                     cp.sync_landing_zones(aws_account_dto, request.sync_id)
                         .await
+                }
+                "ServiceCatalogPortfolio" => {
+                    let cp = ServiceCatalogControlPlane::new(self.aws_service.clone());
+                    cp.sync_portfolios(aws_account_dto, request.sync_id).await
                 }
                 // Batch 12: Document DB, Graph DB & In-Memory DB
                 "DocumentDbCluster" => {

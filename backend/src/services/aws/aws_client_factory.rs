@@ -68,6 +68,7 @@ use aws_sdk_route53::Client as Route53Client;
 use aws_sdk_s3::Client as S3Client;
 use aws_sdk_secretsmanager::Client as SecretsManagerClient;
 use aws_sdk_securityhub::Client as SecurityHubClient;
+use aws_sdk_servicecatalog::Client as ServiceCatalogClient;
 use aws_sdk_sesv2::Client as SesV2Client;
 use aws_sdk_sfn::Client as SfnClient;
 use aws_sdk_shield::Client as ShieldClient;
@@ -299,6 +300,10 @@ pub trait AwsClientFactory {
         &self,
         aws_account_dto: &AwsAccountDto,
     ) -> Result<ControlTowerClient, AppError>;
+    async fn create_servicecatalog_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<ServiceCatalogClient, AppError>;
     async fn create_memorydb_client(
         &self,
         aws_account_dto: &AwsAccountDto,

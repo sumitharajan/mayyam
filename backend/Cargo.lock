@@ -2317,6 +2317,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-sdk-servicecatalog"
+version = "1.98.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7121b2b3f47310eed12e32cda75074189d52811bb1a2ab056ccfb7ef4043007f"
+dependencies = [
+ "aws-credential-types",
+ "aws-runtime",
+ "aws-smithy-async",
+ "aws-smithy-http 0.63.6",
+ "aws-smithy-json 0.62.5",
+ "aws-smithy-observability",
+ "aws-smithy-runtime",
+ "aws-smithy-runtime-api",
+ "aws-smithy-types",
+ "aws-types",
+ "bytes",
+ "fastrand 2.3.0",
+ "http 0.2.12",
+ "http 1.3.1",
+ "regex-lite",
+ "tracing",
+]
+
+[[package]]
 name = "aws-sdk-sesv2"
 version = "1.115.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5714,6 +5738,7 @@ dependencies = [
  "aws-sdk-s3",
  "aws-sdk-secretsmanager",
  "aws-sdk-securityhub",
+ "aws-sdk-servicecatalog",
  "aws-sdk-sesv2",
  "aws-sdk-sfn",
  "aws-sdk-shield",

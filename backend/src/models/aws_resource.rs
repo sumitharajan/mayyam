@@ -148,6 +148,7 @@ pub enum AwsResourceType {
     MacieAccount,
     OrganizationsOrganization,
     ControlTowerLandingZone,
+    ServiceCatalogPortfolio,
     // Document Database Resources
     DocumentDbCluster,
     // Graph Database Resources
@@ -268,6 +269,7 @@ impl ToString for AwsResourceType {
             AwsResourceType::MacieAccount => "MacieAccount".to_string(),
             AwsResourceType::OrganizationsOrganization => "OrganizationsOrganization".to_string(),
             AwsResourceType::ControlTowerLandingZone => "ControlTowerLandingZone".to_string(),
+            AwsResourceType::ServiceCatalogPortfolio => "ServiceCatalogPortfolio".to_string(),
             // Document Database Resources
             AwsResourceType::DocumentDbCluster => "DocumentDbCluster".to_string(),
             // Graph Database Resources
@@ -392,6 +394,7 @@ impl From<&str> for AwsResourceType {
             "MacieAccount" => AwsResourceType::MacieAccount,
             "OrganizationsOrganization" => AwsResourceType::OrganizationsOrganization,
             "ControlTowerLandingZone" => AwsResourceType::ControlTowerLandingZone,
+            "ServiceCatalogPortfolio" => AwsResourceType::ServiceCatalogPortfolio,
             // Document Database Resources
             "DocumentDbCluster" => AwsResourceType::DocumentDbCluster,
             // Graph Database Resources

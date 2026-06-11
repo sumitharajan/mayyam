@@ -90,6 +90,7 @@ use crate::services::aws::inventory::s3_pillar_evaluator::evaluate_s3_fleet;
 use crate::services::aws::inventory::secretsmanager_pillar_evaluator::evaluate_secretsmanager_fleet;
 use crate::services::aws::inventory::security_group_pillar_evaluator::evaluate_security_group_fleet;
 use crate::services::aws::inventory::securityhub_pillar_evaluator::evaluate_securityhub_fleet;
+use crate::services::aws::inventory::servicecatalog_pillar_evaluator::evaluate_servicecatalog_fleet;
 use crate::services::aws::inventory::shield_pillar_evaluator::evaluate_shield_fleet;
 use crate::services::aws::inventory::sns_pillar_evaluator::evaluate_sns_fleet;
 use crate::services::aws::inventory::sqs_pillar_evaluator::evaluate_sqs_fleet;
@@ -1222,6 +1223,21 @@ pub async fn get_controltower_pillar_reports(
         query,
         AwsResourceType::ControlTowerLandingZone,
         evaluate_controltower_fleet,
+    )
+    .await
+}
+
+pub async fn get_servicecatalog_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Service Catalog pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::ServiceCatalogPortfolio,
+        evaluate_servicecatalog_fleet,
     )
     .await
 }
