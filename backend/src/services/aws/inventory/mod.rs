@@ -16,6 +16,7 @@
 // emit reason-coded findings, and preserve the raw evidence they used.
 
 pub mod acm_pillar_evaluator;
+pub mod amazonmq_pillar_evaluator;
 pub mod api_gateway_pillar_evaluator;
 pub mod apprunner_pillar_evaluator;
 pub mod appsync_pillar_evaluator;

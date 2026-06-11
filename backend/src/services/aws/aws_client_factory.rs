@@ -55,6 +55,7 @@ use aws_sdk_lakeformation::Client as LakeFormationClient;
 use aws_sdk_lambda::Client as LambdaClient;
 use aws_sdk_lightsail::Client as LightsailClient;
 use aws_sdk_memorydb::Client as MemoryDbClient;
+use aws_sdk_mq::Client as AmazonMqClient;
 use aws_sdk_opensearch::Client as OpenSearchClient;
 use aws_sdk_quicksight::Client as QuickSightClient;
 use aws_sdk_rds::Client as RdsClient;
@@ -308,4 +309,8 @@ pub trait AwsClientFactory {
         &self,
         aws_account_dto: &AwsAccountDto,
     ) -> Result<QuickSightClient, AppError>;
+    async fn create_amazonmq_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<AmazonMqClient, AppError>;
 }

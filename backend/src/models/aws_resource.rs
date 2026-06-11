@@ -109,6 +109,7 @@ pub enum AwsResourceType {
     EventBridgeRule,
     StepFunction,
     SesIdentity,
+    AmazonMqBroker,
     AppSyncApi,
     ConnectInstance,
     // Analytics & Big Data Resources
@@ -222,6 +223,7 @@ impl ToString for AwsResourceType {
             AwsResourceType::EventBridgeRule => "EventBridgeRule".to_string(),
             AwsResourceType::StepFunction => "StepFunction".to_string(),
             AwsResourceType::SesIdentity => "SesIdentity".to_string(),
+            AwsResourceType::AmazonMqBroker => "AmazonMqBroker".to_string(),
             AwsResourceType::AppSyncApi => "AppSyncApi".to_string(),
             AwsResourceType::ConnectInstance => "ConnectInstance".to_string(),
             // Analytics & Big Data Resources
@@ -338,6 +340,7 @@ impl From<&str> for AwsResourceType {
             "EventBridgeRule" => AwsResourceType::EventBridgeRule,
             "StepFunction" => AwsResourceType::StepFunction,
             "SesIdentity" => AwsResourceType::SesIdentity,
+            "AmazonMqBroker" => AwsResourceType::AmazonMqBroker,
             "AppSyncApi" => AwsResourceType::AppSyncApi,
             "ConnectInstance" => AwsResourceType::ConnectInstance,
             // Analytics & Big Data Resources

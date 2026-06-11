@@ -84,6 +84,7 @@ const SERVICES = [
   { key: "lakeformation", label: "Lake Formation" },
   { key: "lightsail", label: "Lightsail" },
   { key: "quicksight", label: "QuickSight" },
+  { key: "amazonmq", label: "Amazon MQ" },
 ];
 
 // Well-Architected pillar scorecards from deterministic inventory

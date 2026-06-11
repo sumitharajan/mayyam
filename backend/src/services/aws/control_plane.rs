@@ -25,6 +25,7 @@ use tracing::{debug, error, info};
 use uuid::Uuid;
 
 // Import control planes from their respective modules
+use crate::services::aws::aws_control_plane::amazonmq_control_plane::AmazonMqControlPlane;
 use crate::services::aws::aws_control_plane::api_gateway_control_plane::ApiGatewayControlPlane;
 use crate::services::aws::aws_control_plane::cloudfront_control_plane::CloudFrontControlPlane;
 use crate::services::aws::aws_control_plane::dynamodb_control_plane::DynamoDbControlPlane;
@@ -755,6 +756,7 @@ impl AwsControlPlane {
                 AwsResourceType::EventBridgeRule.to_string(),
                 AwsResourceType::StepFunction.to_string(),
                 AwsResourceType::SesIdentity.to_string(),
+                AwsResourceType::AmazonMqBroker.to_string(),
                 // Batch 6: Analytics & Big Data
                 AwsResourceType::RedshiftCluster.to_string(),
                 AwsResourceType::EmrCluster.to_string(),
@@ -947,6 +949,10 @@ impl AwsControlPlane {
                     let cp = StepFunctionsControlPlane::new(self.aws_service.clone());
                     cp.sync_state_machines(aws_account_dto, request.sync_id)
                         .await
+                }
+                "AmazonMqBroker" => {
+                    let cp = AmazonMqControlPlane::new(self.aws_service.clone());
+                    cp.sync_brokers(aws_account_dto, request.sync_id).await
                 }
                 "SesIdentity" => {
                     let cp = SesControlPlane::new(self.aws_service.clone());

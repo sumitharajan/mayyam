@@ -216,6 +216,7 @@ mod aws_resource_model_tests {
             "CloudWatchAlarm", "SsmDocument",
             // Application Integration
             "EventBridgeRule", "StepFunction", "SesIdentity",
+            "AmazonMqBroker",
             // Analytics & Big Data
             "RedshiftCluster", "EmrCluster", "AthenaWorkgroup", "GlueDatabase",
             // Edge & DR

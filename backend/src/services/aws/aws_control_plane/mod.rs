@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+pub mod amazonmq_control_plane;
 pub mod api_gateway_control_plane;
 pub mod cloudfront_control_plane;
 pub mod dynamodb_control_plane;

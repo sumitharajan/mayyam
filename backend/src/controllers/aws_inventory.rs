@@ -27,6 +27,7 @@ use crate::errors::AppError;
 use crate::models::aws_resource::AwsResourceType;
 use crate::repositories::aws_resource::AwsResourceRepository;
 use crate::services::aws::inventory::acm_pillar_evaluator::evaluate_acm_fleet;
+use crate::services::aws::inventory::amazonmq_pillar_evaluator::evaluate_amazonmq_fleet;
 use crate::services::aws::inventory::api_gateway_pillar_evaluator::evaluate_api_gateway_fleet;
 use crate::services::aws::inventory::apprunner_pillar_evaluator::evaluate_apprunner_fleet;
 use crate::services::aws::inventory::appsync_pillar_evaluator::evaluate_appsync_fleet;
@@ -1304,6 +1305,21 @@ pub async fn get_quicksight_pillar_reports(
         query,
         AwsResourceType::QuickSightAsset,
         evaluate_quicksight_fleet,
+    )
+    .await
+}
+
+pub async fn get_amazonmq_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Amazon MQ pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::AmazonMqBroker,
+        evaluate_amazonmq_fleet,
     )
     .await
 }
