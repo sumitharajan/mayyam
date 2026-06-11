@@ -86,3 +86,5 @@ frontend/test-results
 frontend/playwright-report
 
 /backend/backups
+
+/docs/product-roadmap
