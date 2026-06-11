@@ -248,6 +248,17 @@ impl Ec2ControlPlane {
                     "status_check_metric_observed".to_string(),
                     json!(has_metric(resource_data, "StatusCheckFailed")),
                 );
+                resource_data.insert(
+                    "packet_metrics_observed".to_string(),
+                    json!(
+                        has_metric(resource_data, "NetworkPacketsIn")
+                            && has_metric(resource_data, "NetworkPacketsOut")
+                    ),
+                );
+                resource_data.insert(
+                    "recovery_point_telemetry_observed".to_string(),
+                    json!(recovery_point_age_hours(resource_data).is_some()),
+                );
                 resource_data.insert("telemetry_collection_error_count".to_string(), json!(0));
                 resource_data.insert("telemetry_collection_errors".to_string(), json!([]));
             }
@@ -258,6 +269,11 @@ impl Ec2ControlPlane {
                 resource_data.insert("cpu_metric_observed".to_string(), json!(false));
                 resource_data.insert("network_metrics_observed".to_string(), json!(false));
                 resource_data.insert("status_check_metric_observed".to_string(), json!(false));
+                resource_data.insert("packet_metrics_observed".to_string(), json!(false));
+                resource_data.insert(
+                    "recovery_point_telemetry_observed".to_string(),
+                    json!(recovery_point_age_hours(resource_data).is_some()),
+                );
                 resource_data.insert("telemetry_collection_error_count".to_string(), json!(1));
                 resource_data.insert(
                     "telemetry_collection_errors".to_string(),
@@ -935,11 +951,13 @@ impl Ec2ControlPlane {
     }
 }
 
-fn ec2_core_metric_names() -> [&'static str; 8] {
+fn ec2_core_metric_names() -> [&'static str; 10] {
     [
         "CPUUtilization",
         "NetworkIn",
         "NetworkOut",
+        "NetworkPacketsIn",
+        "NetworkPacketsOut",
         "DiskReadOps",
         "DiskWriteOps",
         "StatusCheckFailed",
@@ -970,4 +988,24 @@ fn has_metric(resource_data: &serde_json::Map<String, Value>, metric_name: &str)
             })
         })
         .unwrap_or(false)
+}
+
+fn recovery_point_age_hours(resource_data: &serde_json::Map<String, Value>) -> Option<f64> {
+    for key in [
+        "latest_recovery_point_age_hours",
+        "recovery_point_age_hours",
+        "backup_age_hours",
+    ] {
+        if let Some(value) = resource_data
+            .get(key)
+            .and_then(|value| value.as_f64().or_else(|| value.as_i64().map(|n| n as f64)))
+        {
+            return Some(value);
+        }
+    }
+
+    resource_data
+        .get("disaster_recovery")
+        .and_then(|value| value.get("latest_recovery_point_age_hours"))
+        .and_then(|value| value.as_f64().or_else(|| value.as_i64().map(|n| n as f64)))
 }

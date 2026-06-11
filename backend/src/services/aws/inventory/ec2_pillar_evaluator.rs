@@ -13,8 +13,9 @@
 // limitations under the License.
 
 // Deterministic EC2 inventory and telemetry evaluators for the cost, security,
-// resilience, and performance pillars (roadmap rows
-// 01-AWS-CLOUD-00001/00010/00037 plus 01-AWS-CLOUD-00002/00011/00020).
+// resilience, performance, scalability, and disaster-recovery pillars (roadmap
+// rows 01-AWS-CLOUD-00001/00010/00037 plus
+// 01-AWS-CLOUD-00002/00011/00020/00029/00038/00047).
 //
 // Pure domain logic: takes already-collected `aws_resources` rows plus an
 // explicit `now`, returns reason-coded findings with the raw evidence that
@@ -44,6 +45,14 @@ pub const REASON_RES_STATUS_CHECK_FAILURE_TELEMETRY: &str =
     "EC2_RES_STATUS_CHECK_FAILURE_TELEMETRY";
 pub const REASON_PERF_MISSING_CORE_TELEMETRY: &str = "EC2_PERF_MISSING_CORE_TELEMETRY";
 pub const REASON_PERF_HIGH_CPU_TELEMETRY: &str = "EC2_PERF_HIGH_CPU_TELEMETRY";
+pub const REASON_SCALE_MISSING_DEMAND_TELEMETRY: &str = "EC2_SCALE_MISSING_DEMAND_TELEMETRY";
+pub const REASON_SCALE_HIGH_CPU_PRESSURE_TELEMETRY: &str = "EC2_SCALE_HIGH_CPU_PRESSURE_TELEMETRY";
+pub const REASON_SEC_MISSING_PACKET_TELEMETRY: &str = "EC2_SEC_MISSING_PACKET_TELEMETRY";
+pub const REASON_SEC_PUBLIC_PACKET_TRAFFIC_TELEMETRY: &str =
+    "EC2_SEC_PUBLIC_PACKET_TRAFFIC_TELEMETRY";
+pub const REASON_DR_MISSING_RECOVERY_POINT_TELEMETRY: &str =
+    "EC2_DR_MISSING_RECOVERY_POINT_TELEMETRY";
+pub const REASON_DR_STALE_RECOVERY_POINT_TELEMETRY: &str = "EC2_DR_STALE_RECOVERY_POINT_TELEMETRY";
 pub const REASON_INV_STALE_DATA: &str = "EC2_INV_STALE_DATA";
 
 /// Evaluate every EC2 instance in the fleet for one pillar.
@@ -65,6 +74,8 @@ pub fn evaluate_ec2_fleet(
             Pillar::Security => evaluate_security(resource, &mut findings),
             Pillar::Resilience => evaluate_resilience(resource, &mut findings),
             Pillar::Performance => evaluate_performance(resource, &mut findings),
+            Pillar::Scalability => evaluate_scalability(resource, &mut findings),
+            Pillar::DisasterRecovery => evaluate_disaster_recovery(resource, now, &mut findings),
             // Pillars without checks for this service yet produce no findings.
             _ => {}
         }
@@ -160,6 +171,7 @@ fn evaluate_cost(resource: &AwsResourceModel, findings: &mut Vec<InventoryFindin
 }
 
 fn evaluate_security(resource: &AwsResourceModel, findings: &mut Vec<InventoryFinding>) {
+    let public_ip = data_str(&resource.resource_data, "public_ip").filter(|ip| !ip.is_empty());
     if let Some(public_ip) = data_str(&resource.resource_data, "public_ip") {
         if !public_ip.is_empty() {
             findings.push(InventoryFinding {
@@ -190,6 +202,49 @@ fn evaluate_security(resource: &AwsResourceModel, findings: &mut Vec<InventoryFi
             ),
             evidence: json!({ "tags": resource.tags }),
         });
+    }
+
+    let packet_metrics = ["NetworkPacketsIn", "NetworkPacketsOut"];
+    let missing_packet_metrics = missing_metrics(resource, &packet_metrics);
+    if !missing_packet_metrics.is_empty() {
+        findings.push(InventoryFinding {
+            resource_id: resource.resource_id.clone(),
+            arn: resource.arn.clone(),
+            pillar: Pillar::Security,
+            reason_code: REASON_SEC_MISSING_PACKET_TELEMETRY.to_string(),
+            severity: Severity::Medium,
+            message: format!(
+                "Instance {} is missing EC2 packet telemetry; network exposure cannot be verified from evidence",
+                resource.resource_id
+            ),
+            evidence: json!({
+                "required_metrics": packet_metrics,
+                "missing_metrics": missing_packet_metrics,
+            }),
+        });
+    }
+
+    if let (Some(public_ip), Some(max_packets_in)) =
+        (public_ip, metric_max(resource, "NetworkPacketsIn"))
+    {
+        if max_packets_in > 0.0 {
+            findings.push(InventoryFinding {
+                resource_id: resource.resource_id.clone(),
+                arn: resource.arn.clone(),
+                pillar: Pillar::Security,
+                reason_code: REASON_SEC_PUBLIC_PACKET_TRAFFIC_TELEMETRY.to_string(),
+                severity: Severity::High,
+                message: format!(
+                    "Instance {} has a public IP and inbound packet telemetry",
+                    resource.resource_id
+                ),
+                evidence: json!({
+                    "public_ip": public_ip,
+                    "metric_name": "NetworkPacketsIn",
+                    "max": max_packets_in,
+                }),
+            });
+        }
     }
 }
 
@@ -310,6 +365,97 @@ fn evaluate_performance(resource: &AwsResourceModel, findings: &mut Vec<Inventor
     }
 }
 
+fn evaluate_scalability(resource: &AwsResourceModel, findings: &mut Vec<InventoryFinding>) {
+    let required_metrics = ["CPUUtilization", "NetworkIn", "NetworkOut"];
+    let missing_metrics = missing_metrics(resource, &required_metrics);
+    if !missing_metrics.is_empty() {
+        findings.push(InventoryFinding {
+            resource_id: resource.resource_id.clone(),
+            arn: resource.arn.clone(),
+            pillar: Pillar::Scalability,
+            reason_code: REASON_SCALE_MISSING_DEMAND_TELEMETRY.to_string(),
+            severity: Severity::Medium,
+            message: format!(
+                "Instance {} is missing EC2 demand telemetry needed to assess scaling pressure",
+                resource.resource_id
+            ),
+            evidence: json!({
+                "required_metrics": required_metrics,
+                "missing_metrics": missing_metrics,
+            }),
+        });
+    }
+
+    if data_str(&resource.resource_data, "state").as_deref() == Some("running") {
+        if let Some(max_cpu) = metric_max(resource, "CPUUtilization") {
+            if max_cpu >= SCALING_CPU_PRESSURE_MIN {
+                findings.push(InventoryFinding {
+                    resource_id: resource.resource_id.clone(),
+                    arn: resource.arn.clone(),
+                    pillar: Pillar::Scalability,
+                    reason_code: REASON_SCALE_HIGH_CPU_PRESSURE_TELEMETRY.to_string(),
+                    severity: Severity::High,
+                    message: format!(
+                        "Instance {} has high CPUUtilization telemetry; scale-out or rightsizing pressure is likely",
+                        resource.resource_id
+                    ),
+                    evidence: json!({
+                        "metric_name": "CPUUtilization",
+                        "max": max_cpu,
+                        "scaling_cpu_pressure_min": SCALING_CPU_PRESSURE_MIN,
+                    }),
+                });
+            }
+        }
+    }
+}
+
+fn evaluate_disaster_recovery(
+    resource: &AwsResourceModel,
+    now: DateTime<Utc>,
+    findings: &mut Vec<InventoryFinding>,
+) {
+    match recovery_point_age_hours(resource, now) {
+        None => findings.push(InventoryFinding {
+            resource_id: resource.resource_id.clone(),
+            arn: resource.arn.clone(),
+            pillar: Pillar::DisasterRecovery,
+            reason_code: REASON_DR_MISSING_RECOVERY_POINT_TELEMETRY.to_string(),
+            severity: Severity::Medium,
+            message: format!(
+                "Instance {} has no recovery point telemetry; EC2 restore posture cannot be verified",
+                resource.resource_id
+            ),
+            evidence: json!({
+                "expected_fields": [
+                    "latest_recovery_point_age_hours",
+                    "recovery_point_age_hours",
+                    "latest_recovery_point_at"
+                ],
+                "resource_data_keys": resource_data_keys(resource),
+            }),
+        }),
+        Some(age_hours) if age_hours > RECOVERY_POINT_STALE_AFTER_HOURS => {
+            findings.push(InventoryFinding {
+                resource_id: resource.resource_id.clone(),
+                arn: resource.arn.clone(),
+                pillar: Pillar::DisasterRecovery,
+                reason_code: REASON_DR_STALE_RECOVERY_POINT_TELEMETRY.to_string(),
+                severity: Severity::High,
+                message: format!(
+                    "Instance {} has stale recovery point telemetry",
+                    resource.resource_id
+                ),
+                evidence: json!({
+                    "latest_recovery_point_age_hours": age_hours,
+                    "stale_after_hours": RECOVERY_POINT_STALE_AFTER_HOURS,
+                }),
+            });
+        }
+        _ => {}
+    }
+}
+
 /// Fleet-level check: two or more running instances all placed in one AZ.
 fn check_az_concentration(resources: &[AwsResourceModel]) -> Option<InventoryFinding> {
     let placements: Vec<(&AwsResourceModel, String)> = resources
@@ -353,6 +499,8 @@ fn check_az_concentration(resources: &[AwsResourceModel]) -> Option<InventoryFin
 
 const LOW_CPU_UTILIZATION_MAX: f64 = 5.0;
 const HIGH_CPU_UTILIZATION_MIN: f64 = 90.0;
+const SCALING_CPU_PRESSURE_MIN: f64 = 80.0;
+const RECOVERY_POINT_STALE_AFTER_HOURS: f64 = 24.0;
 
 fn missing_metrics(resource: &AwsResourceModel, required_metrics: &[&str]) -> Vec<String> {
     required_metrics
@@ -366,6 +514,48 @@ fn metric_max(resource: &AwsResourceModel, metric_name: &str) -> Option<f64> {
     metric_values(&resource.resource_data, metric_name)
         .into_iter()
         .reduce(f64::max)
+}
+
+fn recovery_point_age_hours(resource: &AwsResourceModel, now: DateTime<Utc>) -> Option<f64> {
+    for key in [
+        "latest_recovery_point_age_hours",
+        "recovery_point_age_hours",
+        "backup_age_hours",
+    ] {
+        if let Some(value) = resource
+            .resource_data
+            .get(key)
+            .and_then(|value| value.as_f64().or_else(|| value.as_i64().map(|n| n as f64)))
+        {
+            return Some(value);
+        }
+    }
+
+    if let Some(value) = resource
+        .resource_data
+        .pointer("/disaster_recovery/latest_recovery_point_age_hours")
+        .and_then(|value| value.as_f64().or_else(|| value.as_i64().map(|n| n as f64)))
+    {
+        return Some(value);
+    }
+
+    for key in ["latest_recovery_point_at", "recovery_point_at"] {
+        if let Some(value) = resource
+            .resource_data
+            .get(key)
+            .and_then(|value| value.as_str())
+            .and_then(|value| DateTime::parse_from_rfc3339(value).ok())
+        {
+            return Some((now - value.with_timezone(&Utc)).num_hours() as f64);
+        }
+    }
+
+    resource
+        .resource_data
+        .pointer("/disaster_recovery/latest_recovery_point_at")
+        .and_then(|value| value.as_str())
+        .and_then(|value| DateTime::parse_from_rfc3339(value).ok())
+        .map(|value| (now - value.with_timezone(&Utc)).num_hours() as f64)
 }
 
 fn metric_values(resource_data: &Value, metric_name: &str) -> Vec<f64> {
@@ -585,7 +775,17 @@ mod tests {
         let r = fixture(
             "i-private",
             json!([{"Key": "Owner", "Value": "sre"}]),
-            json!({"state": "running", "private_ip": "10.0.0.5", "availability_zone": "us-east-1a"}),
+            json!({
+                "state": "running",
+                "private_ip": "10.0.0.5",
+                "availability_zone": "us-east-1a",
+                "cloudwatch_metrics": {
+                    "metrics": [
+                        metric("NetworkPacketsIn", &[0.0]),
+                        metric("NetworkPacketsOut", &[0.0])
+                    ]
+                }
+            }),
             1,
             now(),
         );
@@ -836,5 +1036,123 @@ mod tests {
         let codes = reason_codes(&report);
         assert!(codes.contains(&REASON_PERF_MISSING_CORE_TELEMETRY));
         assert!(codes.contains(&REASON_PERF_HIGH_CPU_TELEMETRY));
+    }
+
+    #[test]
+    fn ec2_telemetry_scalability_requires_demand_metrics_and_flags_cpu_pressure() {
+        let missing = fixture(
+            "i-scale-gap",
+            json!({"owner": "sre"}),
+            json!({
+                "state": "running",
+                "availability_zone": "us-east-1a",
+                "cloudwatch_metrics": {
+                    "metrics": [
+                        metric("CPUUtilization", &[42.0])
+                    ]
+                }
+            }),
+            1,
+            now(),
+        );
+        let pressured = fixture(
+            "i-scale-hot",
+            json!({"owner": "sre"}),
+            json!({
+                "state": "running",
+                "availability_zone": "us-east-1a",
+                "cloudwatch_metrics": {
+                    "metrics": [
+                        metric("CPUUtilization", &[83.0, 91.0]),
+                        metric("NetworkIn", &[2048.0]),
+                        metric("NetworkOut", &[1024.0])
+                    ]
+                }
+            }),
+            1,
+            now(),
+        );
+
+        let report = evaluate_ec2_fleet(&[missing, pressured], Pillar::Scalability, now());
+        let codes = reason_codes(&report);
+        assert!(codes.contains(&REASON_SCALE_MISSING_DEMAND_TELEMETRY));
+        assert!(codes.contains(&REASON_SCALE_HIGH_CPU_PRESSURE_TELEMETRY));
+    }
+
+    #[test]
+    fn ec2_telemetry_security_requires_packet_metrics_and_flags_public_traffic() {
+        let missing = fixture(
+            "i-packet-gap",
+            json!({"owner": "sre"}),
+            json!({
+                "state": "running",
+                "private_ip": "10.0.0.5",
+                "availability_zone": "us-east-1a",
+                "cloudwatch_metrics": {
+                    "metrics": [
+                        metric("CPUUtilization", &[22.0])
+                    ]
+                }
+            }),
+            1,
+            now(),
+        );
+        let exposed = fixture(
+            "i-public-packets",
+            json!({"owner": "sre"}),
+            json!({
+                "state": "running",
+                "public_ip": "54.0.0.1",
+                "availability_zone": "us-east-1a",
+                "cloudwatch_metrics": {
+                    "metrics": [
+                        metric("NetworkPacketsIn", &[0.0, 1250.0]),
+                        metric("NetworkPacketsOut", &[400.0])
+                    ]
+                }
+            }),
+            1,
+            now(),
+        );
+
+        let report = evaluate_ec2_fleet(&[missing, exposed], Pillar::Security, now());
+        let codes = reason_codes(&report);
+        assert!(codes.contains(&REASON_SEC_MISSING_PACKET_TELEMETRY));
+        assert!(codes.contains(&REASON_SEC_PUBLIC_PACKET_TRAFFIC_TELEMETRY));
+    }
+
+    #[test]
+    fn ec2_telemetry_disaster_recovery_requires_recent_recovery_point_evidence() {
+        let missing = fixture(
+            "i-no-recovery-evidence",
+            json!({"owner": "sre"}),
+            json!({
+                "state": "running",
+                "availability_zone": "us-east-1a",
+                "cloudwatch_metrics": {
+                    "metrics": [
+                        metric("StatusCheckFailed", &[0.0])
+                    ]
+                }
+            }),
+            1,
+            now(),
+        );
+        let stale = fixture(
+            "i-stale-recovery",
+            json!({"owner": "sre"}),
+            json!({
+                "state": "running",
+                "availability_zone": "us-east-1b",
+                "latest_recovery_point_age_hours": 72
+            }),
+            1,
+            now(),
+        );
+
+        let report = evaluate_ec2_fleet(&[missing, stale], Pillar::DisasterRecovery, now());
+        let codes = reason_codes(&report);
+        assert!(codes.contains(&REASON_DR_MISSING_RECOVERY_POINT_TELEMETRY));
+        assert!(codes.contains(&REASON_DR_STALE_RECOVERY_POINT_TELEMETRY));
     }
 }

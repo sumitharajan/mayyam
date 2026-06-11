@@ -142,6 +142,8 @@ const EC2_PILLARS: &[Pillar] = &[
     Pillar::Security,
     Pillar::Resilience,
     Pillar::Performance,
+    Pillar::Scalability,
+    Pillar::DisasterRecovery,
 ];
 /// Full pillar set for services with extended evaluator coverage.
 const ALL_PILLARS: &[Pillar] = &[
