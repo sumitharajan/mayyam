@@ -65,6 +65,7 @@ use aws_sdk_s3::Client as S3Client;
 use aws_sdk_secretsmanager::Client as SecretsManagerClient;
 use aws_sdk_sesv2::Client as SesV2Client;
 use aws_sdk_sfn::Client as SfnClient;
+use aws_sdk_shield::Client as ShieldClient;
 use aws_sdk_sns::Client as SnsClient;
 use aws_sdk_sqs::Client as SqsClient;
 use aws_sdk_ssm::Client as SsmClient;
@@ -313,4 +314,8 @@ pub trait AwsClientFactory {
         &self,
         aws_account_dto: &AwsAccountDto,
     ) -> Result<AmazonMqClient, AppError>;
+    async fn create_shield_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<ShieldClient, AppError>;
 }

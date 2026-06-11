@@ -85,6 +85,7 @@ use crate::services::aws::inventory::route_table_pillar_evaluator::evaluate_rout
 use crate::services::aws::inventory::s3_pillar_evaluator::evaluate_s3_fleet;
 use crate::services::aws::inventory::secretsmanager_pillar_evaluator::evaluate_secretsmanager_fleet;
 use crate::services::aws::inventory::security_group_pillar_evaluator::evaluate_security_group_fleet;
+use crate::services::aws::inventory::shield_pillar_evaluator::evaluate_shield_fleet;
 use crate::services::aws::inventory::sns_pillar_evaluator::evaluate_sns_fleet;
 use crate::services::aws::inventory::sqs_pillar_evaluator::evaluate_sqs_fleet;
 use crate::services::aws::inventory::ssm_pillar_evaluator::evaluate_ssm_fleet;
@@ -1336,6 +1337,21 @@ pub async fn get_privatelink_pillar_reports(
         query,
         AwsResourceType::VpcEndpoint,
         evaluate_privatelink_fleet,
+    )
+    .await
+}
+
+pub async fn get_shield_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Shield pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::ShieldProtection,
+        evaluate_shield_fleet,
     )
     .await
 }

@@ -56,6 +56,7 @@ pub mod redshift_control_plane;
 // Batch 7: Edge & DR
 pub mod backup_control_plane;
 pub mod globalaccelerator_control_plane;
+pub mod shield_control_plane;
 pub mod waf_control_plane;
 // Final Review Additions
 pub mod appsync_control_plane;

@@ -91,6 +91,7 @@ use crate::services::aws::aws_control_plane::privatelink_control_plane::PrivateL
 use crate::services::aws::aws_control_plane::quicksight_control_plane::QuickSightControlPlane;
 use crate::services::aws::aws_control_plane::route53_control_plane::Route53ControlPlane;
 use crate::services::aws::aws_control_plane::secretsmanager_control_plane::SecretsManagerControlPlane;
+use crate::services::aws::aws_control_plane::shield_control_plane::ShieldControlPlane;
 use crate::services::aws::aws_control_plane::storagegateway_control_plane::StorageGatewayControlPlane;
 use crate::services::aws::aws_control_plane::timestream_control_plane::TimestreamControlPlane;
 use crate::services::aws::aws_control_plane::transitgateway_control_plane::TransitGatewayControlPlane;
@@ -765,6 +766,7 @@ impl AwsControlPlane {
                 AwsResourceType::GlueDatabase.to_string(),
                 // Batch 7: Edge & DR
                 AwsResourceType::WafWebAcl.to_string(),
+                AwsResourceType::ShieldProtection.to_string(),
                 AwsResourceType::GlobalAccelerator.to_string(),
                 AwsResourceType::BackupVault.to_string(),
                 AwsResourceType::BackupPlan.to_string(),
@@ -981,6 +983,10 @@ impl AwsControlPlane {
                 "WafWebAcl" => {
                     let cp = WafControlPlane::new(self.aws_service.clone());
                     cp.sync_web_acls(aws_account_dto, request.sync_id).await
+                }
+                "ShieldProtection" => {
+                    let cp = ShieldControlPlane::new(self.aws_service.clone());
+                    cp.sync_protections(aws_account_dto, request.sync_id).await
                 }
                 "GlobalAccelerator" => {
                     let cp = GlobalAcceleratorControlPlane::new(self.aws_service.clone());

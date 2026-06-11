@@ -46,6 +46,7 @@ use aws_sdk_opensearch::Client as OpenSearchClient;
 use aws_sdk_quicksight::Client as QuickSightClient;
 use aws_sdk_rds::Client as RdsClient;
 use aws_sdk_s3::Client as S3Client;
+use aws_sdk_shield::Client as ShieldClient;
 use aws_sdk_sns::Client as SnsClient;
 use aws_sdk_sqs::Client as SqsClient;
 use aws_sdk_sts::Client as StsClient;
@@ -813,5 +814,13 @@ impl AwsClientFactory for AwsService {
     ) -> Result<AmazonMqClient, AppError> {
         let config = self.get_aws_sdk_config(aws_account_dto).await?;
         Ok(AmazonMqClient::new(&config))
+    }
+
+    async fn create_shield_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<ShieldClient, AppError> {
+        let config = self.get_aws_sdk_config(aws_account_dto).await?;
+        Ok(ShieldClient::new(&config))
     }
 }

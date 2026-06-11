@@ -74,6 +74,7 @@ pub mod route_table_pillar_evaluator;
 pub mod s3_pillar_evaluator;
 pub mod secretsmanager_pillar_evaluator;
 pub mod security_group_pillar_evaluator;
+pub mod shield_pillar_evaluator;
 pub mod sns_pillar_evaluator;
 pub mod sqs_pillar_evaluator;
 pub mod ssm_pillar_evaluator;

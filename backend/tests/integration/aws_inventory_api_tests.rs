@@ -200,6 +200,7 @@ async fn storage_and_database_pillar_reports_contract() {
         ("quicksight", "QuickSightAsset", 3),
         ("amazonmq", "AmazonMqBroker", 3),
         ("privatelink", "VpcEndpoint", 3),
+        ("shield", "ShieldProtection", 3),
     ] {
         let resp = client
             .get(format!(

@@ -86,6 +86,7 @@ const SERVICES = [
   { key: "quicksight", label: "QuickSight" },
   { key: "amazonmq", label: "Amazon MQ" },
   { key: "privatelink", label: "PrivateLink" },
+  { key: "shield", label: "Shield" },
 ];
 
 // Well-Architected pillar scorecards from deterministic inventory

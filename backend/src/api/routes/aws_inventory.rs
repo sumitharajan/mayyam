@@ -296,4 +296,8 @@ pub fn configure(controller: Arc<AwsInventoryController>) -> Scope {
             "/privatelink/pillars",
             web::get().to(aws_inventory::get_privatelink_pillar_reports),
         )
+        .route(
+            "/shield/pillars",
+            web::get().to(aws_inventory::get_shield_pillar_reports),
+        )
 }

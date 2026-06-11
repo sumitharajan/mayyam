@@ -220,7 +220,7 @@ mod aws_resource_model_tests {
             // Analytics & Big Data
             "RedshiftCluster", "EmrCluster", "AthenaWorkgroup", "GlueDatabase",
             // Edge & DR
-            "WafWebAcl", "GlobalAccelerator", "BackupVault", "BackupPlan",
+            "WafWebAcl", "ShieldProtection", "GlobalAccelerator", "BackupVault", "BackupPlan",
             // Compute Scaling
             "AutoScalingGroup",
             // Networking, DNS & Secrets

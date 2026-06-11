@@ -120,6 +120,7 @@ pub enum AwsResourceType {
     KinesisAnalyticsApp,
     // Edge Computing Resources
     WafWebAcl,
+    ShieldProtection,
     GlobalAccelerator,
     CloudFrontFunction,
     // Backup & DR Resources
@@ -235,6 +236,7 @@ impl ToString for AwsResourceType {
             AwsResourceType::KinesisAnalyticsApp => "KinesisAnalyticsApp".to_string(),
             // Edge Computing Resources
             AwsResourceType::WafWebAcl => "WafWebAcl".to_string(),
+            AwsResourceType::ShieldProtection => "ShieldProtection".to_string(),
             AwsResourceType::GlobalAccelerator => "GlobalAccelerator".to_string(),
             AwsResourceType::CloudFrontFunction => "CloudFrontFunction".to_string(),
             // Backup & DR Resources
@@ -353,6 +355,7 @@ impl From<&str> for AwsResourceType {
             "KinesisAnalyticsApp" => AwsResourceType::KinesisAnalyticsApp,
             // Edge Computing Resources
             "WafWebAcl" => AwsResourceType::WafWebAcl,
+            "ShieldProtection" => AwsResourceType::ShieldProtection,
             "GlobalAccelerator" => AwsResourceType::GlobalAccelerator,
             "CloudFrontFunction" => AwsResourceType::CloudFrontFunction,
             // Backup & DR Resources
