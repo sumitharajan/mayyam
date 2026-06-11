@@ -47,6 +47,7 @@ const SERVICES = [
   { key: "internetgateway", label: "Internet Gateway" },
   { key: "routetable", label: "Route Tables" },
   { key: "networkacl", label: "Network ACLs" },
+  { key: "fargate", label: "Fargate" },
 ];
 
 // Well-Architected pillar scorecards from deterministic inventory

@@ -37,6 +37,7 @@ use crate::services::aws::inventory::ecs_pillar_evaluator::evaluate_ecs_fleet;
 use crate::services::aws::inventory::eks_pillar_evaluator::evaluate_eks_fleet;
 use crate::services::aws::inventory::efs_pillar_evaluator::evaluate_efs_fleet;
 use crate::services::aws::inventory::elasticache_pillar_evaluator::evaluate_elasticache_fleet;
+use crate::services::aws::inventory::fargate_pillar_evaluator::evaluate_fargate_fleet;
 use crate::services::aws::inventory::glacier_pillar_evaluator::evaluate_glacier_fleet;
 use crate::services::aws::inventory::iam_pillar_evaluator::evaluate_iam_fleet;
 use crate::services::aws::inventory::kinesis_pillar_evaluator::evaluate_kinesis_fleet;
@@ -537,5 +538,15 @@ pub async fn get_network_acl_pillar_reports(
     let query = query.into_inner();
     debug!("Network ACL pillar report request: {:?}", query);
     pillar_reports(&controller, query, AwsResourceType::NetworkAcl, evaluate_network_acl_fleet)
+        .await
+}
+
+pub async fn get_fargate_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Fargate pillar report request: {:?}", query);
+    pillar_reports(&controller, query, AwsResourceType::FargateProfile, evaluate_fargate_fleet)
         .await
 }

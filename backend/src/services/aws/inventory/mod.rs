@@ -26,6 +26,7 @@ pub mod ecs_pillar_evaluator;
 pub mod eks_pillar_evaluator;
 pub mod efs_pillar_evaluator;
 pub mod elasticache_pillar_evaluator;
+pub mod fargate_pillar_evaluator;
 pub mod glacier_pillar_evaluator;
 pub mod iam_pillar_evaluator;
 pub mod internet_gateway_pillar_evaluator;

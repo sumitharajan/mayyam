@@ -51,4 +51,5 @@ pub fn configure(controller: Arc<AwsInventoryController>) -> Scope {
         .route("/internetgateway/pillars", web::get().to(aws_inventory::get_internet_gateway_pillar_reports))
         .route("/routetable/pillars", web::get().to(aws_inventory::get_route_table_pillar_reports))
         .route("/networkacl/pillars", web::get().to(aws_inventory::get_network_acl_pillar_reports))
+        .route("/fargate/pillars", web::get().to(aws_inventory::get_fargate_pillar_reports))
 }

@@ -161,6 +161,7 @@ async fn storage_and_database_pillar_reports_contract() {
         ("internetgateway", "InternetGateway"),
         ("routetable", "RouteTable"),
         ("networkacl", "NetworkAcl"),
+        ("fargate", "FargateProfile"),
     ] {
         let resp = client
             .get(format!(
