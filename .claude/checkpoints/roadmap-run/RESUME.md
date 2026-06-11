@@ -7,7 +7,7 @@
 - Current batch rows: none
 - Current batch status: ready_to_select
 - Completed feature rows: 289 committed
-- Current blocker: none. A disk-full validation failure occurred during batch-050; approved removal of only `backend/target/debug/incremental/mayyam-1rxlgpsf1fmkx` recovered enough space for validation to complete.
+- Current blocker: none. A disk-full validation failure occurred during batch-050; approved `cargo clean` cleared `backend/target`, leaving only an undeletable empty target directory behind due workspace ACLs.
 - Changed files in last batch: `backend/src/services/kubernetes/inventory.rs`, `backend/src/services/kubernetes/mod.rs`, `backend/src/controllers/kubernetes.rs`, `backend/src/api/routes/kubernetes.rs`, `backend/tests/integration/kubernetes_smoke_tests.rs`, `backend/tests/integration_tests.rs`.
 - Latest verification: `cargo test --lib kubernetes::inventory --message-format short`, `cargo check --message-format short`, `cargo test --features integration-tests --test integration_tests kubernetes_cluster_inventory --message-format short`, `cargo fmt -- --check`, and `git diff --check` passed.
 - Exact next action: select and atomically claim batch-054 using the same P0 before P1/P2 and M1 before M2+ priority rules.
