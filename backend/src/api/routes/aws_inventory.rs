@@ -55,4 +55,7 @@ pub fn configure(controller: Arc<AwsInventoryController>) -> Scope {
         .route("/kms/pillars", web::get().to(aws_inventory::get_kms_pillar_reports))
         .route("/acm/pillars", web::get().to(aws_inventory::get_acm_pillar_reports))
         .route("/cloudtrail/pillars", web::get().to(aws_inventory::get_cloudtrail_pillar_reports))
+        .route("/config/pillars", web::get().to(aws_inventory::get_config_pillar_reports))
+        .route("/eventbridge/pillars", web::get().to(aws_inventory::get_eventbridge_pillar_reports))
+        .route("/stepfunctions/pillars", web::get().to(aws_inventory::get_stepfunctions_pillar_reports))
 }

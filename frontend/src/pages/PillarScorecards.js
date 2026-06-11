@@ -51,6 +51,9 @@ const SERVICES = [
   { key: "kms", label: "KMS" },
   { key: "acm", label: "ACM" },
   { key: "cloudtrail", label: "CloudTrail" },
+  { key: "config", label: "AWS Config" },
+  { key: "eventbridge", label: "EventBridge" },
+  { key: "stepfunctions", label: "Step Functions" },
 ];
 
 // Well-Architected pillar scorecards from deterministic inventory

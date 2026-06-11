@@ -32,6 +32,9 @@ use crate::services::aws::inventory::appsync_pillar_evaluator::evaluate_appsync_
 use crate::services::aws::inventory::cloudfront_pillar_evaluator::evaluate_cloudfront_fleet;
 use crate::services::aws::inventory::cloudtrail_pillar_evaluator::evaluate_cloudtrail_fleet;
 use crate::services::aws::inventory::cloudwatch_pillar_evaluator::evaluate_cloudwatch_fleet;
+use crate::services::aws::inventory::config_pillar_evaluator::evaluate_config_fleet;
+use crate::services::aws::inventory::eventbridge_pillar_evaluator::evaluate_eventbridge_fleet;
+use crate::services::aws::inventory::stepfunctions_pillar_evaluator::evaluate_stepfunctions_fleet;
 use crate::services::aws::inventory::dynamodb_pillar_evaluator::evaluate_dynamodb_fleet;
 use crate::services::aws::inventory::ebs_pillar_evaluator::evaluate_ebs_fleet;
 use crate::services::aws::inventory::ec2_pillar_evaluator::evaluate_ec2_fleet;
@@ -583,6 +586,45 @@ pub async fn get_cloudtrail_pillar_reports(
         query,
         AwsResourceType::CloudTrailTrail,
         evaluate_cloudtrail_fleet,
+    )
+    .await
+}
+
+pub async fn get_config_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("AWS Config pillar report request: {:?}", query);
+    pillar_reports(&controller, query, AwsResourceType::ConfigRule, evaluate_config_fleet).await
+}
+
+pub async fn get_eventbridge_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("EventBridge pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::EventBridgeRule,
+        evaluate_eventbridge_fleet,
+    )
+    .await
+}
+
+pub async fn get_stepfunctions_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Step Functions pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::StepFunction,
+        evaluate_stepfunctions_fleet,
     )
     .await
 }

@@ -165,6 +165,9 @@ async fn storage_and_database_pillar_reports_contract() {
         ("kms", "KmsKey"),
         ("acm", "AcmCertificate"),
         ("cloudtrail", "CloudTrailTrail"),
+        ("config", "ConfigRule"),
+        ("eventbridge", "EventBridgeRule"),
+        ("stepfunctions", "StepFunction"),
     ] {
         let resp = client
             .get(format!(
