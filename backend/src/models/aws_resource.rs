@@ -143,6 +143,7 @@ pub enum AwsResourceType {
     MskCluster,
     // Security Detection Resources
     GuardDutyDetector,
+    SecurityHubHub,
     // Document Database Resources
     DocumentDbCluster,
     // Graph Database Resources
@@ -258,6 +259,7 @@ impl ToString for AwsResourceType {
             AwsResourceType::MskCluster => "MskCluster".to_string(),
             // Security Detection Resources
             AwsResourceType::GuardDutyDetector => "GuardDutyDetector".to_string(),
+            AwsResourceType::SecurityHubHub => "SecurityHubHub".to_string(),
             // Document Database Resources
             AwsResourceType::DocumentDbCluster => "DocumentDbCluster".to_string(),
             // Graph Database Resources
@@ -377,6 +379,7 @@ impl From<&str> for AwsResourceType {
             "MskCluster" => AwsResourceType::MskCluster,
             // Security Detection Resources
             "GuardDutyDetector" => AwsResourceType::GuardDutyDetector,
+            "SecurityHubHub" => AwsResourceType::SecurityHubHub,
             // Document Database Resources
             "DocumentDbCluster" => AwsResourceType::DocumentDbCluster,
             // Graph Database Resources

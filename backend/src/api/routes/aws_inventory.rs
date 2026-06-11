@@ -245,6 +245,10 @@ pub fn configure(controller: Arc<AwsInventoryController>) -> Scope {
             web::get().to(aws_inventory::get_guardduty_pillar_reports),
         )
         .route(
+            "/securityhub/pillars",
+            web::get().to(aws_inventory::get_securityhub_pillar_reports),
+        )
+        .route(
             "/documentdb/pillars",
             web::get().to(aws_inventory::get_documentdb_pillar_reports),
         )

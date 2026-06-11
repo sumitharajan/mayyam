@@ -73,6 +73,7 @@ const SERVICES = [
   { key: "aurora", label: "Aurora" },
   { key: "msk", label: "MSK" },
   { key: "guardduty", label: "GuardDuty" },
+  { key: "securityhub", label: "Security Hub" },
   { key: "documentdb", label: "DocumentDB" },
   { key: "neptune", label: "Neptune" },
   { key: "memorydb", label: "MemoryDB" },

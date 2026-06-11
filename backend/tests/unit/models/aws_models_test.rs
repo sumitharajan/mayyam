@@ -226,7 +226,7 @@ mod aws_resource_model_tests {
             // Networking, DNS & Secrets
             "Route53HostedZone", "TransitGateway", "VpcEndpoint", "SecretsManagerSecret",
             // Database Clusters, Streaming & Security Detection
-            "AuroraCluster", "MskCluster", "GuardDutyDetector",
+            "AuroraCluster", "MskCluster", "GuardDutyDetector", "SecurityHubHub",
             // Document DB, Graph DB & In-Memory DB
             "DocumentDbCluster", "NeptuneCluster", "MemoryDbCluster",
             // Platform, Data Movement & File Systems

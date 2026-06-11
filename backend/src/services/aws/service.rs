@@ -736,6 +736,14 @@ impl AwsClientFactory for AwsService {
         Ok(aws_sdk_guardduty::Client::new(&config))
     }
 
+    async fn create_securityhub_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<aws_sdk_securityhub::Client, AppError> {
+        let config = self.get_aws_sdk_config(aws_account_dto).await?;
+        Ok(aws_sdk_securityhub::Client::new(&config))
+    }
+
     async fn create_memorydb_client(
         &self,
         aws_account_dto: &AwsAccountDto,

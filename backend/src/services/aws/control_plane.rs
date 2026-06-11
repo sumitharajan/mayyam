@@ -91,6 +91,7 @@ use crate::services::aws::aws_control_plane::privatelink_control_plane::PrivateL
 use crate::services::aws::aws_control_plane::quicksight_control_plane::QuickSightControlPlane;
 use crate::services::aws::aws_control_plane::route53_control_plane::Route53ControlPlane;
 use crate::services::aws::aws_control_plane::secretsmanager_control_plane::SecretsManagerControlPlane;
+use crate::services::aws::aws_control_plane::securityhub_control_plane::SecurityHubControlPlane;
 use crate::services::aws::aws_control_plane::shield_control_plane::ShieldControlPlane;
 use crate::services::aws::aws_control_plane::storagegateway_control_plane::StorageGatewayControlPlane;
 use crate::services::aws::aws_control_plane::timestream_control_plane::TimestreamControlPlane;
@@ -789,6 +790,7 @@ impl AwsControlPlane {
                 AwsResourceType::AuroraCluster.to_string(),
                 AwsResourceType::MskCluster.to_string(),
                 AwsResourceType::GuardDutyDetector.to_string(),
+                AwsResourceType::SecurityHubHub.to_string(),
                 // Batch 12: Document DB, Graph DB & In-Memory DB
                 AwsResourceType::DocumentDbCluster.to_string(),
                 AwsResourceType::NeptuneCluster.to_string(),
@@ -1062,6 +1064,10 @@ impl AwsControlPlane {
                 "GuardDutyDetector" => {
                     let cp = GuardDutyControlPlane::new(self.aws_service.clone());
                     cp.sync_detectors(aws_account_dto, request.sync_id).await
+                }
+                "SecurityHubHub" => {
+                    let cp = SecurityHubControlPlane::new(self.aws_service.clone());
+                    cp.sync_hubs(aws_account_dto, request.sync_id).await
                 }
                 // Batch 12: Document DB, Graph DB & In-Memory DB
                 "DocumentDbCluster" => {
