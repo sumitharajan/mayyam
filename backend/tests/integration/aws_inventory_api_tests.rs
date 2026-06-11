@@ -150,6 +150,11 @@ async fn storage_and_database_pillar_reports_contract() {
         ("cloudfront", "CloudFrontDistribution"),
         ("elb", "AlbNlbAndElb"),
         ("apigateway", "ApiGatewayRestApiStageAndMethod"),
+        ("cloudwatch", "CloudWatchAlarmAndDashboard"),
+        ("appsync", "AppSyncApi"),
+        ("glacier", "GlacierArchive"),
+        ("storagegateway", "StorageGateway"),
+        ("kinesisanalytics", "KinesisAnalyticsApp"),
     ] {
         let resp = client
             .get(format!(

@@ -27,7 +27,9 @@ use crate::errors::AppError;
 use crate::models::aws_resource::AwsResourceType;
 use crate::repositories::aws_resource::AwsResourceRepository;
 use crate::services::aws::inventory::api_gateway_pillar_evaluator::evaluate_api_gateway_fleet;
+use crate::services::aws::inventory::appsync_pillar_evaluator::evaluate_appsync_fleet;
 use crate::services::aws::inventory::cloudfront_pillar_evaluator::evaluate_cloudfront_fleet;
+use crate::services::aws::inventory::cloudwatch_pillar_evaluator::evaluate_cloudwatch_fleet;
 use crate::services::aws::inventory::dynamodb_pillar_evaluator::evaluate_dynamodb_fleet;
 use crate::services::aws::inventory::ebs_pillar_evaluator::evaluate_ebs_fleet;
 use crate::services::aws::inventory::ec2_pillar_evaluator::evaluate_ec2_fleet;
@@ -35,8 +37,10 @@ use crate::services::aws::inventory::ecs_pillar_evaluator::evaluate_ecs_fleet;
 use crate::services::aws::inventory::eks_pillar_evaluator::evaluate_eks_fleet;
 use crate::services::aws::inventory::efs_pillar_evaluator::evaluate_efs_fleet;
 use crate::services::aws::inventory::elasticache_pillar_evaluator::evaluate_elasticache_fleet;
+use crate::services::aws::inventory::glacier_pillar_evaluator::evaluate_glacier_fleet;
 use crate::services::aws::inventory::iam_pillar_evaluator::evaluate_iam_fleet;
 use crate::services::aws::inventory::kinesis_pillar_evaluator::evaluate_kinesis_fleet;
+use crate::services::aws::inventory::kinesisanalytics_pillar_evaluator::evaluate_kinesisanalytics_fleet;
 use crate::services::aws::inventory::lambda_pillar_evaluator::evaluate_lambda_fleet;
 use crate::services::aws::inventory::load_balancer_pillar_evaluator::evaluate_load_balancer_fleet;
 use crate::services::aws::inventory::opensearch_pillar_evaluator::evaluate_opensearch_fleet;
@@ -44,6 +48,7 @@ use crate::services::aws::inventory::rds_pillar_evaluator::evaluate_rds_fleet;
 use crate::services::aws::inventory::s3_pillar_evaluator::evaluate_s3_fleet;
 use crate::services::aws::inventory::sns_pillar_evaluator::evaluate_sns_fleet;
 use crate::services::aws::inventory::sqs_pillar_evaluator::evaluate_sqs_fleet;
+use crate::services::aws::inventory::storagegateway_pillar_evaluator::evaluate_storagegateway_fleet;
 use crate::services::aws::inventory::types::{Pillar, DEFAULT_STALE_AFTER_HOURS};
 use crate::services::aws::inventory::vpc_pillar_evaluator::evaluate_vpc_fleet;
 
@@ -388,6 +393,74 @@ pub async fn get_api_gateway_pillar_reports(
         ],
         "ApiGatewayRestApiStageAndMethod",
         evaluate_api_gateway_fleet,
+    )
+    .await
+}
+
+pub async fn get_cloudwatch_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("CloudWatch pillar report request: {:?}", query);
+    multi_type_pillar_reports(
+        &controller,
+        query,
+        &[
+            AwsResourceType::CloudWatchAlarm,
+            AwsResourceType::CloudWatchDashboard,
+        ],
+        "CloudWatchAlarmAndDashboard",
+        evaluate_cloudwatch_fleet,
+    )
+    .await
+}
+
+pub async fn get_appsync_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("AppSync pillar report request: {:?}", query);
+    pillar_reports(&controller, query, AwsResourceType::AppSyncApi, evaluate_appsync_fleet).await
+}
+
+pub async fn get_glacier_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Glacier pillar report request: {:?}", query);
+    pillar_reports(&controller, query, AwsResourceType::GlacierArchive, evaluate_glacier_fleet)
+        .await
+}
+
+pub async fn get_storagegateway_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Storage Gateway pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::StorageGateway,
+        evaluate_storagegateway_fleet,
+    )
+    .await
+}
+
+pub async fn get_kinesisanalytics_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Kinesis Analytics pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::KinesisAnalyticsApp,
+        evaluate_kinesisanalytics_fleet,
     )
     .await
 }

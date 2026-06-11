@@ -40,4 +40,9 @@ pub fn configure(controller: Arc<AwsInventoryController>) -> Scope {
         .route("/cloudfront/pillars", web::get().to(aws_inventory::get_cloudfront_pillar_reports))
         .route("/elb/pillars", web::get().to(aws_inventory::get_elb_pillar_reports))
         .route("/apigateway/pillars", web::get().to(aws_inventory::get_api_gateway_pillar_reports))
+        .route("/cloudwatch/pillars", web::get().to(aws_inventory::get_cloudwatch_pillar_reports))
+        .route("/appsync/pillars", web::get().to(aws_inventory::get_appsync_pillar_reports))
+        .route("/glacier/pillars", web::get().to(aws_inventory::get_glacier_pillar_reports))
+        .route("/storagegateway/pillars", web::get().to(aws_inventory::get_storagegateway_pillar_reports))
+        .route("/kinesisanalytics/pillars", web::get().to(aws_inventory::get_kinesisanalytics_pillar_reports))
 }

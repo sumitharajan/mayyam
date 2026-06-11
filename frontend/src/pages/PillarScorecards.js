@@ -36,6 +36,11 @@ const SERVICES = [
   { key: "cloudfront", label: "CloudFront" },
   { key: "elb", label: "ELB" },
   { key: "apigateway", label: "API Gateway" },
+  { key: "cloudwatch", label: "CloudWatch" },
+  { key: "appsync", label: "AppSync" },
+  { key: "glacier", label: "Glacier" },
+  { key: "storagegateway", label: "Storage Gateway" },
+  { key: "kinesisanalytics", label: "Kinesis Analytics" },
 ];
 
 // Well-Architected pillar scorecards from deterministic inventory
