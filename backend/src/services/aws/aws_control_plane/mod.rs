@@ -72,6 +72,7 @@ pub mod secretsmanager_control_plane;
 pub mod transitgateway_control_plane;
 // Batch 11: Database Clusters, Streaming & Security Detection
 pub mod aurora_control_plane;
+pub mod controltower_control_plane;
 pub mod guardduty_control_plane;
 pub mod inspector_control_plane;
 pub mod macie_control_plane;

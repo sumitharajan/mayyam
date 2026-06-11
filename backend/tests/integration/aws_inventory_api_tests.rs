@@ -191,6 +191,7 @@ async fn storage_and_database_pillar_reports_contract() {
         ("inspector", "InspectorAccountCoverage", 3),
         ("macie", "MacieAccount", 3),
         ("organizations", "OrganizationsOrganization", 3),
+        ("controltower", "ControlTowerLandingZone", 3),
         ("documentdb", "DocumentDbCluster", 3),
         ("neptune", "NeptuneCluster", 3),
         ("memorydb", "MemoryDbCluster", 3),

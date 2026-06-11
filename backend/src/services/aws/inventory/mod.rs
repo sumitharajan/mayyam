@@ -31,6 +31,7 @@ pub mod cloudwatch_log_group_pillar_evaluator;
 pub mod cloudwatch_metric_pillar_evaluator;
 pub mod cloudwatch_pillar_evaluator;
 pub mod config_pillar_evaluator;
+pub mod controltower_pillar_evaluator;
 pub mod datasync_pillar_evaluator;
 pub mod documentdb_pillar_evaluator;
 pub mod dynamodb_pillar_evaluator;

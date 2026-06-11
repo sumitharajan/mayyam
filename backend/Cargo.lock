@@ -1330,6 +1330,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-sdk-controltower"
+version = "1.104.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "080969341864142c5d9da3125040355c227ec213207412d8a7f46609c0272acc"
+dependencies = [
+ "aws-credential-types",
+ "aws-runtime",
+ "aws-smithy-async",
+ "aws-smithy-http 0.63.6",
+ "aws-smithy-json 0.62.5",
+ "aws-smithy-observability",
+ "aws-smithy-runtime",
+ "aws-smithy-runtime-api",
+ "aws-smithy-types",
+ "aws-types",
+ "bytes",
+ "fastrand 2.3.0",
+ "http 0.2.12",
+ "http 1.3.1",
+ "regex-lite",
+ "tracing",
+]
+
+[[package]]
 name = "aws-sdk-costexplorer"
 version = "1.92.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5649,6 +5673,7 @@ dependencies = [
  "aws-sdk-cloudwatchlogs",
  "aws-sdk-config",
  "aws-sdk-connect",
+ "aws-sdk-controltower",
  "aws-sdk-costexplorer",
  "aws-sdk-datasync",
  "aws-sdk-dynamodb",

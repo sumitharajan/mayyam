@@ -42,6 +42,7 @@ use crate::services::aws::inventory::cloudwatch_log_group_pillar_evaluator::eval
 use crate::services::aws::inventory::cloudwatch_metric_pillar_evaluator::evaluate_cloudwatch_metric_fleet;
 use crate::services::aws::inventory::cloudwatch_pillar_evaluator::evaluate_cloudwatch_fleet;
 use crate::services::aws::inventory::config_pillar_evaluator::evaluate_config_fleet;
+use crate::services::aws::inventory::controltower_pillar_evaluator::evaluate_controltower_fleet;
 use crate::services::aws::inventory::datasync_pillar_evaluator::evaluate_datasync_fleet;
 use crate::services::aws::inventory::documentdb_pillar_evaluator::evaluate_documentdb_fleet;
 use crate::services::aws::inventory::dynamodb_pillar_evaluator::evaluate_dynamodb_fleet;
@@ -1206,6 +1207,21 @@ pub async fn get_organizations_pillar_reports(
         query,
         AwsResourceType::OrganizationsOrganization,
         evaluate_organizations_fleet,
+    )
+    .await
+}
+
+pub async fn get_controltower_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Control Tower pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::ControlTowerLandingZone,
+        evaluate_controltower_fleet,
     )
     .await
 }

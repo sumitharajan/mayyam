@@ -55,6 +55,7 @@ use crate::services::aws::aws_control_plane::ecs_control_plane::EcsControlPlane;
 use crate::services::aws::aws_control_plane::eks_control_plane::EksControlPlane;
 // Batch 4: Management & Monitoring
 use crate::services::aws::aws_control_plane::cloudwatch_control_plane::CloudWatchControlPlane;
+use crate::services::aws::aws_control_plane::controltower_control_plane::ControlTowerControlPlane;
 use crate::services::aws::aws_control_plane::ssm_control_plane::SsmControlPlane;
 // Batch 5: Application Integration
 use crate::services::aws::aws_control_plane::eventbridge_control_plane::EventBridgeControlPlane;
@@ -797,6 +798,7 @@ impl AwsControlPlane {
                 AwsResourceType::InspectorAccountCoverage.to_string(),
                 AwsResourceType::MacieAccount.to_string(),
                 AwsResourceType::OrganizationsOrganization.to_string(),
+                AwsResourceType::ControlTowerLandingZone.to_string(),
                 // Batch 12: Document DB, Graph DB & In-Memory DB
                 AwsResourceType::DocumentDbCluster.to_string(),
                 AwsResourceType::NeptuneCluster.to_string(),
@@ -1087,6 +1089,11 @@ impl AwsControlPlane {
                 "OrganizationsOrganization" => {
                     let cp = OrganizationsControlPlane::new(self.aws_service.clone());
                     cp.sync_organization(aws_account_dto, request.sync_id).await
+                }
+                "ControlTowerLandingZone" => {
+                    let cp = ControlTowerControlPlane::new(self.aws_service.clone());
+                    cp.sync_landing_zones(aws_account_dto, request.sync_id)
+                        .await
                 }
                 // Batch 12: Document DB, Graph DB & In-Memory DB
                 "DocumentDbCluster" => {

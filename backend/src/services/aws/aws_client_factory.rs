@@ -27,6 +27,7 @@ use aws_sdk_cloudwatch::Client as CloudWatchClient;
 use aws_sdk_cloudwatchlogs::Client as CloudWatchLogsClient;
 use aws_sdk_config::Client as ConfigServiceClient;
 use aws_sdk_connect::Client as ConnectClient;
+use aws_sdk_controltower::Client as ControlTowerClient;
 use aws_sdk_costexplorer::Client as CostExplorerClient;
 use aws_sdk_datasync::Client as DataSyncClient;
 use aws_sdk_dynamodb::Client as DynamoDbClient;
@@ -294,6 +295,10 @@ pub trait AwsClientFactory {
         &self,
         aws_account_dto: &AwsAccountDto,
     ) -> Result<OrganizationsClient, AppError>;
+    async fn create_controltower_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<ControlTowerClient, AppError>;
     async fn create_memorydb_client(
         &self,
         aws_account_dto: &AwsAccountDto,

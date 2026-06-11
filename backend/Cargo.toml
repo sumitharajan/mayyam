@@ -181,6 +181,7 @@ aws-sdk-securityhub = "1.22.0"
 aws-sdk-inspector2 = "1.22.0"
 aws-sdk-macie2 = "1.22.0"
 aws-sdk-organizations = "1.22.0"
+aws-sdk-controltower = "1.22.0"
 
 [dev-dependencies]
 mockall = "0.11"
