@@ -25,6 +25,9 @@ use crate::services::kubernetes::namespace_inventory::{
 use crate::services::kubernetes::node_inventory::{
     evaluate_kubernetes_node_inventory, RESOURCE_TYPE as NODE_RESOURCE_TYPE,
 };
+use crate::services::kubernetes::pod_inventory::{
+    evaluate_kubernetes_pod_inventory, RESOURCE_TYPE as POD_RESOURCE_TYPE,
+};
 use crate::services::kubernetes::prelude::*;
 use actix_web::{web, HttpResponse, Responder};
 use actix_web_lab::sse;
@@ -46,6 +49,7 @@ const KUBERNETES_INVENTORY_PILLARS: &[Pillar] =
 pub struct KubernetesInventoryQuery {
     pub pillar: Option<String>,
     pub cluster_id: Option<String>,
+    pub namespace: Option<String>,
 }
 
 fn parse_kubernetes_inventory_pillars(raw: &Option<String>) -> Result<Vec<Pillar>, AppError> {
@@ -274,6 +278,59 @@ pub async fn get_node_inventory_pillar_reports_controller(
         "stale_after_hours": DEFAULT_STALE_AFTER_HOURS,
         "cluster_id": query.cluster_id,
         "resources_evaluated": node_items.len(),
+        "oldest_refresh": oldest_refresh,
+        "reports": reports,
+    })))
+}
+
+pub async fn get_pod_inventory_pillar_reports_controller(
+    claims: web::ReqData<Claims>,
+    db: web::Data<Arc<DatabaseConnection>>,
+    query: web::Query<KubernetesInventoryQuery>,
+    pod_service: web::Data<Arc<PodService>>,
+) -> Result<impl Responder, AppError> {
+    let query = query.into_inner();
+    debug!(
+        target: "mayyam::controllers::kubernetes",
+        user_id = %claims.username,
+        ?query,
+        "Kubernetes pod inventory pillar report request"
+    );
+
+    let pillars = parse_kubernetes_inventory_pillars(&query.pillar)?;
+    let cluster_id = query
+        .cluster_id
+        .as_deref()
+        .map(str::trim)
+        .filter(|cluster_id| !cluster_id.is_empty());
+    let namespace = query
+        .namespace
+        .as_deref()
+        .map(str::trim)
+        .filter(|namespace| !namespace.is_empty());
+    let pod_items = if let Some(cluster_id) = cluster_id {
+        let cluster_config = get_cluster_config_by_id(db.get_ref().as_ref(), cluster_id).await?;
+        pod_service
+            .list_pod_inventory(&cluster_config, cluster_id, namespace)
+            .await?
+    } else {
+        Vec::new()
+    };
+
+    let now = Utc::now();
+    let reports = pillars
+        .iter()
+        .map(|pillar| evaluate_kubernetes_pod_inventory(&pod_items, *pillar, now))
+        .collect::<Vec<_>>();
+    let oldest_refresh = pod_items.iter().map(|pod| pod.collected_at).min();
+
+    Ok(HttpResponse::Ok().json(json!({
+        "resource_type": POD_RESOURCE_TYPE,
+        "evaluated_at": now,
+        "stale_after_hours": DEFAULT_STALE_AFTER_HOURS,
+        "cluster_id": query.cluster_id,
+        "namespace": query.namespace,
+        "resources_evaluated": pod_items.len(),
         "oldest_refresh": oldest_refresh,
         "reports": reports,
     })))

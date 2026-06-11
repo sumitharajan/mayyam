@@ -23,6 +23,7 @@ use std::collections::BTreeMap;
 use tracing::{debug, error, info};
 
 use crate::services::kubernetes::client::ClientFactory;
+use crate::services::kubernetes::pod_inventory::{PodContainerInventoryItem, PodInventoryItem};
 use crate::{errors::AppError, models::cluster::KubernetesClusterConfig};
 use kube::api::AttachParams;
 use tokio::io::AsyncReadExt;
@@ -166,6 +167,81 @@ pub fn convert_kube_pod_to_pod_info(pod: &Pod, current_namespace: &str) -> PodIn
     }
 }
 
+fn convert_kube_pod_to_pod_inventory(
+    pod: &Pod,
+    cluster_id: &str,
+    current_namespace: &str,
+    collected_at: chrono::DateTime<Utc>,
+) -> PodInventoryItem {
+    let pod_name = pod.name_any();
+    let pod_namespace = pod
+        .namespace()
+        .unwrap_or_else(|| current_namespace.to_string());
+    let status = pod.status.as_ref();
+    let spec = pod.spec.as_ref();
+    let container_statuses = status.and_then(|status| status.container_statuses.as_ref());
+    let containers = spec
+        .map(|spec| {
+            spec.containers
+                .iter()
+                .map(|container_spec| {
+                    let status_opt = container_statuses.and_then(|statuses| {
+                        statuses
+                            .iter()
+                            .find(|container_status| container_status.name == container_spec.name)
+                    });
+                    PodContainerInventoryItem {
+                        name: container_spec.name.clone(),
+                        image: container_spec.image.clone(),
+                        ready: status_opt.map(|status| status.ready),
+                        restart_count: status_opt.map_or(0, |status| status.restart_count),
+                        privileged: container_spec
+                            .security_context
+                            .as_ref()
+                            .and_then(|security_context| security_context.privileged),
+                    }
+                })
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+    let restart_count = containers
+        .iter()
+        .map(|container| container.restart_count)
+        .sum();
+    let (controlled_by, controller_kind) = pod
+        .metadata
+        .owner_references
+        .as_ref()
+        .and_then(|owners| owners.first())
+        .map_or((None, None), |owner_ref| {
+            (Some(owner_ref.name.clone()), Some(owner_ref.kind.clone()))
+        });
+
+    PodInventoryItem {
+        cluster_id: cluster_id.to_string(),
+        namespace: pod_namespace,
+        name: pod_name,
+        phase: status.and_then(|status| status.phase.clone()),
+        pod_ip: status.and_then(|status| status.pod_ip.clone()),
+        node_name: spec.and_then(|spec| spec.node_name.clone()),
+        labels: pod.metadata.labels.clone().unwrap_or_default(),
+        annotations: pod.metadata.annotations.clone().unwrap_or_default(),
+        containers,
+        restart_count,
+        controlled_by,
+        controller_kind,
+        qos_class: status.and_then(|status| status.qos_class.clone()),
+        service_account_name: spec.and_then(|spec| spec.service_account_name.clone()),
+        host_network: spec.and_then(|spec| spec.host_network).unwrap_or(false),
+        created_at: pod
+            .metadata
+            .creation_timestamp
+            .as_ref()
+            .map(|timestamp| timestamp.0),
+        collected_at,
+    }
+}
+
 #[derive(Clone)]
 pub struct PodService;
 
@@ -208,6 +284,66 @@ impl PodService {
             }
             Err(e) => {
                 error!(target: "mayyam::services::kubernetes::pod", cluster_name = cluster_config.api_server_url.as_deref().unwrap_or("unknown"), %namespace, error = %e, "Failed to list pods");
+                Err(AppError::Kubernetes(e.to_string()))
+            }
+        }
+    }
+
+    pub async fn list_pod_inventory(
+        &self,
+        cluster_config: &KubernetesClusterConfig,
+        cluster_id: &str,
+        namespace: Option<&str>,
+    ) -> Result<Vec<PodInventoryItem>, AppError> {
+        let namespace = namespace
+            .map(str::trim)
+            .filter(|namespace| !namespace.is_empty());
+        debug!(
+            target: "mayyam::services::kubernetes::pod",
+            cluster_name = cluster_config.api_server_url.as_deref().unwrap_or("unknown"),
+            namespace = namespace.unwrap_or("all"),
+            "Listing pod inventory"
+        );
+        let client = Self::get_kube_client(cluster_config).await?;
+
+        let api: Api<Pod> = match namespace {
+            Some(namespace) if namespace != "all" => Api::namespaced(client, namespace),
+            _ => Api::all(client),
+        };
+        let lp = ListParams::default();
+        let collected_at = Utc::now();
+        match api.list(&lp).await {
+            Ok(pod_list) => {
+                info!(
+                    target: "mayyam::services::kubernetes::pod",
+                    cluster_name = cluster_config.api_server_url.as_deref().unwrap_or("unknown"),
+                    namespace = namespace.unwrap_or("all"),
+                    count = pod_list.items.len(),
+                    "Successfully listed pod inventory"
+                );
+                let fallback_namespace = namespace
+                    .filter(|namespace| *namespace != "all")
+                    .unwrap_or("");
+                Ok(pod_list
+                    .iter()
+                    .map(|pod| {
+                        convert_kube_pod_to_pod_inventory(
+                            pod,
+                            cluster_id,
+                            fallback_namespace,
+                            collected_at,
+                        )
+                    })
+                    .collect())
+            }
+            Err(e) => {
+                error!(
+                    target: "mayyam::services::kubernetes::pod",
+                    cluster_name = cluster_config.api_server_url.as_deref().unwrap_or("unknown"),
+                    namespace = namespace.unwrap_or("all"),
+                    error = %e,
+                    "Failed to list pod inventory"
+                );
                 Err(AppError::Kubernetes(e.to_string()))
             }
         }
