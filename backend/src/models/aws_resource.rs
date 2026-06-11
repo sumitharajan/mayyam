@@ -174,6 +174,7 @@ pub enum AwsResourceType {
     // Migration & DR Resources
     DmsResource,
     MgnResource,
+    DrsResource,
 }
 
 impl ToString for AwsResourceType {
@@ -304,6 +305,7 @@ impl ToString for AwsResourceType {
             // Migration & DR Resources
             AwsResourceType::DmsResource => "DmsResource".to_string(),
             AwsResourceType::MgnResource => "MgnResource".to_string(),
+            AwsResourceType::DrsResource => "DrsResource".to_string(),
         }
     }
 }
@@ -434,6 +436,7 @@ impl From<&str> for AwsResourceType {
             // Migration & DR Resources
             "DmsResource" => AwsResourceType::DmsResource,
             "MgnResource" => AwsResourceType::MgnResource,
+            "DrsResource" => AwsResourceType::DrsResource,
             _ => panic!("Unknown resource type: {}", s),
         }
     }

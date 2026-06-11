@@ -32,6 +32,7 @@ use aws_sdk_cloudwatchlogs::Client as CloudWatchLogsClient;
 use aws_sdk_computeoptimizer::Client as ComputeOptimizerClient;
 use aws_sdk_controltower::Client as ControlTowerClient;
 use aws_sdk_costexplorer::Client as CostExplorerClient;
+use aws_sdk_drs::Client as DrsClient;
 use aws_sdk_dynamodb::Client as DynamoDbClient;
 use aws_sdk_ec2::Client as Ec2Client;
 use aws_sdk_efs::Client as EfsClient;
@@ -384,6 +385,14 @@ impl AwsClientFactory for AwsService {
     ) -> Result<MgnClient, AppError> {
         let config = self.get_aws_sdk_config(aws_account_dto).await?;
         Ok(MgnClient::new(&config))
+    }
+
+    async fn create_drs_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<DrsClient, AppError> {
+        let config = self.get_aws_sdk_config(aws_account_dto).await?;
+        Ok(DrsClient::new(&config))
     }
 
     async fn create_cost_explorer_client(

@@ -79,6 +79,7 @@ use crate::services::aws::aws_control_plane::connect_control_plane::ConnectContr
 use crate::services::aws::aws_control_plane::datasync_control_plane::DataSyncControlPlane;
 use crate::services::aws::aws_control_plane::dms_control_plane::DmsControlPlane;
 use crate::services::aws::aws_control_plane::documentdb_control_plane::DocumentDbControlPlane;
+use crate::services::aws::aws_control_plane::drs_control_plane::DrsControlPlane;
 use crate::services::aws::aws_control_plane::elasticbeanstalk_control_plane::ElasticBeanstalkControlPlane;
 use crate::services::aws::aws_control_plane::firehose_control_plane::FirehoseControlPlane;
 use crate::services::aws::aws_control_plane::fsx_control_plane::FsxControlPlane;
@@ -830,6 +831,7 @@ impl AwsControlPlane {
                 // Migration & DR
                 AwsResourceType::DmsResource.to_string(),
                 AwsResourceType::MgnResource.to_string(),
+                AwsResourceType::DrsResource.to_string(),
             ],
         };
 
@@ -1188,6 +1190,10 @@ impl AwsControlPlane {
                 }
                 "MgnResource" => {
                     let cp = MgnControlPlane::new(self.aws_service.clone());
+                    cp.sync_resources(aws_account_dto, request.sync_id).await
+                }
+                "DrsResource" => {
+                    let cp = DrsControlPlane::new(self.aws_service.clone());
                     cp.sync_resources(aws_account_dto, request.sync_id).await
                 }
                 _ => Ok(vec![]),

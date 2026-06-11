@@ -91,6 +91,7 @@ pub mod neptune_control_plane;
 // Batch 13: Platform, Data Movement & File Systems
 pub mod datasync_control_plane;
 pub mod dms_control_plane;
+pub mod drs_control_plane;
 pub mod elasticbeanstalk_control_plane;
 pub mod firehose_control_plane;
 pub mod fsx_control_plane;

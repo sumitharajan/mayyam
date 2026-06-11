@@ -47,6 +47,7 @@ use crate::services::aws::inventory::controltower_pillar_evaluator::evaluate_con
 use crate::services::aws::inventory::datasync_pillar_evaluator::evaluate_datasync_fleet;
 use crate::services::aws::inventory::dms_pillar_evaluator::evaluate_dms_fleet;
 use crate::services::aws::inventory::documentdb_pillar_evaluator::evaluate_documentdb_fleet;
+use crate::services::aws::inventory::drs_pillar_evaluator::evaluate_drs_fleet;
 use crate::services::aws::inventory::dynamodb_pillar_evaluator::evaluate_dynamodb_fleet;
 use crate::services::aws::inventory::ebs_pillar_evaluator::evaluate_ebs_fleet;
 use crate::services::aws::inventory::ec2_pillar_evaluator::evaluate_ec2_fleet;
@@ -1502,6 +1503,24 @@ pub async fn get_mgn_pillar_reports(
         query,
         AwsResourceType::MgnResource,
         evaluate_mgn_fleet,
+    )
+    .await
+}
+
+pub async fn get_drs_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!(
+        "Elastic Disaster Recovery pillar report request: {:?}",
+        query
+    );
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::DrsResource,
+        evaluate_drs_fleet,
     )
     .await
 }

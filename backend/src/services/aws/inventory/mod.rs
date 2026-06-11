@@ -36,6 +36,7 @@ pub mod controltower_pillar_evaluator;
 pub mod datasync_pillar_evaluator;
 pub mod dms_pillar_evaluator;
 pub mod documentdb_pillar_evaluator;
+pub mod drs_pillar_evaluator;
 pub mod dynamodb_pillar_evaluator;
 pub mod ebs_pillar_evaluator;
 pub mod ec2_pillar_evaluator;

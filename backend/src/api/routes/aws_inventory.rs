@@ -337,6 +337,10 @@ pub fn configure(controller: Arc<AwsInventoryController>) -> Scope {
             web::get().to(aws_inventory::get_mgn_pillar_reports),
         )
         .route(
+            "/drs/pillars",
+            web::get().to(aws_inventory::get_drs_pillar_reports),
+        )
+        .route(
             "/amazonmq/pillars",
             web::get().to(aws_inventory::get_amazonmq_pillar_reports),
         )

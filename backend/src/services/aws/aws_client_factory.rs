@@ -32,6 +32,7 @@ use aws_sdk_connect::Client as ConnectClient;
 use aws_sdk_controltower::Client as ControlTowerClient;
 use aws_sdk_costexplorer::Client as CostExplorerClient;
 use aws_sdk_datasync::Client as DataSyncClient;
+use aws_sdk_drs::Client as DrsClient;
 use aws_sdk_dynamodb::Client as DynamoDbClient;
 use aws_sdk_ec2::Client as Ec2Client;
 use aws_sdk_ecs::Client as EcsClient;
@@ -108,6 +109,10 @@ pub trait AwsClientFactory {
         &self,
         aws_account_dto: &AwsAccountDto,
     ) -> Result<MgnClient, AppError>;
+    async fn create_drs_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<DrsClient, AppError>;
     async fn create_cost_explorer_client(
         &self,
         aws_account_dto: &AwsAccountDto,

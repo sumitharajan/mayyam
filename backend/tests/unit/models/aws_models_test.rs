@@ -245,6 +245,7 @@ mod aws_resource_model_tests {
             // Migration & DR
             "DmsResource",
             "MgnResource",
+            "DrsResource",
         ];
 
         for resource_type in valid_types {

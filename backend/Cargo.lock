@@ -1448,6 +1448,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-sdk-drs"
+version = "1.99.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ccb36567dfa2ee778b82fcd1a4dec78f28d5476cf594337c35ec65394dad021c"
+dependencies = [
+ "aws-credential-types",
+ "aws-runtime",
+ "aws-smithy-async",
+ "aws-smithy-http 0.63.6",
+ "aws-smithy-json 0.62.5",
+ "aws-smithy-observability",
+ "aws-smithy-runtime",
+ "aws-smithy-runtime-api",
+ "aws-smithy-types",
+ "aws-types",
+ "bytes",
+ "fastrand 2.3.0",
+ "http 0.2.12",
+ "http 1.3.1",
+ "regex-lite",
+ "tracing",
+]
+
+[[package]]
 name = "aws-sdk-dynamodb"
 version = "1.92.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5846,6 +5870,7 @@ dependencies = [
  "aws-sdk-controltower",
  "aws-sdk-costexplorer",
  "aws-sdk-datasync",
+ "aws-sdk-drs",
  "aws-sdk-dynamodb",
  "aws-sdk-ec2",
  "aws-sdk-ecs",
