@@ -54,6 +54,7 @@ use aws_sdk_apprunner::Client as AppRunnerClient;
 use aws_sdk_globalaccelerator::Client as GlobalAcceleratorClient;
 use aws_sdk_batch::Client as BatchClient;
 use aws_sdk_glacier::Client as GlacierClient;
+use aws_sdk_autoscaling::Client as AutoScalingClient;
 use aws_sdk_storagegateway::Client as StorageGatewayClient;
 use aws_sdk_connect::Client as ConnectClient;
 use aws_sdk_appsync::Client as AppSyncClient;
@@ -223,6 +224,10 @@ pub trait AwsClientFactory {
         &self,
         aws_account_dto: &AwsAccountDto,
     ) -> Result<GlacierClient, AppError>;
+    async fn create_autoscaling_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<AutoScalingClient, AppError>;
     async fn create_storagegateway_client(
         &self,
         aws_account_dto: &AwsAccountDto,

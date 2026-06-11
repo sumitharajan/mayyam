@@ -62,3 +62,4 @@ pub mod storagegateway_control_plane;
 pub mod connect_control_plane;
 pub mod appsync_control_plane;
 pub mod kinesisanalytics_control_plane;
+pub mod autoscaling_control_plane;

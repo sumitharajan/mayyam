@@ -161,6 +161,7 @@ aws-sdk-storagegateway = "1.22.0"
 aws-sdk-connect = "1.22.0"
 aws-sdk-appsync = "1.22.0"
 aws-sdk-kinesisanalyticsv2 = "1.22.0"
+aws-sdk-autoscaling = "1.22.0"
 
 [dev-dependencies]
 mockall = "0.11"

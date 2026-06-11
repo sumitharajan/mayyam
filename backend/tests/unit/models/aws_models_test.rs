@@ -219,7 +219,9 @@ mod aws_resource_model_tests {
             // Analytics & Big Data
             "RedshiftCluster", "EmrCluster", "AthenaWorkgroup", "GlueDatabase",
             // Edge & DR
-            "WafWebAcl", "GlobalAccelerator", "BackupVault", "BackupPlan"
+            "WafWebAcl", "GlobalAccelerator", "BackupVault", "BackupPlan",
+            // Compute Scaling
+            "AutoScalingGroup"
         ];
 
         for resource_type in valid_types {

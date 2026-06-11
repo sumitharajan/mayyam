@@ -178,6 +178,7 @@ async fn storage_and_database_pillar_reports_contract() {
         ("glue", "GlueDatabase"),
         ("redshift", "RedshiftCluster"),
         ("waf", "WafWebAcl"),
+        ("autoscaling", "AutoScalingGroup"),
     ] {
         let resp = client
             .get(format!(

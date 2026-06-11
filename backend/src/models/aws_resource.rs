@@ -125,6 +125,8 @@ pub enum AwsResourceType {
     // Backup & DR Resources
     BackupVault,
     BackupPlan,
+    // Compute Scaling Resources
+    AutoScalingGroup,
 }
 
 impl ToString for AwsResourceType {
@@ -204,6 +206,8 @@ impl ToString for AwsResourceType {
             // Backup & DR Resources
             AwsResourceType::BackupVault => "BackupVault".to_string(),
             AwsResourceType::BackupPlan => "BackupPlan".to_string(),
+            // Compute Scaling Resources
+            AwsResourceType::AutoScalingGroup => "AutoScalingGroup".to_string(),
         }
     }
 }
@@ -285,6 +289,8 @@ impl From<&str> for AwsResourceType {
             // Backup & DR Resources
             "BackupVault" => AwsResourceType::BackupVault,
             "BackupPlan" => AwsResourceType::BackupPlan,
+            // Compute Scaling Resources
+            "AutoScalingGroup" => AwsResourceType::AutoScalingGroup,
             _ => panic!("Unknown resource type: {}", s),
         }
     }

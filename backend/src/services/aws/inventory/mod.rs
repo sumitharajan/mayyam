@@ -19,6 +19,7 @@ pub mod acm_pillar_evaluator;
 pub mod api_gateway_pillar_evaluator;
 pub mod apprunner_pillar_evaluator;
 pub mod appsync_pillar_evaluator;
+pub mod autoscaling_pillar_evaluator;
 pub mod athena_pillar_evaluator;
 pub mod backup_pillar_evaluator;
 pub mod batch_pillar_evaluator;

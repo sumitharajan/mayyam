@@ -31,6 +31,7 @@ use crate::services::aws::inventory::api_gateway_pillar_evaluator::evaluate_api_
 use crate::services::aws::inventory::apprunner_pillar_evaluator::evaluate_apprunner_fleet;
 use crate::services::aws::inventory::appsync_pillar_evaluator::evaluate_appsync_fleet;
 use crate::services::aws::inventory::athena_pillar_evaluator::evaluate_athena_fleet;
+use crate::services::aws::inventory::autoscaling_pillar_evaluator::evaluate_autoscaling_fleet;
 use crate::services::aws::inventory::backup_pillar_evaluator::evaluate_backup_fleet;
 use crate::services::aws::inventory::batch_pillar_evaluator::evaluate_batch_fleet;
 use crate::services::aws::inventory::emr_pillar_evaluator::evaluate_emr_fleet;
@@ -785,6 +786,21 @@ pub async fn get_waf_pillar_reports(
         query,
         AwsResourceType::WafWebAcl,
         evaluate_waf_fleet,
+    )
+    .await
+}
+
+pub async fn get_autoscaling_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Auto Scaling pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::AutoScalingGroup,
+        evaluate_autoscaling_fleet,
     )
     .await
 }

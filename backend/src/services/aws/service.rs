@@ -658,6 +658,14 @@ impl AwsClientFactory for AwsService {
         Ok(aws_sdk_glacier::Client::new(&config))
     }
 
+    async fn create_autoscaling_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<aws_sdk_autoscaling::Client, AppError> {
+        let config = self.get_aws_sdk_config(aws_account_dto).await?;
+        Ok(aws_sdk_autoscaling::Client::new(&config))
+    }
+
     async fn create_storagegateway_client(
         &self,
         aws_account_dto: &AwsAccountDto,

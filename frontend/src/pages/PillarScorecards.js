@@ -64,6 +64,7 @@ const SERVICES = [
   { key: "glue", label: "Glue" },
   { key: "redshift", label: "Redshift" },
   { key: "waf", label: "WAF" },
+  { key: "autoscaling", label: "Auto Scaling" },
 ];
 
 // Well-Architected pillar scorecards from deterministic inventory

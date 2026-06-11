@@ -71,6 +71,7 @@ use crate::services::aws::aws_control_plane::globalaccelerator_control_plane::Gl
 use crate::services::aws::aws_control_plane::backup_control_plane::BackupControlPlane;
 // Final Review Additions
 use crate::services::aws::aws_control_plane::glacier_control_plane::GlacierControlPlane;
+use crate::services::aws::aws_control_plane::autoscaling_control_plane::AutoScalingControlPlane;
 use crate::services::aws::aws_control_plane::storagegateway_control_plane::StorageGatewayControlPlane;
 use crate::services::aws::aws_control_plane::connect_control_plane::ConnectControlPlane;
 use crate::services::aws::aws_control_plane::appsync_control_plane::AppSyncControlPlane;
@@ -747,6 +748,8 @@ impl AwsControlPlane {
                 AwsResourceType::ConnectInstance.to_string(),
                 AwsResourceType::AppSyncApi.to_string(),
                 AwsResourceType::KinesisAnalyticsApp.to_string(),
+                // Batch 8: Compute Scaling
+                AwsResourceType::AutoScalingGroup.to_string(),
             ],
         };
 
@@ -945,6 +948,11 @@ impl AwsControlPlane {
                 "KinesisAnalyticsApp" => {
                     let cp = KinesisAnalyticsControlPlane::new(self.aws_service.clone());
                     cp.sync_applications(aws_account_dto, request.sync_id).await
+                }
+                // Batch 8: Compute Scaling
+                "AutoScalingGroup" => {
+                    let cp = AutoScalingControlPlane::new(self.aws_service.clone());
+                    cp.sync_auto_scaling_groups(aws_account_dto, request.sync_id).await
                 }
                 _ => Ok(vec![]),
             };
