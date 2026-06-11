@@ -7,7 +7,7 @@
 - Current batch rows: none
 - Current batch status: ready_to_select
 - Completed feature rows: 286 committed
-- Current blocker: none. A disk-full validation failure occurred during batch-050; approved `cargo clean` cleared `backend/target` contents and recovered enough space for validation to complete. Removing the now-empty `backend/target` directory itself failed because of a delete-deny ACL.
+- Current blocker: none. A disk-full validation failure occurred during batch-050; approved removal of only `backend/target/debug/incremental/mayyam-1rxlgpsf1fmkx` recovered enough space for validation to complete.
 - Changed files in last batch: `backend/src/services/aws/inventory/autoscaling_pillar_evaluator.rs`, `backend/src/services/aws/aws_control_plane/autoscaling_control_plane.rs`.
 - Latest verification: `cargo test --lib autoscaling_pillar_evaluator --message-format short`, `cargo check --message-format short`, `cargo test --features integration-tests --test integration_tests storage_and_database_pillar_reports_contract --message-format short`, `cargo fmt -- --check`, and `git diff --check` passed.
 - Exact next action: select and atomically claim batch-053 from pending roadmap rows using the P0, then P1, then P2 priority rules.
