@@ -133,6 +133,7 @@ pub enum AwsResourceType {
     // Networking & DNS Depth Resources
     Route53HostedZone,
     TransitGateway,
+    VpcEndpoint,
     // Secrets Resources
     SecretsManagerSecret,
     // Database Cluster Resources
@@ -246,6 +247,7 @@ impl ToString for AwsResourceType {
             // Networking & DNS Depth Resources
             AwsResourceType::Route53HostedZone => "Route53HostedZone".to_string(),
             AwsResourceType::TransitGateway => "TransitGateway".to_string(),
+            AwsResourceType::VpcEndpoint => "VpcEndpoint".to_string(),
             // Secrets Resources
             AwsResourceType::SecretsManagerSecret => "SecretsManagerSecret".to_string(),
             // Database Cluster Resources
@@ -363,6 +365,7 @@ impl From<&str> for AwsResourceType {
             // Networking & DNS Depth Resources
             "Route53HostedZone" => AwsResourceType::Route53HostedZone,
             "TransitGateway" => AwsResourceType::TransitGateway,
+            "VpcEndpoint" => AwsResourceType::VpcEndpoint,
             // Secrets Resources
             "SecretsManagerSecret" => AwsResourceType::SecretsManagerSecret,
             // Database Cluster Resources

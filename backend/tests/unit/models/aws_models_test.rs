@@ -224,7 +224,7 @@ mod aws_resource_model_tests {
             // Compute Scaling
             "AutoScalingGroup",
             // Networking, DNS & Secrets
-            "Route53HostedZone", "TransitGateway", "SecretsManagerSecret",
+            "Route53HostedZone", "TransitGateway", "VpcEndpoint", "SecretsManagerSecret",
             // Database Clusters, Streaming & Security Detection
             "AuroraCluster", "MskCluster", "GuardDutyDetector",
             // Document DB, Graph DB & In-Memory DB

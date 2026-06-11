@@ -87,6 +87,7 @@ use crate::services::aws::aws_control_plane::lightsail_control_plane::LightsailC
 use crate::services::aws::aws_control_plane::memorydb_control_plane::MemoryDbControlPlane;
 use crate::services::aws::aws_control_plane::msk_control_plane::MskControlPlane;
 use crate::services::aws::aws_control_plane::neptune_control_plane::NeptuneControlPlane;
+use crate::services::aws::aws_control_plane::privatelink_control_plane::PrivateLinkControlPlane;
 use crate::services::aws::aws_control_plane::quicksight_control_plane::QuickSightControlPlane;
 use crate::services::aws::aws_control_plane::route53_control_plane::Route53ControlPlane;
 use crate::services::aws::aws_control_plane::secretsmanager_control_plane::SecretsManagerControlPlane;
@@ -780,6 +781,7 @@ impl AwsControlPlane {
                 // Batch 10: Networking, DNS & Secrets
                 AwsResourceType::Route53HostedZone.to_string(),
                 AwsResourceType::TransitGateway.to_string(),
+                AwsResourceType::VpcEndpoint.to_string(),
                 AwsResourceType::SecretsManagerSecret.to_string(),
                 // Batch 11: Database Clusters, Streaming & Security Detection
                 AwsResourceType::AuroraCluster.to_string(),
@@ -1031,6 +1033,11 @@ impl AwsControlPlane {
                 "TransitGateway" => {
                     let cp = TransitGatewayControlPlane::new(self.aws_service.clone());
                     cp.sync_transit_gateways(aws_account_dto, request.sync_id)
+                        .await
+                }
+                "VpcEndpoint" => {
+                    let cp = PrivateLinkControlPlane::new(self.aws_service.clone());
+                    cp.sync_vpc_endpoints(aws_account_dto, request.sync_id)
                         .await
                 }
                 "SecretsManagerSecret" => {

@@ -199,6 +199,7 @@ async fn storage_and_database_pillar_reports_contract() {
         ("lightsail", "LightsailResource", 3),
         ("quicksight", "QuickSightAsset", 3),
         ("amazonmq", "AmazonMqBroker", 3),
+        ("privatelink", "VpcEndpoint", 3),
     ] {
         let resp = client
             .get(format!(

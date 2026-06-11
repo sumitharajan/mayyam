@@ -76,6 +76,7 @@ use crate::services::aws::inventory::nat_gateway_pillar_evaluator::evaluate_nat_
 use crate::services::aws::inventory::neptune_pillar_evaluator::evaluate_neptune_fleet;
 use crate::services::aws::inventory::network_acl_pillar_evaluator::evaluate_network_acl_fleet;
 use crate::services::aws::inventory::opensearch_pillar_evaluator::evaluate_opensearch_fleet;
+use crate::services::aws::inventory::privatelink_pillar_evaluator::evaluate_privatelink_fleet;
 use crate::services::aws::inventory::quicksight_pillar_evaluator::evaluate_quicksight_fleet;
 use crate::services::aws::inventory::rds_pillar_evaluator::evaluate_rds_fleet;
 use crate::services::aws::inventory::redshift_pillar_evaluator::evaluate_redshift_fleet;
@@ -1320,6 +1321,21 @@ pub async fn get_amazonmq_pillar_reports(
         query,
         AwsResourceType::AmazonMqBroker,
         evaluate_amazonmq_fleet,
+    )
+    .await
+}
+
+pub async fn get_privatelink_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("PrivateLink pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::VpcEndpoint,
+        evaluate_privatelink_fleet,
     )
     .await
 }
