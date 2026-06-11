@@ -214,7 +214,10 @@ mod tests {
             region: "us-east-1".to_string(),
             resource_type: "ElasticacheCluster".to_string(),
             resource_id: resource_id.to_string(),
-            arn: format!("arn:aws:elasticache:us-east-1:123456789012:cluster:{}", resource_id),
+            arn: format!(
+                "arn:aws:elasticache:us-east-1:123456789012:cluster:{}",
+                resource_id
+            ),
             name: Some(resource_id.to_string()),
             tags,
             resource_data,
@@ -248,7 +251,11 @@ mod tests {
         data["transit_encryption_enabled"] = json!(false);
         let r = fixture("cache-plain", json!({"team": "perf"}), data, now());
         let report = evaluate_elasticache_fleet(&[r], Pillar::Security, now());
-        let codes: Vec<&str> = report.findings.iter().map(|f| f.reason_code.as_str()).collect();
+        let codes: Vec<&str> = report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect();
         assert!(codes.contains(&REASON_SEC_AT_REST_ENCRYPTION_DISABLED));
         assert!(codes.contains(&REASON_SEC_TRANSIT_ENCRYPTION_DISABLED));
     }
@@ -263,7 +270,11 @@ mod tests {
         );
         let report = evaluate_elasticache_fleet(&[r], Pillar::Security, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_SEC_ENCRYPTION_DATA_NOT_COLLECTED]
         );
     }
@@ -277,7 +288,11 @@ mod tests {
             now(),
         );
         let report = evaluate_elasticache_fleet(&[r], Pillar::Resilience, now());
-        let codes: Vec<&str> = report.findings.iter().map(|f| f.reason_code.as_str()).collect();
+        let codes: Vec<&str> = report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect();
         assert!(codes.contains(&REASON_RES_SNAPSHOTS_DISABLED));
         assert!(codes.contains(&REASON_RES_SINGLE_NODE));
     }
@@ -286,8 +301,7 @@ mod tests {
     fn healthy_cluster_passes_all_pillars() {
         let r = fixture("cache-ok", json!({"team": "perf"}), healthy_data(), now());
         for pillar in [Pillar::Cost, Pillar::Security, Pillar::Resilience] {
-            let report =
-                evaluate_elasticache_fleet(std::slice::from_ref(&r), pillar, now());
+            let report = evaluate_elasticache_fleet(std::slice::from_ref(&r), pillar, now());
             assert!(
                 report.findings.is_empty(),
                 "unexpected for {:?}: {:?}",

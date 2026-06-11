@@ -29,8 +29,7 @@ use crate::services::aws::inventory::types::{
 
 // Reason codes are the stable contract for findings; never reuse or rename.
 pub const REASON_COST_TAG_DATA_NOT_COLLECTED: &str = "SNS_COST_TAG_DATA_NOT_COLLECTED";
-pub const REASON_SEC_ENCRYPTION_DATA_NOT_COLLECTED: &str =
-    "SNS_SEC_ENCRYPTION_DATA_NOT_COLLECTED";
+pub const REASON_SEC_ENCRYPTION_DATA_NOT_COLLECTED: &str = "SNS_SEC_ENCRYPTION_DATA_NOT_COLLECTED";
 pub const REASON_RES_NO_SUBSCRIPTIONS: &str = "SNS_RES_NO_SUBSCRIPTIONS";
 pub const REASON_RES_PENDING_SUBSCRIPTIONS: &str = "SNS_RES_PENDING_SUBSCRIPTIONS";
 pub const REASON_INV_STALE_DATA: &str = "SNS_INV_STALE_DATA";
@@ -204,7 +203,11 @@ mod tests {
             now(),
         );
         let report = evaluate_sns_fleet(&[orphan], Pillar::Resilience, now());
-        let codes: Vec<&str> = report.findings.iter().map(|f| f.reason_code.as_str()).collect();
+        let codes: Vec<&str> = report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect();
         assert!(codes.contains(&REASON_RES_NO_SUBSCRIPTIONS));
         assert!(codes.contains(&REASON_RES_PENDING_SUBSCRIPTIONS));
     }
@@ -213,7 +216,11 @@ mod tests {
     fn resilience_passes_for_subscribed_topic() {
         let r = fixture("ok", json!({"team": "alerts"}), healthy_data(), now());
         let report = evaluate_sns_fleet(&[r], Pillar::Resilience, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -226,7 +233,11 @@ mod tests {
         );
         let report = evaluate_sns_fleet(&[r], Pillar::Security, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_SEC_ENCRYPTION_DATA_NOT_COLLECTED]
         );
     }
@@ -236,7 +247,11 @@ mod tests {
         let r = fixture("untagged", json!({}), healthy_data(), now());
         let report = evaluate_sns_fleet(&[r], Pillar::Cost, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_COST_TAG_DATA_NOT_COLLECTED]
         );
     }

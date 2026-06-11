@@ -41,7 +41,10 @@ impl RedshiftControlPlane {
             &aws_account_dto.account_id, sync_id
         );
 
-        let client = self.aws_service.create_redshift_client(aws_account_dto).await?;
+        let client = self
+            .aws_service
+            .create_redshift_client(aws_account_dto)
+            .await?;
         let mut resources: Vec<AwsResourceModel> = Vec::new();
 
         let mut marker: Option<String> = None;
@@ -70,19 +73,15 @@ impl RedshiftControlPlane {
                 // (only the namespace ARN), so build the well-known cluster ARN.
                 let arn = format!(
                     "arn:aws:redshift:{}:{}:cluster:{}",
-                    aws_account_dto.default_region,
-                    aws_account_dto.account_id,
-                    cluster_identifier
+                    aws_account_dto.default_region, aws_account_dto.account_id, cluster_identifier
                 );
 
                 let mut resource_data = serde_json::Map::new();
-                resource_data
-                    .insert("cluster_identifier".to_string(), json!(cluster_identifier));
+                resource_data.insert("cluster_identifier".to_string(), json!(cluster_identifier));
                 resource_data.insert("arn".to_string(), json!(arn));
 
                 if let Some(namespace_arn) = cluster.cluster_namespace_arn() {
-                    resource_data
-                        .insert("cluster_namespace_arn".to_string(), json!(namespace_arn));
+                    resource_data.insert("cluster_namespace_arn".to_string(), json!(namespace_arn));
                 }
 
                 if let Some(node_type) = cluster.node_type() {
@@ -114,8 +113,10 @@ impl RedshiftControlPlane {
                 }
 
                 if let Some(publicly_accessible) = cluster.publicly_accessible() {
-                    resource_data
-                        .insert("publicly_accessible".to_string(), json!(publicly_accessible));
+                    resource_data.insert(
+                        "publicly_accessible".to_string(),
+                        json!(publicly_accessible),
+                    );
                 }
 
                 if let Some(encrypted) = cluster.encrypted() {
@@ -127,8 +128,10 @@ impl RedshiftControlPlane {
                 }
 
                 if let Some(enhanced_vpc_routing) = cluster.enhanced_vpc_routing() {
-                    resource_data
-                        .insert("enhanced_vpc_routing".to_string(), json!(enhanced_vpc_routing));
+                    resource_data.insert(
+                        "enhanced_vpc_routing".to_string(),
+                        json!(enhanced_vpc_routing),
+                    );
                 }
 
                 if let Some(retention) = cluster.automated_snapshot_retention_period() {
@@ -150,8 +153,10 @@ impl RedshiftControlPlane {
                 }
 
                 if let Some(allow_version_upgrade) = cluster.allow_version_upgrade() {
-                    resource_data
-                        .insert("allow_version_upgrade".to_string(), json!(allow_version_upgrade));
+                    resource_data.insert(
+                        "allow_version_upgrade".to_string(),
+                        json!(allow_version_upgrade),
+                    );
                 }
 
                 if let Some(track) = cluster.maintenance_track_name() {
@@ -196,7 +201,8 @@ impl RedshiftControlPlane {
 
                 if let Some(aqua) = cluster.aqua_configuration() {
                     if let Some(aqua_status) = aqua.aqua_status() {
-                        resource_data.insert("aqua_status".to_string(), json!(aqua_status.as_str()));
+                        resource_data
+                            .insert("aqua_status".to_string(), json!(aqua_status.as_str()));
                     }
                 }
 

@@ -46,7 +46,10 @@ impl ConfigControlPlane {
             &aws_account_dto.account_id, sync_id
         );
 
-        let client = self.aws_service.create_config_client(aws_account_dto).await?;
+        let client = self
+            .aws_service
+            .create_config_client(aws_account_dto)
+            .await?;
         let mut resources: Vec<AwsResourceModel> = Vec::new();
 
         // First pass: collect every rule definition with NextToken pagination.
@@ -202,8 +205,7 @@ impl ConfigControlPlane {
                         let mut tags_map = serde_json::Map::new();
                         for tag in tags_response.tags() {
                             if let Some(key) = tag.key() {
-                                tags_map
-                                    .insert(key.to_string(), json!(tag.value().unwrap_or("")));
+                                tags_map.insert(key.to_string(), json!(tag.value().unwrap_or("")));
                             }
                         }
                         serde_json::Value::Object(tags_map)

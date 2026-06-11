@@ -80,8 +80,10 @@ impl GlobalAcceleratorControlPlane {
                 resource_data.insert("name".to_string(), json!(name));
 
                 if let Some(ip_address_type) = accelerator.ip_address_type() {
-                    resource_data
-                        .insert("ip_address_type".to_string(), json!(ip_address_type.as_str()));
+                    resource_data.insert(
+                        "ip_address_type".to_string(),
+                        json!(ip_address_type.as_str()),
+                    );
                 }
 
                 if let Some(enabled) = accelerator.enabled() {
@@ -98,8 +100,10 @@ impl GlobalAcceleratorControlPlane {
                 }
 
                 if let Some(dual_stack_dns_name) = accelerator.dual_stack_dns_name() {
-                    resource_data
-                        .insert("dual_stack_dns_name".to_string(), json!(dual_stack_dns_name));
+                    resource_data.insert(
+                        "dual_stack_dns_name".to_string(),
+                        json!(dual_stack_dns_name),
+                    );
                 }
 
                 if let Some(created_time) = accelerator.created_time() {
@@ -213,8 +217,7 @@ impl GlobalAcceleratorControlPlane {
                                 }
                                 first_page = false;
                             }
-                            listener_token =
-                                listener_response.next_token().map(String::from);
+                            listener_token = listener_response.next_token().map(String::from);
                             if listener_token.is_none() {
                                 break;
                             }
@@ -230,8 +233,10 @@ impl GlobalAcceleratorControlPlane {
                     }
                 }
 
-                resource_data
-                    .insert("listeners_collected".to_string(), json!(listeners_collected));
+                resource_data.insert(
+                    "listeners_collected".to_string(),
+                    json!(listeners_collected),
+                );
                 if listeners_collected {
                     resource_data.insert("listener_count".to_string(), json!(listener_count));
                     resource_data.insert("listeners".to_string(), json!(listener_details));
@@ -251,10 +256,7 @@ impl GlobalAcceleratorControlPlane {
                         serde_json::Value::Object(tags_map)
                     }
                     Err(e) => {
-                        debug!(
-                            "Failed to list tags for Global Accelerator {}: {}",
-                            arn, e
-                        );
+                        debug!("Failed to list tags for Global Accelerator {}: {}", arn, e);
                         json!({})
                     }
                 };

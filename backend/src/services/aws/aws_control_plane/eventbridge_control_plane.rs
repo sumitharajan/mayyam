@@ -41,7 +41,10 @@ impl EventBridgeControlPlane {
             &aws_account_dto.account_id, sync_id
         );
 
-        let client = self.aws_service.create_eventbridge_client(aws_account_dto).await?;
+        let client = self
+            .aws_service
+            .create_eventbridge_client(aws_account_dto)
+            .await?;
         let mut resources: Vec<AwsResourceModel> = Vec::new();
 
         // Enumerate event buses so custom-bus rules are inventoried too. A
@@ -100,8 +103,7 @@ impl EventBridgeControlPlane {
                         resource_data.insert("description".to_string(), json!(description));
                     }
                     if let Some(schedule) = rule.schedule_expression() {
-                        resource_data
-                            .insert("schedule_expression".to_string(), json!(schedule));
+                        resource_data.insert("schedule_expression".to_string(), json!(schedule));
                     }
                     if let Some(pattern) = rule.event_pattern() {
                         resource_data.insert("event_pattern".to_string(), json!(pattern));
@@ -121,8 +123,7 @@ impl EventBridgeControlPlane {
                         .await
                     {
                         Ok(targets) => {
-                            resource_data
-                                .insert("target_count".to_string(), json!(targets.len()));
+                            resource_data.insert("target_count".to_string(), json!(targets.len()));
                             resource_data.insert("targets".to_string(), json!(targets));
                         }
                         Err(e) => {
@@ -136,7 +137,11 @@ impl EventBridgeControlPlane {
                     let tags = if arn.is_empty() {
                         json!({})
                     } else {
-                        match client.list_tags_for_resource().resource_arn(&arn).send().await
+                        match client
+                            .list_tags_for_resource()
+                            .resource_arn(&arn)
+                            .send()
+                            .await
                         {
                             Ok(tags_response) => {
                                 let mut tags_map = serde_json::Map::new();
@@ -204,10 +209,7 @@ impl EventBridgeControlPlane {
             }
 
             let response = request.send().await.map_err(|e| {
-                AppError::ExternalService(format!(
-                    "Failed to list EventBridge event buses: {}",
-                    e
-                ))
+                AppError::ExternalService(format!("Failed to list EventBridge event buses: {}", e))
             })?;
 
             for bus in response.event_buses() {

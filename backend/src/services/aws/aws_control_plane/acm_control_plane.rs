@@ -109,8 +109,7 @@ impl AcmControlPlane {
                 }
 
                 if let Some(cert_type) = detail.r#type() {
-                    resource_data
-                        .insert("certificate_type".to_string(), json!(cert_type.as_str()));
+                    resource_data.insert("certificate_type".to_string(), json!(cert_type.as_str()));
                 }
 
                 let in_use_by: Vec<String> =
@@ -163,10 +162,8 @@ impl AcmControlPlane {
                     Ok(tags_response) => {
                         let mut tags_map = serde_json::Map::new();
                         for tag in tags_response.tags() {
-                            tags_map.insert(
-                                tag.key().to_string(),
-                                json!(tag.value().unwrap_or("")),
-                            );
+                            tags_map
+                                .insert(tag.key().to_string(), json!(tag.value().unwrap_or("")));
                         }
                         serde_json::Value::Object(tags_map)
                     }

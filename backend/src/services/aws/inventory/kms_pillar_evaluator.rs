@@ -138,8 +138,8 @@ fn evaluate_cost(resource: &AwsResourceModel, findings: &mut Vec<InventoryFindin
 
 fn evaluate_security(resource: &AwsResourceModel, findings: &mut Vec<InventoryFinding>) {
     // Automatic rotation only applies to customer-managed symmetric keys.
-    let symmetric = data_str(&resource.resource_data, "key_spec").as_deref()
-        == Some("SYMMETRIC_DEFAULT");
+    let symmetric =
+        data_str(&resource.resource_data, "key_spec").as_deref() == Some("SYMMETRIC_DEFAULT");
     if !is_customer_managed(resource) || !symmetric {
         return;
     }
@@ -282,7 +282,11 @@ mod tests {
     }
 
     fn codes(report: &PillarReport) -> Vec<&str> {
-        report.findings.iter().map(|f| f.reason_code.as_str()).collect()
+        report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect()
     }
 
     #[test]
@@ -310,7 +314,11 @@ mod tests {
         data["key_state"] = json!("PendingDeletion");
         let r = fixture("key-deleting", json!({"team": "sec"}), data, now());
         let report = evaluate_kms_fleet(&[r], Pillar::Cost, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -352,7 +360,11 @@ mod tests {
         data.as_object_mut().unwrap().remove("rotation_enabled");
         let r = fixture("key-rsa", json!({"team": "sec"}), data, now());
         let report = evaluate_kms_fleet(&[r], Pillar::Security, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -379,12 +391,21 @@ mod tests {
         disabled["key_state"] = json!("Disabled");
         let r2 = fixture("key-disabled", json!({"team": "sec"}), disabled, now());
         let report = evaluate_kms_fleet(&[r2], Pillar::Resilience, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
     fn stale_inventory_is_flagged() {
-        let mut r = fixture("key-stale", json!({"team": "sec"}), healthy_customer_data(), now());
+        let mut r = fixture(
+            "key-stale",
+            json!({"team": "sec"}),
+            healthy_customer_data(),
+            now(),
+        );
         r.last_refreshed = now() - Duration::hours(48);
         let report = evaluate_kms_fleet(&[r], Pillar::Resilience, now());
         assert_eq!(report.stale_resources, 1);
@@ -402,7 +423,12 @@ mod tests {
 
     #[test]
     fn healthy_customer_key_passes_all_pillars() {
-        let r = fixture("key-ok", json!({"team": "sec"}), healthy_customer_data(), now());
+        let r = fixture(
+            "key-ok",
+            json!({"team": "sec"}),
+            healthy_customer_data(),
+            now(),
+        );
         for pillar in [Pillar::Cost, Pillar::Security, Pillar::Resilience] {
             let report = evaluate_kms_fleet(std::slice::from_ref(&r), pillar, now());
             assert!(

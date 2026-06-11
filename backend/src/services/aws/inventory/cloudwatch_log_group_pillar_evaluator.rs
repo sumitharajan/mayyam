@@ -172,11 +172,7 @@ mod tests {
     use chrono::Duration;
     use uuid::Uuid;
 
-    fn fixture(
-        resource_id: &str,
-        resource_data: Value,
-        now: DateTime<Utc>,
-    ) -> AwsResourceModel {
+    fn fixture(resource_id: &str, resource_data: Value, now: DateTime<Utc>) -> AwsResourceModel {
         let refreshed = now - Duration::hours(1);
         AwsResourceModel {
             id: Uuid::new_v4(),
@@ -218,7 +214,11 @@ mod tests {
     }
 
     fn codes(report: &PillarReport) -> Vec<&str> {
-        report.findings.iter().map(|f| f.reason_code.as_str()).collect()
+        report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect()
     }
 
     #[test]
@@ -256,7 +256,11 @@ mod tests {
         data["LogGroupClass"] = json!("INFREQUENT_ACCESS");
         let r = fixture("/app/large-ia", data, now());
         let report = evaluate_cloudwatch_log_group_fleet(&[r], Pillar::Cost, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -272,7 +276,11 @@ mod tests {
     fn security_passes_kms_encrypted_group() {
         let r = fixture("/app/checkout", healthy_data(), now());
         let report = evaluate_cloudwatch_log_group_fleet(&[r], Pillar::Security, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]

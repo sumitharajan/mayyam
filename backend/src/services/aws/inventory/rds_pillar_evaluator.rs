@@ -246,16 +246,30 @@ mod tests {
         data["storage_type"] = json!("gp2");
         let r = fixture("db-untagged", json!({}), data, 1, now());
         let report = evaluate_rds_fleet(&[r], Pillar::Cost, now());
-        let codes: Vec<&str> = report.findings.iter().map(|f| f.reason_code.as_str()).collect();
+        let codes: Vec<&str> = report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect();
         assert!(codes.contains(&REASON_COST_MISSING_ALLOCATION_TAGS));
         assert!(codes.contains(&REASON_COST_GP2_STORAGE));
     }
 
     #[test]
     fn cost_passes_for_tagged_gp3_instance() {
-        let r = fixture("db-good", json!({"team": "payments"}), healthy_data(), 1, now());
+        let r = fixture(
+            "db-good",
+            json!({"team": "payments"}),
+            healthy_data(),
+            1,
+            now(),
+        );
         let report = evaluate_rds_fleet(&[r], Pillar::Cost, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
         assert_eq!(report.score, 100);
     }
 
@@ -281,7 +295,11 @@ mod tests {
     fn security_passes_when_posture_collected_and_owned() {
         let r = fixture("db-ok", json!({"owner": "dba"}), healthy_data(), 1, now());
         let report = evaluate_rds_fleet(&[r], Pillar::Security, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -291,7 +309,11 @@ mod tests {
         data["backup_retention_period"] = json!(0);
         let r = fixture("db-fragile", json!({"owner": "dba"}), data, 1, now());
         let report = evaluate_rds_fleet(&[r], Pillar::Resilience, now());
-        let codes: Vec<&str> = report.findings.iter().map(|f| f.reason_code.as_str()).collect();
+        let codes: Vec<&str> = report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect();
         assert!(codes.contains(&REASON_RES_SINGLE_AZ));
         assert!(codes.contains(&REASON_RES_BACKUPS_DISABLED));
         let backups = report
@@ -304,9 +326,18 @@ mod tests {
 
     #[test]
     fn stale_inventory_is_reported_as_failure_path() {
-        let r = fixture("db-stale", json!({"owner": "dba", "project": "mayyam"}), healthy_data(), 48, now());
+        let r = fixture(
+            "db-stale",
+            json!({"owner": "dba", "project": "mayyam"}),
+            healthy_data(),
+            48,
+            now(),
+        );
         let report = evaluate_rds_fleet(&[r], Pillar::Resilience, now());
         assert_eq!(report.stale_resources, 1);
-        assert!(report.findings.iter().any(|f| f.reason_code == REASON_INV_STALE_DATA));
+        assert!(report
+            .findings
+            .iter()
+            .any(|f| f.reason_code == REASON_INV_STALE_DATA));
     }
 }

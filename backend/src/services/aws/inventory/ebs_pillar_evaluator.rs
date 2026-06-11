@@ -136,10 +136,7 @@ fn evaluate_security(resource: &AwsResourceModel, findings: &mut Vec<InventoryFi
             pillar: Pillar::Security,
             reason_code: REASON_SEC_UNENCRYPTED.to_string(),
             severity: Severity::High,
-            message: format!(
-                "Volume {} is not encrypted at rest",
-                resource.resource_id
-            ),
+            message: format!("Volume {} is not encrypted at rest", resource.resource_id),
             evidence: json!({
                 "encrypted": resource.resource_data.get("encrypted"),
                 "kms_key_id": resource.resource_data.get("kms_key_id"),
@@ -242,7 +239,11 @@ mod tests {
             now(),
         );
         let report = evaluate_ebs_fleet(&[r], Pillar::Cost, now());
-        let codes: Vec<&str> = report.findings.iter().map(|f| f.reason_code.as_str()).collect();
+        let codes: Vec<&str> = report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect();
         assert!(codes.contains(&REASON_COST_MISSING_ALLOCATION_TAGS));
         assert!(codes.contains(&REASON_COST_UNATTACHED_VOLUME));
         assert!(codes.contains(&REASON_COST_GP2_VOLUME));
@@ -250,9 +251,19 @@ mod tests {
 
     #[test]
     fn cost_passes_for_tagged_attached_gp3_volume() {
-        let r = fixture("vol-good", json!({"team": "infra"}), healthy_data(), 1, now());
+        let r = fixture(
+            "vol-good",
+            json!({"team": "infra"}),
+            healthy_data(),
+            1,
+            now(),
+        );
         let report = evaluate_ebs_fleet(&[r], Pillar::Cost, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
         assert_eq!(report.score, 100);
     }
 
@@ -272,9 +283,19 @@ mod tests {
 
     #[test]
     fn security_passes_for_encrypted_owned_volume() {
-        let r = fixture("vol-ok", json!({"owner": "infra"}), healthy_data(), 1, now());
+        let r = fixture(
+            "vol-ok",
+            json!({"owner": "infra"}),
+            healthy_data(),
+            1,
+            now(),
+        );
         let report = evaluate_ebs_fleet(&[r], Pillar::Security, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -284,16 +305,29 @@ mod tests {
         let r = fixture("vol-nosnap", json!({"owner": "infra"}), data, 1, now());
         let report = evaluate_ebs_fleet(&[r], Pillar::Resilience, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_RES_SNAPSHOT_DATA_NOT_COLLECTED]
         );
     }
 
     #[test]
     fn stale_inventory_is_reported_as_failure_path() {
-        let r = fixture("vol-stale", json!({"owner": "infra", "project": "mayyam"}), healthy_data(), 48, now());
+        let r = fixture(
+            "vol-stale",
+            json!({"owner": "infra", "project": "mayyam"}),
+            healthy_data(),
+            48,
+            now(),
+        );
         let report = evaluate_ebs_fleet(&[r], Pillar::Cost, now());
         assert_eq!(report.stale_resources, 1);
-        assert!(report.findings.iter().any(|f| f.reason_code == REASON_INV_STALE_DATA));
+        assert!(report
+            .findings
+            .iter()
+            .any(|f| f.reason_code == REASON_INV_STALE_DATA));
     }
 }

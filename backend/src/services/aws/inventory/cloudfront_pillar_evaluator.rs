@@ -37,13 +37,11 @@ pub const REASON_COST_NO_TAGS: &str = "CLOUDFRONT_COST_NO_TAGS";
 pub const REASON_COST_DISABLED_DISTRIBUTION: &str = "CLOUDFRONT_COST_DISABLED_DISTRIBUTION";
 pub const REASON_COST_PRICE_CLASS_ALL: &str = "CLOUDFRONT_COST_PRICE_CLASS_ALL";
 pub const REASON_SEC_VIEWER_ALLOWS_HTTP: &str = "CLOUDFRONT_SEC_VIEWER_ALLOWS_HTTP";
-pub const REASON_SEC_CACHE_BEHAVIOR_ALLOWS_HTTP: &str =
-    "CLOUDFRONT_SEC_CACHE_BEHAVIOR_ALLOWS_HTTP";
+pub const REASON_SEC_CACHE_BEHAVIOR_ALLOWS_HTTP: &str = "CLOUDFRONT_SEC_CACHE_BEHAVIOR_ALLOWS_HTTP";
 pub const REASON_SEC_VIEWER_POLICY_DATA_NOT_COLLECTED: &str =
     "CLOUDFRONT_SEC_VIEWER_POLICY_DATA_NOT_COLLECTED";
 pub const REASON_RES_SINGLE_ORIGIN: &str = "CLOUDFRONT_RES_SINGLE_ORIGIN";
-pub const REASON_RES_ORIGIN_DATA_NOT_COLLECTED: &str =
-    "CLOUDFRONT_RES_ORIGIN_DATA_NOT_COLLECTED";
+pub const REASON_RES_ORIGIN_DATA_NOT_COLLECTED: &str = "CLOUDFRONT_RES_ORIGIN_DATA_NOT_COLLECTED";
 pub const REASON_INV_STALE_DATA: &str = "CLOUDFRONT_INV_STALE_DATA";
 
 /// Evaluate every CloudFront distribution in the fleet for one pillar.
@@ -302,7 +300,10 @@ mod tests {
             region: "global".to_string(),
             resource_type: "CloudFrontDistribution".to_string(),
             resource_id: resource_id.to_string(),
-            arn: format!("arn:aws:cloudfront::123456789012:distribution/{}", resource_id),
+            arn: format!(
+                "arn:aws:cloudfront::123456789012:distribution/{}",
+                resource_id
+            ),
             name: Some(resource_id.to_string()),
             tags,
             resource_data,
@@ -351,7 +352,11 @@ mod tests {
         data["price_class"] = json!("PriceClassAll");
         let r = fixture("E1IDLE", json!({}), data, now());
         let report = evaluate_cloudfront_fleet(&[r], Pillar::Cost, now());
-        let codes: Vec<&str> = report.findings.iter().map(|f| f.reason_code.as_str()).collect();
+        let codes: Vec<&str> = report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect();
         assert!(codes.contains(&REASON_COST_NO_TAGS));
         assert!(codes.contains(&REASON_COST_DISABLED_DISTRIBUTION));
         assert!(codes.contains(&REASON_COST_PRICE_CLASS_ALL));
@@ -364,7 +369,11 @@ mod tests {
         data["cache_behaviors"][0]["viewer_protocol_policy"] = json!("allow-all");
         let r = fixture("E1HTTP", json!({"team": "edge"}), data, now());
         let report = evaluate_cloudfront_fleet(&[r], Pillar::Security, now());
-        let codes: Vec<&str> = report.findings.iter().map(|f| f.reason_code.as_str()).collect();
+        let codes: Vec<&str> = report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect();
         assert!(codes.contains(&REASON_SEC_VIEWER_ALLOWS_HTTP));
         assert!(codes.contains(&REASON_SEC_CACHE_BEHAVIOR_ALLOWS_HTTP));
     }
@@ -379,7 +388,11 @@ mod tests {
         );
         let report = evaluate_cloudfront_fleet(&[r], Pillar::Security, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_SEC_VIEWER_POLICY_DATA_NOT_COLLECTED]
         );
     }
@@ -391,7 +404,11 @@ mod tests {
         let r = fixture("E1SOLO", json!({"team": "edge"}), data, now());
         let report = evaluate_cloudfront_fleet(&[r], Pillar::Resilience, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_RES_SINGLE_ORIGIN]
         );
     }
@@ -406,7 +423,11 @@ mod tests {
         );
         let report = evaluate_cloudfront_fleet(&[r], Pillar::Resilience, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_RES_ORIGIN_DATA_NOT_COLLECTED]
         );
     }
@@ -442,8 +463,7 @@ mod tests {
     fn healthy_distribution_passes_all_pillars() {
         let r = fixture("E1OK", json!({"team": "edge"}), healthy_data(), now());
         for pillar in [Pillar::Cost, Pillar::Security, Pillar::Resilience] {
-            let report =
-                evaluate_cloudfront_fleet(std::slice::from_ref(&r), pillar, now());
+            let report = evaluate_cloudfront_fleet(std::slice::from_ref(&r), pillar, now());
             assert!(
                 report.findings.is_empty(),
                 "unexpected for {:?}: {:?}",

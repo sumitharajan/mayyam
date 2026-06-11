@@ -326,7 +326,11 @@ mod tests {
     }
 
     fn codes(report: &PillarReport) -> Vec<&str> {
-        report.findings.iter().map(|f| f.reason_code.as_str()).collect()
+        report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect()
     }
 
     #[test]
@@ -374,7 +378,11 @@ mod tests {
         });
         let r = fixture("acl-gap", json!({"team": "sre"}), data, now());
         let report = evaluate_waf_fleet(&[r], Pillar::Cost, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -430,7 +438,11 @@ mod tests {
         });
         let r = fixture("acl-gap", json!({"team": "sre"}), data, now());
         let report = evaluate_waf_fleet(&[r], Pillar::Security, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]

@@ -32,7 +32,9 @@ impl StorageClassesService {
         let sc_list = storage_classes
             .list(&ListParams::default())
             .await
-            .map_err(|e| AppError::ExternalService(format!("Failed to list StorageClasses: {}", e)))?;
+            .map_err(|e| {
+                AppError::ExternalService(format!("Failed to list StorageClasses: {}", e))
+            })?;
 
         let mut formatted_sc = Vec::new();
         for sc in sc_list {
@@ -56,7 +58,8 @@ impl StorageClassesService {
             AppError::ExternalService(format!("Failed to get StorageClass details: {}", e))
         })?;
 
-        serde_json::to_value(&sc)
-            .map_err(|e| AppError::Internal(format!("Failed to serialize StorageClass details: {}", e)))
+        serde_json::to_value(&sc).map_err(|e| {
+            AppError::Internal(format!("Failed to serialize StorageClass details: {}", e))
+        })
     }
 }

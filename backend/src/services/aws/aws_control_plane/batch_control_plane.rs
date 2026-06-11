@@ -41,7 +41,10 @@ impl BatchControlPlane {
             &aws_account_dto.account_id, sync_id
         );
 
-        let client = self.aws_service.create_batch_client(aws_account_dto).await?;
+        let client = self
+            .aws_service
+            .create_batch_client(aws_account_dto)
+            .await?;
         let mut resources: Vec<AwsResourceModel> = Vec::new();
 
         // DescribeComputeEnvironments returns full ComputeEnvironmentDetail
@@ -71,10 +74,7 @@ impl BatchControlPlane {
                         continue;
                     }
                 };
-                let arn = env
-                    .compute_environment_arn()
-                    .unwrap_or("")
-                    .to_string();
+                let arn = env.compute_environment_arn().unwrap_or("").to_string();
 
                 let mut resource_data = serde_json::Map::new();
                 resource_data.insert("compute_environment_name".to_string(), json!(name));
@@ -128,19 +128,15 @@ impl BatchControlPlane {
                 if let Some(cr) = env.compute_resources() {
                     // EC2 | SPOT | FARGATE | FARGATE_SPOT.
                     if let Some(cr_type) = cr.r#type() {
-                        resource_data.insert(
-                            "compute_resource_type".to_string(),
-                            json!(cr_type.as_str()),
-                        );
+                        resource_data
+                            .insert("compute_resource_type".to_string(), json!(cr_type.as_str()));
                     }
 
                     // BEST_FIT (default) | BEST_FIT_PROGRESSIVE |
                     // SPOT_CAPACITY_OPTIMIZED | SPOT_PRICE_CAPACITY_OPTIMIZED.
                     if let Some(strategy) = cr.allocation_strategy() {
-                        resource_data.insert(
-                            "allocation_strategy".to_string(),
-                            json!(strategy.as_str()),
-                        );
+                        resource_data
+                            .insert("allocation_strategy".to_string(), json!(strategy.as_str()));
                     }
 
                     if let Some(min_vcpus) = cr.minv_cpus() {
@@ -155,12 +151,10 @@ impl BatchControlPlane {
                         resource_data.insert("desiredv_cpus".to_string(), json!(desired_vcpus));
                     }
 
-                    resource_data
-                        .insert("instance_types".to_string(), json!(cr.instance_types()));
+                    resource_data.insert("instance_types".to_string(), json!(cr.instance_types()));
 
                     if let Some(fleet_role) = cr.spot_iam_fleet_role() {
-                        resource_data
-                            .insert("spot_iam_fleet_role".to_string(), json!(fleet_role));
+                        resource_data.insert("spot_iam_fleet_role".to_string(), json!(fleet_role));
                     }
 
                     resource_data.insert("subnet_count".to_string(), json!(cr.subnets().len()));

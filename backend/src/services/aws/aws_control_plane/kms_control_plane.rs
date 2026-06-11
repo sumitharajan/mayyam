@@ -66,18 +66,14 @@ impl KmsControlPlane {
                     }
                 };
 
-                let describe_response = match client
-                    .describe_key()
-                    .key_id(entry_key_id)
-                    .send()
-                    .await
-                {
-                    Ok(res) => res,
-                    Err(e) => {
-                        error!("Failed to describe KMS key {}: {}", entry_key_id, e);
-                        continue;
-                    }
-                };
+                let describe_response =
+                    match client.describe_key().key_id(entry_key_id).send().await {
+                        Ok(res) => res,
+                        Err(e) => {
+                            error!("Failed to describe KMS key {}: {}", entry_key_id, e);
+                            continue;
+                        }
+                    };
 
                 let metadata = match describe_response.key_metadata() {
                     Some(m) => m,
@@ -146,7 +142,12 @@ impl KmsControlPlane {
                     .unwrap_or(false);
 
                 if is_customer_managed && is_symmetric {
-                    match client.get_key_rotation_status().key_id(&key_id).send().await {
+                    match client
+                        .get_key_rotation_status()
+                        .key_id(&key_id)
+                        .send()
+                        .await
+                    {
                         Ok(rotation) => {
                             resource_data.insert(
                                 "rotation_enabled".to_string(),

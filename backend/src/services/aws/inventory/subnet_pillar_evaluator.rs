@@ -33,8 +33,7 @@ use crate::services::aws::inventory::types::{
 pub const REASON_COST_NO_TAGS: &str = "SUBNET_COST_NO_TAGS";
 pub const REASON_RES_STATE_NOT_AVAILABLE: &str = "SUBNET_RES_STATE_NOT_AVAILABLE";
 pub const REASON_RES_AZ_DATA_NOT_COLLECTED: &str = "SUBNET_RES_AZ_DATA_NOT_COLLECTED";
-pub const REASON_SEC_POSTURE_DATA_NOT_COLLECTED: &str =
-    "SUBNET_SEC_POSTURE_DATA_NOT_COLLECTED";
+pub const REASON_SEC_POSTURE_DATA_NOT_COLLECTED: &str = "SUBNET_SEC_POSTURE_DATA_NOT_COLLECTED";
 pub const REASON_INV_STALE_DATA: &str = "SUBNET_INV_STALE_DATA";
 
 fn is_subnet(resource: &AwsResourceModel) -> bool {
@@ -212,10 +211,16 @@ mod tests {
         let r = fixture("subnet-untagged", json!({}), healthy_data(), now());
         let report = evaluate_subnet_fleet(&[r], Pillar::Cost, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_COST_NO_TAGS]
         );
-        assert!(report.findings[0].message.contains("untagged resource or tag collection gap"));
+        assert!(report.findings[0]
+            .message
+            .contains("untagged resource or tag collection gap"));
     }
 
     #[test]
@@ -225,7 +230,11 @@ mod tests {
         let r = fixture("subnet-pending", json!({"team": "net"}), data, now());
         let report = evaluate_subnet_fleet(&[r], Pillar::Resilience, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_RES_STATE_NOT_AVAILABLE]
         );
     }
@@ -240,7 +249,11 @@ mod tests {
         );
         let report = evaluate_subnet_fleet(&[r], Pillar::Resilience, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_RES_AZ_DATA_NOT_COLLECTED]
         );
     }
@@ -250,14 +263,23 @@ mod tests {
         let r = fixture("subnet-sec", json!({"team": "net"}), healthy_data(), now());
         let report = evaluate_subnet_fleet(&[r], Pillar::Security, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_SEC_POSTURE_DATA_NOT_COLLECTED]
         );
     }
 
     #[test]
     fn stale_inventory_is_reported() {
-        let mut r = fixture("subnet-stale", json!({"team": "net"}), healthy_data(), now());
+        let mut r = fixture(
+            "subnet-stale",
+            json!({"team": "net"}),
+            healthy_data(),
+            now(),
+        );
         r.last_refreshed = now() - Duration::hours(48);
         let report = evaluate_subnet_fleet(&[r], Pillar::Cost, now());
         assert_eq!(report.stale_resources, 1);
@@ -291,7 +313,11 @@ mod tests {
         }
         let report = evaluate_subnet_fleet(std::slice::from_ref(&r), Pillar::Security, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_SEC_POSTURE_DATA_NOT_COLLECTED]
         );
     }

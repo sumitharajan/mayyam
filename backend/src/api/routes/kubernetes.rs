@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 use crate::controllers::kubernetes as kube_controller;
 use actix_web::web;
 use sea_orm::DatabaseConnection; // Ensure this is imported

@@ -37,8 +37,7 @@ use crate::services::aws::inventory::types::{
 
 // Reason codes are the stable contract for findings; never reuse or rename.
 pub const REASON_COST_NO_TAGS: &str = "SECURITYGROUP_COST_NO_TAGS";
-pub const REASON_SEC_RULES_DATA_NOT_COLLECTED: &str =
-    "SECURITYGROUP_SEC_RULES_DATA_NOT_COLLECTED";
+pub const REASON_SEC_RULES_DATA_NOT_COLLECTED: &str = "SECURITYGROUP_SEC_RULES_DATA_NOT_COLLECTED";
 pub const REASON_INV_STALE_DATA: &str = "SECURITYGROUP_INV_STALE_DATA";
 
 /// Evaluate every security group in the fleet for one pillar.
@@ -183,10 +182,16 @@ mod tests {
         let r = fixture("sg-untagged", json!({}), healthy_data(), now());
         let report = evaluate_security_group_fleet(&[r], Pillar::Cost, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_COST_NO_TAGS]
         );
-        assert!(report.findings[0].message.contains("untagged resource or tag collection gap"));
+        assert!(report.findings[0]
+            .message
+            .contains("untagged resource or tag collection gap"));
     }
 
     #[test]
@@ -194,7 +199,11 @@ mod tests {
         let r = fixture("sg-norules", json!({"team": "net"}), healthy_data(), now());
         let report = evaluate_security_group_fleet(&[r], Pillar::Security, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_SEC_RULES_DATA_NOT_COLLECTED]
         );
         assert_eq!(report.findings[0].severity as u8, Severity::Medium as u8);
@@ -215,7 +224,11 @@ mod tests {
         let report = evaluate_security_group_fleet(&[r], Pillar::Resilience, now());
         assert_eq!(report.stale_resources, 1);
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_INV_STALE_DATA]
         );
     }
@@ -232,10 +245,14 @@ mod tests {
 
     #[test]
     fn healthy_tagged_group_passes_cost_and_resilience() {
-        let r = fixture("sg-ok", json!({"team": "net", "owner": "sre"}), healthy_data(), now());
+        let r = fixture(
+            "sg-ok",
+            json!({"team": "net", "owner": "sre"}),
+            healthy_data(),
+            now(),
+        );
         for pillar in [Pillar::Cost, Pillar::Resilience] {
-            let report =
-                evaluate_security_group_fleet(std::slice::from_ref(&r), pillar, now());
+            let report = evaluate_security_group_fleet(std::slice::from_ref(&r), pillar, now());
             assert!(
                 report.findings.is_empty(),
                 "unexpected for {:?}: {:?}",

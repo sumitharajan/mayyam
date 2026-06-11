@@ -36,8 +36,7 @@ pub const RESOURCE_TYPE: &str = "BatchComputeEnv";
 
 // Reason codes are the stable contract for findings; never reuse or rename.
 pub const REASON_COST_MIN_VCPUS_WARM: &str = "BATCH_COST_MIN_VCPUS_WARM";
-pub const REASON_COST_MINVCPUS_DATA_NOT_COLLECTED: &str =
-    "BATCH_COST_MINVCPUS_DATA_NOT_COLLECTED";
+pub const REASON_COST_MINVCPUS_DATA_NOT_COLLECTED: &str = "BATCH_COST_MINVCPUS_DATA_NOT_COLLECTED";
 pub const REASON_COST_ON_DEMAND_ONLY: &str = "BATCH_COST_ON_DEMAND_ONLY";
 pub const REASON_COST_DISABLED_ENV: &str = "BATCH_COST_DISABLED_ENV";
 pub const REASON_COST_NO_TAGS: &str = "BATCH_COST_NO_TAGS";
@@ -47,8 +46,7 @@ pub const REASON_SEC_SG_DATA_NOT_COLLECTED: &str = "BATCH_SEC_SG_DATA_NOT_COLLEC
 pub const REASON_RES_STATUS_INVALID: &str = "BATCH_RES_STATUS_INVALID";
 pub const REASON_RES_SINGLE_SUBNET: &str = "BATCH_RES_SINGLE_SUBNET";
 pub const REASON_RES_SUBNET_DATA_NOT_COLLECTED: &str = "BATCH_RES_SUBNET_DATA_NOT_COLLECTED";
-pub const REASON_RES_SPOT_NOT_CAPACITY_OPTIMIZED: &str =
-    "BATCH_RES_SPOT_NOT_CAPACITY_OPTIMIZED";
+pub const REASON_RES_SPOT_NOT_CAPACITY_OPTIMIZED: &str = "BATCH_RES_SPOT_NOT_CAPACITY_OPTIMIZED";
 pub const REASON_INV_STALE_DATA: &str = "BATCH_INV_STALE_DATA";
 
 /// Evaluate every Batch compute environment in the fleet for one pillar.
@@ -423,7 +421,11 @@ mod tests {
     }
 
     fn codes(report: &PillarReport) -> Vec<&str> {
-        report.findings.iter().map(|f| f.reason_code.as_str()).collect()
+        report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect()
     }
 
     #[test]
@@ -442,7 +444,10 @@ mod tests {
         data.as_object_mut().unwrap().remove("minv_cpus");
         let r = fixture("ce-vcpugap", json!({"team": "batch"}), data, now());
         let report = evaluate_batch_fleet(&[r], Pillar::Cost, now());
-        assert_eq!(codes(&report), vec![REASON_COST_MINVCPUS_DATA_NOT_COLLECTED]);
+        assert_eq!(
+            codes(&report),
+            vec![REASON_COST_MINVCPUS_DATA_NOT_COLLECTED]
+        );
     }
 
     #[test]
@@ -468,7 +473,11 @@ mod tests {
         deleting["status"] = json!("DELETING");
         let r2 = fixture("ce-deleting", json!({"team": "batch"}), deleting, now());
         let report = evaluate_batch_fleet(&[r2], Pillar::Cost, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -490,7 +499,11 @@ mod tests {
         obj.remove("spot_iam_fleet_role");
         let r = fixture("ce-fargate", json!({"team": "batch"}), data, now());
         let report = evaluate_batch_fleet(&[r], Pillar::Cost, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -563,7 +576,10 @@ mod tests {
 
         // Absent strategy means the BEST_FIT default is in effect.
         let mut defaulted = healthy_spot_data();
-        defaulted.as_object_mut().unwrap().remove("allocation_strategy");
+        defaulted
+            .as_object_mut()
+            .unwrap()
+            .remove("allocation_strategy");
         let r2 = fixture("ce-default", json!({"team": "batch"}), defaulted, now());
         let report = evaluate_batch_fleet(&[r2], Pillar::Resilience, now());
         assert_eq!(codes(&report), vec![REASON_RES_SPOT_NOT_CAPACITY_OPTIMIZED]);
@@ -576,12 +592,21 @@ mod tests {
         data["allocation_strategy"] = json!("SPOT_CAPACITY_OPTIMIZED");
         let r = fixture("ce-capopt", json!({"team": "batch"}), data, now());
         let report = evaluate_batch_fleet(&[r], Pillar::Resilience, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
     fn unmanaged_env_skips_compute_resource_checks() {
-        let r = fixture("ce-unmanaged", json!({"team": "batch"}), unmanaged_data(), now());
+        let r = fixture(
+            "ce-unmanaged",
+            json!({"team": "batch"}),
+            unmanaged_data(),
+            now(),
+        );
         for pillar in [Pillar::Cost, Pillar::Security, Pillar::Resilience] {
             let report = evaluate_batch_fleet(std::slice::from_ref(&r), pillar, now());
             assert!(
@@ -595,7 +620,12 @@ mod tests {
 
     #[test]
     fn stale_inventory_is_flagged() {
-        let mut r = fixture("ce-stale", json!({"team": "batch"}), healthy_spot_data(), now());
+        let mut r = fixture(
+            "ce-stale",
+            json!({"team": "batch"}),
+            healthy_spot_data(),
+            now(),
+        );
         r.last_refreshed = now() - Duration::hours(48);
         let report = evaluate_batch_fleet(&[r], Pillar::Resilience, now());
         assert_eq!(report.stale_resources, 1);
@@ -613,7 +643,12 @@ mod tests {
 
     #[test]
     fn healthy_spot_env_passes_all_pillars() {
-        let r = fixture("ce-ok", json!({"team": "batch"}), healthy_spot_data(), now());
+        let r = fixture(
+            "ce-ok",
+            json!({"team": "batch"}),
+            healthy_spot_data(),
+            now(),
+        );
         for pillar in [Pillar::Cost, Pillar::Security, Pillar::Resilience] {
             let report = evaluate_batch_fleet(std::slice::from_ref(&r), pillar, now());
             assert!(

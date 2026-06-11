@@ -140,10 +140,7 @@ fn evaluate_resilience(resource: &AwsResourceModel, findings: &mut Vec<Inventory
                 pillar: Pillar::Resilience,
                 reason_code: REASON_RES_CLUSTER_NOT_ACTIVE.to_string(),
                 severity: Severity::Medium,
-                message: format!(
-                    "Cluster {} is in status '{}'",
-                    resource.resource_id, status
-                ),
+                message: format!("Cluster {} is in status '{}'", resource.resource_id, status),
                 evidence: json!({ "Status": status }),
             });
         }
@@ -202,7 +199,11 @@ mod tests {
         let r = fixture("prod", json!({}), healthy_data(), now());
         let report = evaluate_eks_fleet(&[r], Pillar::Cost, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_COST_TAG_DATA_NOT_COLLECTED]
         );
     }
@@ -232,7 +233,11 @@ mod tests {
         );
         let report = evaluate_eks_fleet(&[r], Pillar::Security, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_SEC_ENDPOINT_ACCESS_DATA_NOT_COLLECTED]
         );
     }
@@ -241,7 +246,11 @@ mod tests {
     fn security_passes_for_current_version_with_endpoint_data() {
         let r = fixture("prod", json!({"team": "platform"}), healthy_data(), now());
         let report = evaluate_eks_fleet(&[r], Pillar::Security, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -251,7 +260,11 @@ mod tests {
         let r = fixture("broken", json!({"team": "platform"}), data, now());
         let report = evaluate_eks_fleet(&[r], Pillar::Resilience, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_RES_CLUSTER_NOT_ACTIVE]
         );
     }

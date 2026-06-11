@@ -41,7 +41,10 @@ impl CloudTrailControlPlane {
             &aws_account_dto.account_id, sync_id
         );
 
-        let client = self.aws_service.create_cloudtrail_client(aws_account_dto).await?;
+        let client = self
+            .aws_service
+            .create_cloudtrail_client(aws_account_dto)
+            .await?;
         let mut resources: Vec<AwsResourceModel> = Vec::new();
 
         // Exclude shadow trails so every returned trail is owned by this
@@ -104,7 +107,11 @@ impl CloudTrailControlPlane {
             // get_trail_status accepts the trail ARN; prefer it over the bare
             // name. On failure, leave is_logging absent so evaluators can
             // report the collection gap, and keep syncing the rest.
-            let status_name = if !trail_arn.is_empty() { trail_arn } else { trail_name };
+            let status_name = if !trail_arn.is_empty() {
+                trail_arn
+            } else {
+                trail_name
+            };
             match client.get_trail_status().name(status_name).send().await {
                 Ok(status) => {
                     if let Some(is_logging) = status.is_logging() {
@@ -112,10 +119,8 @@ impl CloudTrailControlPlane {
                     }
                     if let Some(delivery_error) = status.latest_delivery_error() {
                         if !delivery_error.is_empty() {
-                            resource_data.insert(
-                                "latest_delivery_error".to_string(),
-                                json!(delivery_error),
-                            );
+                            resource_data
+                                .insert("latest_delivery_error".to_string(), json!(delivery_error));
                         }
                     }
                 }
@@ -131,20 +136,13 @@ impl CloudTrailControlPlane {
             // every trail here is home to this region. One ARN per call keeps
             // the response single-page. On failure persist empty tags and
             // continue.
-            let tags = match client
-                .list_tags()
-                .resource_id_list(trail_arn)
-                .send()
-                .await
-            {
+            let tags = match client.list_tags().resource_id_list(trail_arn).send().await {
                 Ok(tags_response) => {
                     let mut tags_map = serde_json::Map::new();
                     for resource_tag in tags_response.resource_tag_list() {
                         for tag in resource_tag.tags_list() {
-                            tags_map.insert(
-                                tag.key().to_string(),
-                                json!(tag.value().unwrap_or("")),
-                            );
+                            tags_map
+                                .insert(tag.key().to_string(), json!(tag.value().unwrap_or("")));
                         }
                     }
                     serde_json::Value::Object(tags_map)

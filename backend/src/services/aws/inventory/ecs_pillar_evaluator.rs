@@ -159,10 +159,7 @@ fn evaluate_resilience(resource: &AwsResourceModel, findings: &mut Vec<Inventory
                     pillar: Pillar::Resilience,
                     reason_code: REASON_RES_CLUSTER_NOT_ACTIVE.to_string(),
                     severity: Severity::Medium,
-                    message: format!(
-                        "Cluster {} is in status '{}'",
-                        resource.resource_id, status
-                    ),
+                    message: format!("Cluster {} is in status '{}'", resource.resource_id, status),
                     evidence: json!({ "Status": status }),
                 });
             }
@@ -254,7 +251,11 @@ mod tests {
             now(),
         );
         let report = evaluate_ecs_fleet(&[r], Pillar::Cost, now());
-        let codes: Vec<&str> = report.findings.iter().map(|f| f.reason_code.as_str()).collect();
+        let codes: Vec<&str> = report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect();
         assert!(codes.contains(&REASON_COST_IDLE_CLUSTER));
         assert!(codes.contains(&REASON_COST_TAG_DATA_NOT_COLLECTED));
     }
@@ -269,7 +270,11 @@ mod tests {
             now(),
         );
         let report = evaluate_ecs_fleet(&[r], Pillar::Cost, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -283,7 +288,11 @@ mod tests {
         );
         let report = evaluate_ecs_fleet(&[r], Pillar::Security, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_SEC_POSTURE_DATA_NOT_COLLECTED]
         );
     }
@@ -305,7 +314,11 @@ mod tests {
             now(),
         );
         let report = evaluate_ecs_fleet(&[degraded, single], Pillar::Resilience, now());
-        let codes: Vec<&str> = report.findings.iter().map(|f| f.reason_code.as_str()).collect();
+        let codes: Vec<&str> = report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect();
         assert!(codes.contains(&REASON_RES_SERVICE_BELOW_DESIRED));
         assert!(codes.contains(&REASON_RES_SINGLE_TASK_SERVICE));
         let below = report
@@ -334,7 +347,11 @@ mod tests {
         );
         let report = evaluate_ecs_fleet(&[cluster, healthy], Pillar::Resilience, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_RES_CLUSTER_NOT_ACTIVE]
         );
     }

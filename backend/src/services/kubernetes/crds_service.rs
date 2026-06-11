@@ -55,9 +55,10 @@ impl CrdsService {
         let client = ClientFactory::get_client(cluster_config).await?;
         let crds: Api<CustomResourceDefinition> = Api::all(client);
 
-        let crd = crds.get(crd_name).await.map_err(|e| {
-            AppError::ExternalService(format!("Failed to get CRD details: {}", e))
-        })?;
+        let crd = crds
+            .get(crd_name)
+            .await
+            .map_err(|e| AppError::ExternalService(format!("Failed to get CRD details: {}", e)))?;
 
         serde_json::to_value(&crd)
             .map_err(|e| AppError::Internal(format!("Failed to serialize CRD details: {}", e)))
@@ -79,11 +80,11 @@ impl CrdsService {
             .map_err(|e| AppError::ExternalService(format!("Discovery failed: {}", e)))?;
 
         let gvk = GroupVersionKind::gvk(group, version, "");
-        
+
         // Use discovery to find the exact APIResource matching the requested group/version/plural
-        let _api_group = discovery
-            .resolve_gvk(&gvk)
-            .ok_or_else(|| AppError::NotFound(format!("ApiGroup {}/{} not found", group, version)))?;
+        let _api_group = discovery.resolve_gvk(&gvk).ok_or_else(|| {
+            AppError::NotFound(format!("ApiGroup {}/{} not found", group, version))
+        })?;
 
         // Fallback or explicit check for resource by plural if gvk resolution doesn't match perfectly.
         // We really want the resource by plural name since that maps to the REST endpoint.
@@ -98,12 +99,16 @@ impl CrdsService {
         }
 
         let (ar, caps) = target_ar.ok_or_else(|| {
-            AppError::NotFound(format!("Resource {} not found in {}/{}", plural, group, version))
+            AppError::NotFound(format!(
+                "Resource {} not found in {}/{}",
+                plural, group, version
+            ))
         })?;
 
-
         let api: Api<DynamicObject> = match namespace {
-            Some(ns) if caps.scope == Scope::Namespaced => Api::namespaced_with(client.clone(), ns, &ar),
+            Some(ns) if caps.scope == Scope::Namespaced => {
+                Api::namespaced_with(client.clone(), ns, &ar)
+            }
             _ => Api::all_with(client.clone(), &ar),
         };
 

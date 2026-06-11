@@ -233,7 +233,11 @@ fn evaluate_resilience(resource: &AwsResourceModel, findings: &mut Vec<Inventory
 fn evaluate_security(resource: &AwsResourceModel, findings: &mut Vec<InventoryFinding>) {
     // Sharing posture from DescribeDocumentPermission. Absent fields mean the
     // per-document permission call failed; report a gap, never fake a pass.
-    match resource.resource_data.get("shared_publicly").and_then(|v| v.as_bool()) {
+    match resource
+        .resource_data
+        .get("shared_publicly")
+        .and_then(|v| v.as_bool())
+    {
         Some(true) => {
             findings.push(InventoryFinding {
                 resource_id: resource.resource_id.clone(),
@@ -380,7 +384,11 @@ mod tests {
     }
 
     fn codes(report: &PillarReport) -> Vec<&str> {
-        report.findings.iter().map(|f| f.reason_code.as_str()).collect()
+        report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect()
     }
 
     #[test]
@@ -407,7 +415,11 @@ mod tests {
         data["created_date"] = json!("2026-05-15T00:00:00Z");
         let r = fixture("doc-new", json!({"team": "sre"}), data, now());
         let report = evaluate_ssm_fleet(&[r], Pillar::Cost, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -419,7 +431,11 @@ mod tests {
         data["created_date"] = json!("2020-01-01T00:00:00Z");
         let r = fixture("doc-noreview", json!({"team": "sre"}), data, now());
         let report = evaluate_ssm_fleet(&[r], Pillar::Cost, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -429,7 +445,10 @@ mod tests {
         data.as_object_mut().unwrap().remove("created_date");
         let r = fixture("doc-nodate", json!({"team": "sre"}), data, now());
         let report = evaluate_ssm_fleet(&[r], Pillar::Cost, now());
-        assert_eq!(codes(&report), vec![REASON_COST_CREATED_DATE_DATA_NOT_COLLECTED]);
+        assert_eq!(
+            codes(&report),
+            vec![REASON_COST_CREATED_DATE_DATA_NOT_COLLECTED]
+        );
     }
 
     #[test]
@@ -450,7 +469,11 @@ mod tests {
         data["schema_version"] = json!("0.3");
         let r = fixture("doc-automation", json!({"team": "sre"}), data, now());
         let report = evaluate_ssm_fleet(&[r], Pillar::Resilience, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -499,7 +522,12 @@ mod tests {
             data["review_status"] = json!(status);
             let r = fixture("doc-review", json!({"team": "sre"}), data, now());
             let report = evaluate_ssm_fleet(&[r], Pillar::Security, now());
-            assert_eq!(codes(&report), vec![REASON_SEC_REVIEW_NOT_APPROVED], "status {}", status);
+            assert_eq!(
+                codes(&report),
+                vec![REASON_SEC_REVIEW_NOT_APPROVED],
+                "status {}",
+                status
+            );
         }
     }
 
@@ -509,7 +537,11 @@ mod tests {
         data["review_status"] = json!("NOT_REVIEWED");
         let r = fixture("doc-notreviewed", json!({"team": "sre"}), data, now());
         let report = evaluate_ssm_fleet(&[r], Pillar::Security, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]

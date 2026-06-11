@@ -217,7 +217,11 @@ mod tests {
         let r = fixture("sgw-untagged", json!({}), healthy_data(), now());
         let report = evaluate_storagegateway_fleet(&[r], Pillar::Cost, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_COST_NO_TAGS]
         );
     }
@@ -227,7 +231,11 @@ mod tests {
         let r = fixture("sgw-sec", json!({"team": "storage"}), healthy_data(), now());
         let report = evaluate_storagegateway_fleet(&[r], Pillar::Security, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_SEC_POSTURE_DATA_NOT_COLLECTED]
         );
     }
@@ -239,7 +247,11 @@ mod tests {
         let r = fixture("sgw-down", json!({"team": "storage"}), data, now());
         let report = evaluate_storagegateway_fleet(&[r], Pillar::Resilience, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_RES_GATEWAY_NOT_ACTIVE]
         );
     }
@@ -251,14 +263,23 @@ mod tests {
         let r = fixture("sgw-gap", json!({"team": "storage"}), data, now());
         let report = evaluate_storagegateway_fleet(&[r], Pillar::Resilience, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_RES_OPERATIONAL_STATE_DATA_NOT_COLLECTED]
         );
     }
 
     #[test]
     fn stale_inventory_is_flagged() {
-        let mut r = fixture("sgw-stale", json!({"team": "storage"}), healthy_data(), now());
+        let mut r = fixture(
+            "sgw-stale",
+            json!({"team": "storage"}),
+            healthy_data(),
+            now(),
+        );
         r.last_refreshed = now() - Duration::hours(48);
         let report = evaluate_storagegateway_fleet(&[r], Pillar::Resilience, now());
         assert_eq!(report.stale_resources, 1);
@@ -281,8 +302,7 @@ mod tests {
     fn healthy_gateway_passes_cost_and_resilience() {
         let r = fixture("sgw-ok", json!({"team": "storage"}), healthy_data(), now());
         for pillar in [Pillar::Cost, Pillar::Resilience] {
-            let report =
-                evaluate_storagegateway_fleet(std::slice::from_ref(&r), pillar, now());
+            let report = evaluate_storagegateway_fleet(std::slice::from_ref(&r), pillar, now());
             assert!(
                 report.findings.is_empty(),
                 "unexpected for {:?}: {:?}",

@@ -178,7 +178,10 @@ mod tests {
             region: "us-east-1".to_string(),
             resource_type: "KinesisStream".to_string(),
             resource_id: resource_id.to_string(),
-            arn: format!("arn:aws:kinesis:us-east-1:123456789012:stream/{}", resource_id),
+            arn: format!(
+                "arn:aws:kinesis:us-east-1:123456789012:stream/{}",
+                resource_id
+            ),
             name: Some(resource_id.to_string()),
             tags,
             resource_data,
@@ -220,29 +223,54 @@ mod tests {
             now(),
         );
         let report = evaluate_kinesis_fleet(&[r], Pillar::Security, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
     fn security_reports_gap_when_encryption_not_collected() {
-        let r = fixture("events", json!({"team": "data"}), json!({"stream_name": "events"}), now());
+        let r = fixture(
+            "events",
+            json!({"team": "data"}),
+            json!({"stream_name": "events"}),
+            now(),
+        );
         let report = evaluate_kinesis_fleet(&[r], Pillar::Security, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_SEC_ENCRYPTION_DATA_NOT_COLLECTED]
         );
     }
 
     #[test]
     fn cost_and_resilience_report_collector_gaps() {
-        let r = fixture("events", json!({}), json!({"stream_name": "events", "encryption_type": "KMS"}), now());
+        let r = fixture(
+            "events",
+            json!({}),
+            json!({"stream_name": "events", "encryption_type": "KMS"}),
+            now(),
+        );
         let cost = evaluate_kinesis_fleet(std::slice::from_ref(&r), Pillar::Cost, now());
-        let cost_codes: Vec<&str> = cost.findings.iter().map(|f| f.reason_code.as_str()).collect();
+        let cost_codes: Vec<&str> = cost
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect();
         assert!(cost_codes.contains(&REASON_COST_TAG_DATA_NOT_COLLECTED));
         assert!(cost_codes.contains(&REASON_COST_SHARD_DATA_NOT_COLLECTED));
         let res = evaluate_kinesis_fleet(std::slice::from_ref(&r), Pillar::Resilience, now());
         assert_eq!(
-            res.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            res.findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_RES_STATUS_DATA_NOT_COLLECTED]
         );
     }

@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 use actix_cors::Cors;
-use actix_web::{middleware::Logger, web, App, HttpServer, HttpResponse, Responder};
+use actix_web::{middleware::Logger, web, App, HttpResponse, HttpServer, Responder};
 use sea_orm::{ConnectionTrait, DbBackend, Statement};
 use std::error::Error;
 use std::sync::Arc;
@@ -30,6 +29,9 @@ use crate::controllers::{
     llm_provider::LlmProviderController, prompt_template::PromptTemplateController,
 };
 use crate::middleware::auth::AuthMiddleware;
+use crate::repositories::chaos_audit_repository::ChaosAuditRepository;
+use crate::repositories::chaos_metrics_repository::ChaosMetricsRepository;
+use crate::repositories::chaos_repository::ChaosRepository;
 use crate::repositories::{
     aws_account::AwsAccountRepository, aws_resource::AwsResourceRepository,
     cloud_resource::CloudResourceRepository, cluster::ClusterRepository,
@@ -47,6 +49,9 @@ use crate::services::aws::aws_data_plane::dynamodb_data_plane::DynamoDBDataPlane
 use crate::services::aws::aws_data_plane::kinesis_data_plane::KinesisDataPlane;
 use crate::services::aws::aws_data_plane::s3_data_plane::S3DataPlane;
 use crate::services::aws::aws_data_plane::sqs_data_plane::SqsDataPlane;
+use crate::services::chaos_audit_service::ChaosAuditService;
+use crate::services::chaos_metrics_service::ChaosMetricsService;
+use crate::services::chaos_service::ChaosService;
 use crate::services::{
     aws::{AwsControlPlane, AwsCostService, AwsDataPlane, AwsService},
     aws_account::AwsAccountService,
@@ -58,15 +63,10 @@ use crate::services::{
     mysql_telemetry_poller::MySqlTelemetryPoller,
     user::UserService,
 };
-use crate::repositories::chaos_repository::ChaosRepository;
-use crate::repositories::chaos_audit_repository::ChaosAuditRepository;
-use crate::repositories::chaos_metrics_repository::ChaosMetricsRepository;
-use crate::services::chaos_service::ChaosService;
-use crate::services::chaos_audit_service::ChaosAuditService;
-use crate::services::chaos_metrics_service::ChaosMetricsService;
 
 // Import Kubernetes Services
 use crate::services::kubernetes::authz_service::AuthorizationService;
+use crate::services::kubernetes::crds_service::CrdsService;
 use crate::services::kubernetes::cronjobs_service::CronJobsService;
 use crate::services::kubernetes::endpoints_service::EndpointsService;
 use crate::services::kubernetes::hpa_service::HorizontalPodAutoscalerService;
@@ -78,11 +78,10 @@ use crate::services::kubernetes::network_policies_service::NetworkPoliciesServic
 use crate::services::kubernetes::nodes_ops_service::NodeOpsService;
 use crate::services::kubernetes::pdb_service::PodDisruptionBudgetsService;
 use crate::services::kubernetes::rbac_service::RbacService;
+use crate::services::kubernetes::replica_sets_service::ReplicaSetsService;
 use crate::services::kubernetes::resource_quotas_service::ResourceQuotasService;
 use crate::services::kubernetes::service_accounts_service::ServiceAccountsService;
-use crate::services::kubernetes::replica_sets_service::ReplicaSetsService;
 use crate::services::kubernetes::storage_classes_service::StorageClassesService;
-use crate::services::kubernetes::crds_service::CrdsService;
 use crate::services::kubernetes::{
     daemon_sets::DaemonSetsService,
     deployments_service::DeploymentsService,
@@ -102,7 +101,7 @@ pub async fn run_server(host: String, port: u16, config: Config) -> Result<(), B
 
     // Connect to the database
     let db_connection_val = crate::utils::database::connect(&config).await?;
-    
+
     // Run automated DB migrations
     if let Err(e) = crate::utils::migrations::run_migrations(&db_connection_val).await {
         tracing::error!("Failed to run database migrations: {}", e);
@@ -141,7 +140,11 @@ pub async fn run_server(host: String, port: u16, config: Config) -> Result<(), B
         crate::repositories::llm_model::LlmProviderModelRepository::new(db_connection.clone()),
     );
     let cost_analytics_repo = Arc::new(CostAnalyticsRepository::new(db_connection.clone()));
-    let cost_budget_repo = Arc::new(crate::repositories::cost_budget_repository::CostBudgetRepository::new((*db_connection).clone()));
+    let cost_budget_repo = Arc::new(
+        crate::repositories::cost_budget_repository::CostBudgetRepository::new(
+            (*db_connection).clone(),
+        ),
+    );
     let chaos_repo = Arc::new(ChaosRepository::new(db_connection.clone()));
     let chaos_audit_repo = Arc::new(ChaosAuditRepository::new(db_connection.clone()));
     let chaos_metrics_repo = Arc::new(ChaosMetricsRepository::new(db_connection.clone()));
@@ -191,8 +194,10 @@ pub async fn run_server(host: String, port: u16, config: Config) -> Result<(), B
         config.clone(),
     ));
     // Initialize Unified LLM Manager
-    let mut llm_manager_init =
-        crate::services::llm::UnifiedLlmManager::new(llm_provider_repo.clone(), llm_provider_model_repo.clone());
+    let mut llm_manager_init = crate::services::llm::UnifiedLlmManager::new(
+        llm_provider_repo.clone(),
+        llm_provider_model_repo.clone(),
+    );
     llm_manager_init.initialize_common_providers().await?;
     let unified_llm_manager = Arc::new(llm_manager_init);
 
@@ -463,19 +468,20 @@ pub async fn run_server(host: String, port: u16, config: Config) -> Result<(), B
                 );
 
                 info!("Registering Budget Management routes");
-                routes::budget::configure_routes(
-                    cfg_param,
-                    cost_budget_repo.clone(),
-                );
+                routes::budget::configure_routes(cfg_param, cost_budget_repo.clone());
 
                 info!("Registering other general routes");
                 // Pass Arc<DatabaseConnection> to the general routes::configure function
-                routes::configure(cfg_param, db_connection.clone(), unified_llm_manager.clone());
+                routes::configure(
+                    cfg_param,
+                    db_connection.clone(),
+                    unified_llm_manager.clone(),
+                );
 
                 info!("Registering Prometheus metrics route");
                 routes::metrics::configure(cfg_param);
             })
-                .service(web::resource("/health").route(web::get().to(health_check)))
+            .service(web::resource("/health").route(web::get().to(health_check)))
     })
     .bind(addr)?
     .run()
@@ -490,7 +496,10 @@ async fn health_check(
 ) -> impl Responder {
     // Check primary Postgres DB
     match db
-        .execute(Statement::from_string(DbBackend::Postgres, "SELECT 1".to_string()))
+        .execute(Statement::from_string(
+            DbBackend::Postgres,
+            "SELECT 1".to_string(),
+        ))
         .await
     {
         Ok(_) => (),
@@ -505,7 +514,10 @@ async fn health_check(
         match crate::utils::database::connect_to_specific_mysql(mysql_cfg).await {
             Ok(conn) => {
                 if let Err(e) = conn
-                    .execute(Statement::from_string(DbBackend::MySql, "SELECT 1".to_string()))
+                    .execute(Statement::from_string(
+                        DbBackend::MySql,
+                        "SELECT 1".to_string(),
+                    ))
                     .await
                 {
                     tracing::error!("MySQL health check failed: {}", e);

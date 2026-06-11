@@ -338,7 +338,11 @@ mod tests {
     }
 
     fn codes(report: &PillarReport) -> Vec<&str> {
-        report.findings.iter().map(|f| f.reason_code.as_str()).collect()
+        report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect()
     }
 
     #[test]
@@ -369,7 +373,11 @@ mod tests {
         data.as_object_mut().unwrap().remove("listeners");
         let r = fixture("ga-listgap", json!({"team": "edge"}), data, now());
         let report = evaluate_globalaccelerator_fleet(&[r], Pillar::Cost, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -398,7 +406,10 @@ mod tests {
         data.as_object_mut().unwrap().remove("flow_logs_s3_prefix");
         let r = fixture("ga-attrgap", json!({"team": "edge"}), data, now());
         let report = evaluate_globalaccelerator_fleet(&[r], Pillar::Security, now());
-        assert_eq!(codes(&report), vec![REASON_SEC_FLOW_LOGS_DATA_NOT_COLLECTED]);
+        assert_eq!(
+            codes(&report),
+            vec![REASON_SEC_FLOW_LOGS_DATA_NOT_COLLECTED]
+        );
         assert!(matches!(report.findings[0].severity, Severity::Low));
     }
 

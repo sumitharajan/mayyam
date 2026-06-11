@@ -136,7 +136,11 @@ fn release_major(label: &str) -> Option<u32> {
         .ok()
 }
 
-fn data_gap_finding(resource: &AwsResourceModel, pillar: Pillar, reason_code: &str) -> InventoryFinding {
+fn data_gap_finding(
+    resource: &AwsResourceModel,
+    pillar: Pillar,
+    reason_code: &str,
+) -> InventoryFinding {
     InventoryFinding {
         resource_id: resource.resource_id.clone(),
         arn: resource.arn.clone(),
@@ -475,7 +479,11 @@ mod tests {
     }
 
     fn codes(report: &PillarReport) -> Vec<&str> {
-        report.findings.iter().map(|f| f.reason_code.as_str()).collect()
+        report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect()
     }
 
     #[test]
@@ -518,7 +526,11 @@ mod tests {
         data["creation_date_time"] = json!("2026-06-09T20:00:00Z"); // 4 hours old
         let r = fixture("j-young", json!({"team": "data"}), data, now());
         let report = evaluate_emr_fleet(&[r], Pillar::Cost, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -528,7 +540,11 @@ mod tests {
         data["auto_terminate"] = json!(true);
         let r = fixture("j-transient", json!({"team": "data"}), data, now());
         let report = evaluate_emr_fleet(&[r], Pillar::Cost, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -558,7 +574,11 @@ mod tests {
         data.as_object_mut().unwrap().remove("auto_scaling_role");
         let r = fixture("j-transient", json!({"team": "data"}), data, now());
         let report = evaluate_emr_fleet(&[r], Pillar::Cost, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -585,14 +605,21 @@ mod tests {
         unprotected["termination_protected"] = json!(false);
         let r1 = fixture("j-unprot", json!({"team": "data"}), unprotected, now());
         let report = evaluate_emr_fleet(&[r1], Pillar::Resilience, now());
-        assert_eq!(codes(&report), vec![REASON_RES_TERMINATION_PROTECTION_DISABLED]);
+        assert_eq!(
+            codes(&report),
+            vec![REASON_RES_TERMINATION_PROTECTION_DISABLED]
+        );
 
         let mut transient = healthy_data();
         transient["auto_terminate"] = json!(true);
         transient["termination_protected"] = json!(false);
         let r2 = fixture("j-transient", json!({"team": "data"}), transient, now());
         let report = evaluate_emr_fleet(&[r2], Pillar::Resilience, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -622,7 +649,11 @@ mod tests {
         current["release_label"] = json!("emr-6.15.0");
         let r2 = fixture("j-current", json!({"team": "data"}), current, now());
         let report = evaluate_emr_fleet(&[r2], Pillar::Resilience, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -631,7 +662,11 @@ mod tests {
         data["release_label"] = json!("custom-build");
         let r = fixture("j-custom", json!({"team": "data"}), data, now());
         let report = evaluate_emr_fleet(&[r], Pillar::Resilience, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -644,7 +679,9 @@ mod tests {
     #[test]
     fn security_flags_missing_security_configuration() {
         let mut data = healthy_data();
-        data.as_object_mut().unwrap().remove("security_configuration");
+        data.as_object_mut()
+            .unwrap()
+            .remove("security_configuration");
         let r = fixture("j-nosec", json!({"team": "data"}), data, now());
         let report = evaluate_emr_fleet(&[r], Pillar::Security, now());
         assert_eq!(codes(&report), vec![REASON_SEC_NO_SECURITY_CONFIGURATION]);
@@ -665,7 +702,11 @@ mod tests {
         data["visible_to_all_users"] = json!(false);
         let r = fixture("j-vis", json!({"team": "data"}), data, now());
         let report = evaluate_emr_fleet(&[r], Pillar::Security, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]

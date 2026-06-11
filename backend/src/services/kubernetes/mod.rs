@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 pub mod client;
 pub mod configmaps_service;
 pub mod daemon_sets;
@@ -29,6 +28,7 @@ pub mod stateful_sets_service;
 
 // Phase 2 services
 pub mod authz_service;
+pub mod crds_service;
 pub mod cronjobs_service;
 pub mod endpoints_service;
 pub mod hpa_service;
@@ -39,11 +39,10 @@ pub mod network_policies_service;
 pub mod nodes_ops_service;
 pub mod pdb_service;
 pub mod rbac_service;
+pub mod replica_sets_service;
 pub mod resource_quotas_service;
 pub mod service_accounts_service;
-pub mod replica_sets_service;
 pub mod storage_classes_service;
-pub mod crds_service;
 
 pub mod prelude {
     pub use super::authz_service::AuthorizationService;

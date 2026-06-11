@@ -150,7 +150,11 @@ fn evaluate_resilience(resource: &AwsResourceModel, findings: &mut Vec<Inventory
         }
     }
 
-    if resource.resource_data.get("point_in_time_recovery").is_none() {
+    if resource
+        .resource_data
+        .get("point_in_time_recovery")
+        .is_none()
+    {
         findings.push(InventoryFinding {
             resource_id: resource.resource_id.clone(),
             arn: resource.arn.clone(),
@@ -188,7 +192,10 @@ mod tests {
             region: "us-east-1".to_string(),
             resource_type: "DynamoDbTable".to_string(),
             resource_id: resource_id.to_string(),
-            arn: format!("arn:aws:dynamodb:us-east-1:123456789012:table/{}", resource_id),
+            arn: format!(
+                "arn:aws:dynamodb:us-east-1:123456789012:table/{}",
+                resource_id
+            ),
             name: Some(resource_id.to_string()),
             tags,
             resource_data,
@@ -229,7 +236,11 @@ mod tests {
             now(),
         );
         let report = evaluate_dynamodb_fleet(&[r], Pillar::Cost, now());
-        let codes: Vec<&str> = report.findings.iter().map(|f| f.reason_code.as_str()).collect();
+        let codes: Vec<&str> = report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect();
         assert!(codes.contains(&REASON_COST_TAG_DATA_NOT_COLLECTED));
         assert!(codes.contains(&REASON_COST_EMPTY_PROVISIONED_TABLE));
     }
@@ -238,7 +249,11 @@ mod tests {
     fn cost_passes_for_tagged_on_demand_table() {
         let r = fixture("orders", json!({"team": "commerce"}), healthy_data(), now());
         let report = evaluate_dynamodb_fleet(&[r], Pillar::Cost, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -248,7 +263,11 @@ mod tests {
         let r = fixture("plain", json!({"team": "commerce"}), data, now());
         let report = evaluate_dynamodb_fleet(&[r], Pillar::Security, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_SEC_POSTURE_DATA_NOT_COLLECTED]
         );
     }
@@ -262,7 +281,11 @@ mod tests {
             now(),
         );
         let report = evaluate_dynamodb_fleet(&[r], Pillar::Resilience, now());
-        let codes: Vec<&str> = report.findings.iter().map(|f| f.reason_code.as_str()).collect();
+        let codes: Vec<&str> = report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect();
         assert!(codes.contains(&REASON_RES_TABLE_NOT_ACTIVE));
         assert!(codes.contains(&REASON_RES_BACKUP_DATA_NOT_COLLECTED));
     }
@@ -271,6 +294,10 @@ mod tests {
     fn resilience_passes_for_active_table_with_pitr_data() {
         let r = fixture("orders", json!({"team": "commerce"}), healthy_data(), now());
         let report = evaluate_dynamodb_fleet(&[r], Pillar::Resilience, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 }

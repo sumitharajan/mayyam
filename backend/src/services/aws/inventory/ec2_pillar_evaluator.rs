@@ -229,7 +229,10 @@ mod tests {
             region: "us-east-1".to_string(),
             resource_type: "EC2Instance".to_string(),
             resource_id: resource_id.to_string(),
-            arn: format!("arn:aws:ec2:us-east-1:123456789012:instance/{}", resource_id),
+            arn: format!(
+                "arn:aws:ec2:us-east-1:123456789012:instance/{}",
+                resource_id
+            ),
             name: Some(resource_id.to_string()),
             tags,
             resource_data,
@@ -246,7 +249,11 @@ mod tests {
     }
 
     fn reason_codes(report: &PillarReport) -> Vec<&str> {
-        report.findings.iter().map(|f| f.reason_code.as_str()).collect()
+        report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect()
     }
 
     #[test]
@@ -282,7 +289,11 @@ mod tests {
             now(),
         );
         let report = evaluate_ec2_fleet(&[r], Pillar::Cost, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
         assert_eq!(report.score, 100);
         assert_eq!(report.resources_evaluated, 1);
         assert_eq!(report.stale_resources, 0);
@@ -323,7 +334,11 @@ mod tests {
             now(),
         );
         let report = evaluate_ec2_fleet(&[r], Pillar::Security, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -382,7 +397,11 @@ mod tests {
             now(),
         );
         let report = evaluate_ec2_fleet(&[a, b], Pillar::Resilience, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
         assert_eq!(report.score, 100);
     }
 
@@ -404,7 +423,10 @@ mod tests {
                 .find(|f| f.reason_code == REASON_INV_STALE_DATA)
                 .unwrap_or_else(|| panic!("stale finding missing for {:?}", pillar));
             assert_eq!(stale.evidence["age_hours"], json!(48));
-            assert_eq!(stale.evidence["stale_after_hours"], json!(DEFAULT_STALE_AFTER_HOURS));
+            assert_eq!(
+                stale.evidence["stale_after_hours"],
+                json!(DEFAULT_STALE_AFTER_HOURS)
+            );
         }
     }
 }

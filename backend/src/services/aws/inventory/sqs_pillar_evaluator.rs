@@ -29,8 +29,7 @@ use crate::services::aws::inventory::types::{
 
 // Reason codes are the stable contract for findings; never reuse or rename.
 pub const REASON_COST_TAG_DATA_NOT_COLLECTED: &str = "SQS_COST_TAG_DATA_NOT_COLLECTED";
-pub const REASON_SEC_ENCRYPTION_DATA_NOT_COLLECTED: &str =
-    "SQS_SEC_ENCRYPTION_DATA_NOT_COLLECTED";
+pub const REASON_SEC_ENCRYPTION_DATA_NOT_COLLECTED: &str = "SQS_SEC_ENCRYPTION_DATA_NOT_COLLECTED";
 pub const REASON_RES_DLQ_DATA_NOT_COLLECTED: &str = "SQS_RES_DLQ_DATA_NOT_COLLECTED";
 pub const REASON_RES_SHORT_RETENTION: &str = "SQS_RES_SHORT_RETENTION";
 pub const REASON_INV_STALE_DATA: &str = "SQS_INV_STALE_DATA";
@@ -98,7 +97,10 @@ fn evaluate_cost(resource: &AwsResourceModel, findings: &mut Vec<InventoryFindin
 
 fn evaluate_security(resource: &AwsResourceModel, findings: &mut Vec<InventoryFinding>) {
     if resource.resource_data.get("kms_master_key_id").is_none()
-        && resource.resource_data.get("sqs_managed_sse_enabled").is_none()
+        && resource
+            .resource_data
+            .get("sqs_managed_sse_enabled")
+            .is_none()
     {
         findings.push(InventoryFinding {
             resource_id: resource.resource_id.clone(),
@@ -213,7 +215,11 @@ mod tests {
         let r = fixture("q-untagged", json!({}), healthy_data(), now());
         let report = evaluate_sqs_fleet(&[r], Pillar::Cost, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_COST_TAG_DATA_NOT_COLLECTED]
         );
     }
@@ -228,7 +234,11 @@ mod tests {
         );
         let report = evaluate_sqs_fleet(&[r], Pillar::Security, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_SEC_ENCRYPTION_DATA_NOT_COLLECTED]
         );
     }
@@ -242,7 +252,11 @@ mod tests {
             now(),
         );
         let report = evaluate_sqs_fleet(&[r], Pillar::Resilience, now());
-        let codes: Vec<&str> = report.findings.iter().map(|f| f.reason_code.as_str()).collect();
+        let codes: Vec<&str> = report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect();
         assert!(codes.contains(&REASON_RES_DLQ_DATA_NOT_COLLECTED));
         assert!(codes.contains(&REASON_RES_SHORT_RETENTION));
     }
@@ -251,6 +265,10 @@ mod tests {
     fn resilience_passes_for_queue_with_dlq_and_default_retention() {
         let r = fixture("q-ok", json!({"team": "events"}), healthy_data(), now());
         let report = evaluate_sqs_fleet(&[r], Pillar::Resilience, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 }

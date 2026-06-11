@@ -209,9 +209,10 @@ fn evaluate_security(resource: &AwsResourceModel, findings: &mut Vec<InventoryFi
     }
 
     // PLAINTEXT means traffic between clients and brokers is unencrypted.
-    if let Some(client_broker) =
-        data_str(&resource.resource_data, "encryption_in_transit_client_broker")
-    {
+    if let Some(client_broker) = data_str(
+        &resource.resource_data,
+        "encryption_in_transit_client_broker",
+    ) {
         if client_broker == "PLAINTEXT" {
             findings.push(InventoryFinding {
                 resource_id: resource.resource_id.clone(),
@@ -407,7 +408,9 @@ mod tests {
         let mut data = healthy_data();
         data["serverless"] = json!(true);
         data["cluster_type"] = json!("SERVERLESS");
-        data.as_object_mut().unwrap().remove("number_of_broker_nodes");
+        data.as_object_mut()
+            .unwrap()
+            .remove("number_of_broker_nodes");
         data.as_object_mut().unwrap().remove("kms_key_id");
         let r = fixture("serverless-msk", json!({"team": "data"}), data, now());
         let res_report = evaluate_msk_fleet(&[r.clone()], Pillar::Resilience, now());

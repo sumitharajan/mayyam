@@ -553,7 +553,11 @@ mod tests {
     }
 
     fn codes(report: &PillarReport) -> Vec<&str> {
-        report.findings.iter().map(|f| f.reason_code.as_str()).collect()
+        report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect()
     }
 
     #[test]
@@ -592,7 +596,11 @@ mod tests {
         standard["logging_include_execution_data"] = json!(true);
         let r2 = fixture("sm-standard", json!({"team": "sre"}), standard, now());
         let report = evaluate_stepfunctions_fleet(&[r2], Pillar::Cost, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -676,7 +684,11 @@ mod tests {
         off["logging_destination_count"] = json!(0);
         let r2 = fixture("sm-off", json!({"team": "sre"}), off, now());
         let report = evaluate_stepfunctions_fleet(&[r2], Pillar::Resilience, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -796,7 +808,12 @@ mod tests {
 
     #[test]
     fn healthy_machine_passes_all_pillars() {
-        let r = fixture("sm-ok", json!({"team": "sre"}), healthy_machine_data(), now());
+        let r = fixture(
+            "sm-ok",
+            json!({"team": "sre"}),
+            healthy_machine_data(),
+            now(),
+        );
         for pillar in [
             Pillar::Cost,
             Pillar::Security,

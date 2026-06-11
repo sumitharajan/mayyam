@@ -30,8 +30,7 @@ use crate::services::aws::inventory::types::{
 // Reason codes are the stable contract for findings; never reuse or rename.
 pub const REASON_COST_NO_TAGS: &str = "VPC_COST_NO_TAGS";
 pub const REASON_SEC_DEFAULT_VPC_PRESENT: &str = "VPC_SEC_DEFAULT_VPC_PRESENT";
-pub const REASON_SEC_FLOW_LOGS_DATA_NOT_COLLECTED: &str =
-    "VPC_SEC_FLOW_LOGS_DATA_NOT_COLLECTED";
+pub const REASON_SEC_FLOW_LOGS_DATA_NOT_COLLECTED: &str = "VPC_SEC_FLOW_LOGS_DATA_NOT_COLLECTED";
 pub const REASON_RES_NOT_AVAILABLE: &str = "VPC_RES_NOT_AVAILABLE";
 pub const REASON_INV_STALE_DATA: &str = "VPC_INV_STALE_DATA";
 
@@ -190,7 +189,11 @@ mod tests {
             now(),
         );
         let report = evaluate_vpc_fleet(&[r], Pillar::Security, now());
-        let codes: Vec<&str> = report.findings.iter().map(|f| f.reason_code.as_str()).collect();
+        let codes: Vec<&str> = report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect();
         assert!(codes.contains(&REASON_SEC_DEFAULT_VPC_PRESENT));
         assert!(codes.contains(&REASON_SEC_FLOW_LOGS_DATA_NOT_COLLECTED));
     }
@@ -204,7 +207,11 @@ mod tests {
             now(),
         );
         let report = evaluate_vpc_fleet(&[r], Pillar::Security, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -217,7 +224,11 @@ mod tests {
         );
         let report = evaluate_vpc_fleet(&[r], Pillar::Resilience, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_RES_NOT_AVAILABLE]
         );
     }

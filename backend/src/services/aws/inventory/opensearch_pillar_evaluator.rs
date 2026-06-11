@@ -221,7 +221,11 @@ mod tests {
             now(),
         );
         let report = evaluate_opensearch_fleet(&[r], Pillar::Resilience, now());
-        let codes: Vec<&str> = report.findings.iter().map(|f| f.reason_code.as_str()).collect();
+        let codes: Vec<&str> = report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect();
         assert!(codes.contains(&REASON_RES_SINGLE_NODE));
         assert!(codes.contains(&REASON_RES_NO_ZONE_AWARENESS));
         assert!(codes.contains(&REASON_RES_NO_DEDICATED_MASTER));
@@ -244,7 +248,11 @@ mod tests {
             now(),
         );
         let report = evaluate_opensearch_fleet(&[r], Pillar::Resilience, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -257,7 +265,11 @@ mod tests {
         );
         let report = evaluate_opensearch_fleet(&[r], Pillar::Security, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_SEC_ENCRYPTION_DATA_NOT_COLLECTED]
         );
     }
@@ -272,7 +284,11 @@ mod tests {
         );
         let report = evaluate_opensearch_fleet(&[r], Pillar::Cost, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_COST_NO_TAGS]
         );
     }

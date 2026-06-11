@@ -159,8 +159,7 @@ fn evaluate_security(
     now: DateTime<Utc>,
     findings: &mut Vec<InventoryFinding>,
 ) {
-    let rotation_enabled =
-        data_bool(&resource.resource_data, "rotation_enabled").unwrap_or(false);
+    let rotation_enabled = data_bool(&resource.resource_data, "rotation_enabled").unwrap_or(false);
     let owning_service = data_str(&resource.resource_data, "owning_service");
 
     // Service-owned secrets (e.g. RDS-managed) rotate through their owning
@@ -308,7 +307,11 @@ mod tests {
     }
 
     fn codes(report: &PillarReport) -> Vec<&str> {
-        report.findings.iter().map(|f| f.reason_code.as_str()).collect()
+        report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect()
     }
 
     #[test]
@@ -334,7 +337,11 @@ mod tests {
         data.as_object_mut().unwrap().remove("last_accessed_date");
         let r = fixture("secret-noaccess", json!({"team": "core"}), data, now());
         let report = evaluate_secretsmanager_fleet(&[r], Pillar::Cost, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -354,7 +361,11 @@ mod tests {
         data["owning_service"] = json!("rds");
         let r = fixture("secret-rds", json!({"team": "core"}), data, now());
         let report = evaluate_secretsmanager_fleet(&[r], Pillar::Security, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -374,7 +385,11 @@ mod tests {
         data["last_rotated_date"] = json!(ts(59));
         let r = fixture("secret-inwindow", json!({"team": "core"}), data, now());
         let report = evaluate_secretsmanager_fleet(&[r], Pillar::Security, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -398,7 +413,12 @@ mod tests {
 
     #[test]
     fn stale_inventory_is_flagged() {
-        let mut r = fixture("secret-stale", json!({"team": "core"}), healthy_data(), now());
+        let mut r = fixture(
+            "secret-stale",
+            json!({"team": "core"}),
+            healthy_data(),
+            now(),
+        );
         r.last_refreshed = now() - Duration::hours(48);
         let report = evaluate_secretsmanager_fleet(&[r], Pillar::Resilience, now());
         assert_eq!(report.stale_resources, 1);

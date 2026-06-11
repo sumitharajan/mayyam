@@ -258,10 +258,7 @@ mod tests {
             region: "us-east-1".to_string(),
             resource_type: RESOURCE_TYPE.to_string(),
             resource_id: resource_id.to_string(),
-            arn: format!(
-                "arn:aws:rds:us-east-1:123456789012:cluster:{}",
-                resource_id
-            ),
+            arn: format!("arn:aws:rds:us-east-1:123456789012:cluster:{}", resource_id),
             name: Some(resource_id.to_string()),
             tags,
             resource_data,

@@ -93,24 +93,20 @@ impl StepFunctionsControlPlane {
                             resource_data.insert("status".to_string(), json!(status.as_str()));
                         }
 
-                        resource_data
-                            .insert("role_arn".to_string(), json!(detail.role_arn()));
+                        resource_data.insert("role_arn".to_string(), json!(detail.role_arn()));
                         resource_data.insert(
                             "state_machine_type".to_string(),
                             json!(detail.r#type().as_str()),
                         );
 
                         if let Some(description) = detail.description() {
-                            resource_data
-                                .insert("description".to_string(), json!(description));
+                            resource_data.insert("description".to_string(), json!(description));
                         }
 
                         if let Some(logging) = detail.logging_configuration() {
                             if let Some(level) = logging.level() {
-                                resource_data.insert(
-                                    "logging_level".to_string(),
-                                    json!(level.as_str()),
-                                );
+                                resource_data
+                                    .insert("logging_level".to_string(), json!(level.as_str()));
                             }
                             resource_data.insert(
                                 "logging_include_execution_data".to_string(),
@@ -135,8 +131,7 @@ impl StepFunctionsControlPlane {
                                 json!(encryption.r#type().as_str()),
                             );
                             if let Some(kms_key_id) = encryption.kms_key_id() {
-                                resource_data
-                                    .insert("kms_key_id".to_string(), json!(kms_key_id));
+                                resource_data.insert("kms_key_id".to_string(), json!(kms_key_id));
                             }
                         }
                     }

@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 use crate::services::kubernetes::client::ClientFactory;
 use chrono::Utc;
 use k8s_openapi::api::core::v1::Namespace;

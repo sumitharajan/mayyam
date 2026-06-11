@@ -138,8 +138,10 @@ impl GuardDutyControlPlane {
                     .and_then(|a| a.status())
                     .map(|st| st.as_str() == "ENABLED")
                     .unwrap_or(false);
-                resource_data
-                    .insert("kubernetes_audit_logs_enabled".to_string(), json!(k8s_enabled));
+                resource_data.insert(
+                    "kubernetes_audit_logs_enabled".to_string(),
+                    json!(k8s_enabled),
+                );
             }
 
             // Features (newer API)

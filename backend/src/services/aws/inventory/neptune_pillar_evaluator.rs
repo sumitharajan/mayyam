@@ -251,10 +251,7 @@ mod tests {
             region: "us-east-1".to_string(),
             resource_type: RESOURCE_TYPE.to_string(),
             resource_id: resource_id.to_string(),
-            arn: format!(
-                "arn:aws:rds:us-east-1:123456789012:cluster:{}",
-                resource_id
-            ),
+            arn: format!("arn:aws:rds:us-east-1:123456789012:cluster:{}", resource_id),
             name: Some(resource_id.to_string()),
             tags,
             resource_data,
@@ -287,15 +284,29 @@ mod tests {
     }
 
     fn codes(report: &PillarReport) -> Vec<&str> {
-        report.findings.iter().map(|f| f.reason_code.as_str()).collect()
+        report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect()
     }
 
     #[test]
     fn healthy_cluster_passes_all_pillars() {
-        let r = fixture("my-neptune", json!({"team": "graph"}), healthy_data(), now());
+        let r = fixture(
+            "my-neptune",
+            json!({"team": "graph"}),
+            healthy_data(),
+            now(),
+        );
         for pillar in [Pillar::Cost, Pillar::Resilience, Pillar::Security] {
             let report = evaluate_neptune_fleet(std::slice::from_ref(&r), pillar, now());
-            assert!(report.findings.is_empty(), "unexpected for {:?}: {:?}", pillar, report.findings);
+            assert!(
+                report.findings.is_empty(),
+                "unexpected for {:?}: {:?}",
+                pillar,
+                report.findings
+            );
             assert_eq!(report.score, 100);
         }
     }

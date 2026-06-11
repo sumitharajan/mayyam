@@ -346,7 +346,11 @@ mod tests {
     }
 
     fn codes(report: &PillarReport) -> Vec<&str> {
-        report.findings.iter().map(|f| f.reason_code.as_str()).collect()
+        report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect()
     }
 
     #[test]
@@ -374,7 +378,11 @@ mod tests {
         data["table_count_truncated"] = json!(true);
         let r = fixture("db-trunc", json!({"team": "data"}), data, now());
         let report = evaluate_glue_fleet(&[r], Pillar::Cost, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -397,7 +405,9 @@ mod tests {
         let report = evaluate_glue_fleet(&[r], Pillar::Security, now());
         assert_eq!(codes(&report), vec![REASON_SEC_DEFAULT_PERMISSIONS_OPEN]);
         assert!(matches!(report.findings[0].severity, Severity::Medium));
-        assert!(report.findings[0].message.contains("IAM_ALLOWED_PRINCIPALS"));
+        assert!(report.findings[0]
+            .message
+            .contains("IAM_ALLOWED_PRINCIPALS"));
     }
 
     #[test]
@@ -431,7 +441,11 @@ mod tests {
         data.as_object_mut().unwrap().remove("location_uri");
         let r = fixture("db-noloc", json!({"team": "data"}), data, now());
         let report = evaluate_glue_fleet(&[r], Pillar::Security, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
 
         // A resource link's non-S3 location belongs to the target catalog.
         let mut link = healthy_data();
@@ -439,7 +453,11 @@ mod tests {
         link["location_uri"] = json!("hdfs://namenode:8020/warehouse");
         let r2 = fixture("db-link", json!({"team": "data"}), link, now());
         let report2 = evaluate_glue_fleet(&[r2], Pillar::Security, now());
-        assert!(report2.findings.is_empty(), "unexpected: {:?}", report2.findings);
+        assert!(
+            report2.findings.is_empty(),
+            "unexpected: {:?}",
+            report2.findings
+        );
     }
 
     #[test]
@@ -471,7 +489,11 @@ mod tests {
         obj.insert("is_resource_link".to_string(), json!(true));
         let r2 = fixture("db-link", json!({"team": "data"}), link, now());
         let report2 = evaluate_glue_fleet(&[r2], Pillar::Resilience, now());
-        assert!(report2.findings.is_empty(), "unexpected: {:?}", report2.findings);
+        assert!(
+            report2.findings.is_empty(),
+            "unexpected: {:?}",
+            report2.findings
+        );
 
         let mut federated = healthy_data();
         let obj = federated.as_object_mut().unwrap();
@@ -479,7 +501,11 @@ mod tests {
         obj.insert("is_federated".to_string(), json!(true));
         let r3 = fixture("db-fed", json!({"team": "data"}), federated, now());
         let report3 = evaluate_glue_fleet(&[r3], Pillar::Resilience, now());
-        assert!(report3.findings.is_empty(), "unexpected: {:?}", report3.findings);
+        assert!(
+            report3.findings.is_empty(),
+            "unexpected: {:?}",
+            report3.findings
+        );
     }
 
     #[test]

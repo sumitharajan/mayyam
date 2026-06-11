@@ -49,8 +49,7 @@ pub const REASON_COST_DEFAULT_AUTOSCALING: &str = "APPRUNNER_COST_DEFAULT_AUTOSC
 pub const REASON_COST_AUTOSCALING_DATA_NOT_COLLECTED: &str =
     "APPRUNNER_COST_AUTOSCALING_DATA_NOT_COLLECTED";
 pub const REASON_RES_SERVICE_FAILED_STATE: &str = "APPRUNNER_RES_SERVICE_FAILED_STATE";
-pub const REASON_RES_STATUS_DATA_NOT_COLLECTED: &str =
-    "APPRUNNER_RES_STATUS_DATA_NOT_COLLECTED";
+pub const REASON_RES_STATUS_DATA_NOT_COLLECTED: &str = "APPRUNNER_RES_STATUS_DATA_NOT_COLLECTED";
 pub const REASON_RES_WEAK_UNHEALTHY_THRESHOLD: &str = "APPRUNNER_RES_WEAK_UNHEALTHY_THRESHOLD";
 pub const REASON_RES_HEALTH_CHECK_DATA_NOT_COLLECTED: &str =
     "APPRUNNER_RES_HEALTH_CHECK_DATA_NOT_COLLECTED";
@@ -58,8 +57,7 @@ pub const REASON_RES_OBSERVABILITY_DISABLED: &str = "APPRUNNER_RES_OBSERVABILITY
 pub const REASON_RES_OBSERVABILITY_DATA_NOT_COLLECTED: &str =
     "APPRUNNER_RES_OBSERVABILITY_DATA_NOT_COLLECTED";
 pub const REASON_SEC_PUBLIC_INGRESS: &str = "APPRUNNER_SEC_PUBLIC_INGRESS";
-pub const REASON_SEC_INGRESS_DATA_NOT_COLLECTED: &str =
-    "APPRUNNER_SEC_INGRESS_DATA_NOT_COLLECTED";
+pub const REASON_SEC_INGRESS_DATA_NOT_COLLECTED: &str = "APPRUNNER_SEC_INGRESS_DATA_NOT_COLLECTED";
 pub const REASON_SEC_DEFAULT_ENCRYPTION_KEY: &str = "APPRUNNER_SEC_DEFAULT_ENCRYPTION_KEY";
 pub const REASON_SEC_ENCRYPTION_DATA_NOT_COLLECTED: &str =
     "APPRUNNER_SEC_ENCRYPTION_DATA_NOT_COLLECTED";
@@ -382,11 +380,8 @@ fn evaluate_security(resource: &AwsResourceModel, findings: &mut Vec<InventoryFi
 
     // Only judge the instance role when the instance configuration block was
     // actually collected; otherwise the cost pillar already reports the gap.
-    let instance_collected =
-        data_bool(resource, "instance_configuration_collected") == Some(true);
-    if instance_collected
-        && data_str(&resource.resource_data, "instance_role_arn").is_none()
-    {
+    let instance_collected = data_bool(resource, "instance_configuration_collected") == Some(true);
+    if instance_collected && data_str(&resource.resource_data, "instance_role_arn").is_none() {
         findings.push(finding(
             resource,
             Pillar::Security,
@@ -477,7 +472,11 @@ mod tests {
     }
 
     fn codes(report: &PillarReport) -> Vec<&str> {
-        report.findings.iter().map(|f| f.reason_code.as_str()).collect()
+        report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect()
     }
 
     fn remove(data: &mut Value, key: &str) {
@@ -486,7 +485,12 @@ mod tests {
 
     #[test]
     fn healthy_service_passes_all_pillars() {
-        let r = fixture("svc-ok", json!({"team": "web"}), healthy_service_data(), now());
+        let r = fixture(
+            "svc-ok",
+            json!({"team": "web"}),
+            healthy_service_data(),
+            now(),
+        );
         for pillar in [Pillar::Cost, Pillar::Security, Pillar::Resilience] {
             let report = evaluate_apprunner_fleet(std::slice::from_ref(&r), pillar, now());
             assert!(
@@ -516,7 +520,12 @@ mod tests {
             data["instance_cpu"] = json!(cpu);
             let r = fixture("svc-big", json!({}), data, now());
             let report = evaluate_apprunner_fleet(&[r], Pillar::Cost, now());
-            assert_eq!(codes(&report), vec![REASON_COST_MAX_SIZE_INSTANCE], "cpu={}", cpu);
+            assert_eq!(
+                codes(&report),
+                vec![REASON_COST_MAX_SIZE_INSTANCE],
+                "cpu={}",
+                cpu
+            );
         }
     }
 
@@ -526,7 +535,10 @@ mod tests {
         remove(&mut data, "instance_cpu");
         let r = fixture("svc-nocpu", json!({}), data, now());
         let report = evaluate_apprunner_fleet(&[r], Pillar::Cost, now());
-        assert_eq!(codes(&report), vec![REASON_COST_INSTANCE_DATA_NOT_COLLECTED]);
+        assert_eq!(
+            codes(&report),
+            vec![REASON_COST_INSTANCE_DATA_NOT_COLLECTED]
+        );
     }
 
     #[test]
@@ -544,7 +556,10 @@ mod tests {
         remove(&mut data, "auto_scaling_configuration_name");
         let r = fixture("svc-noasc", json!({}), data, now());
         let report = evaluate_apprunner_fleet(&[r], Pillar::Cost, now());
-        assert_eq!(codes(&report), vec![REASON_COST_AUTOSCALING_DATA_NOT_COLLECTED]);
+        assert_eq!(
+            codes(&report),
+            vec![REASON_COST_AUTOSCALING_DATA_NOT_COLLECTED]
+        );
     }
 
     #[test]
@@ -554,7 +569,12 @@ mod tests {
             data["status"] = json!(state);
             let r = fixture("svc-failed", json!({}), data, now());
             let report = evaluate_apprunner_fleet(&[r], Pillar::Resilience, now());
-            assert_eq!(codes(&report), vec![REASON_RES_SERVICE_FAILED_STATE], "state={}", state);
+            assert_eq!(
+                codes(&report),
+                vec![REASON_RES_SERVICE_FAILED_STATE],
+                "state={}",
+                state
+            );
             assert!(matches!(report.findings[0].severity, Severity::High));
         }
     }
@@ -600,7 +620,10 @@ mod tests {
         remove(&mut data, "health_check_unhealthy_threshold");
         let r = fixture("svc-nohc", json!({}), data, now());
         let report = evaluate_apprunner_fleet(&[r], Pillar::Resilience, now());
-        assert_eq!(codes(&report), vec![REASON_RES_HEALTH_CHECK_DATA_NOT_COLLECTED]);
+        assert_eq!(
+            codes(&report),
+            vec![REASON_RES_HEALTH_CHECK_DATA_NOT_COLLECTED]
+        );
     }
 
     #[test]
@@ -618,7 +641,10 @@ mod tests {
         remove(&mut data, "observability_enabled");
         let r = fixture("svc-obsgap", json!({}), data, now());
         let report = evaluate_apprunner_fleet(&[r], Pillar::Resilience, now());
-        assert_eq!(codes(&report), vec![REASON_RES_OBSERVABILITY_DATA_NOT_COLLECTED]);
+        assert_eq!(
+            codes(&report),
+            vec![REASON_RES_OBSERVABILITY_DATA_NOT_COLLECTED]
+        );
     }
 
     #[test]
@@ -657,7 +683,10 @@ mod tests {
         remove(&mut data, "kms_key");
         let r = fixture("svc-encgap", json!({}), data, now());
         let report = evaluate_apprunner_fleet(&[r], Pillar::Security, now());
-        assert_eq!(codes(&report), vec![REASON_SEC_ENCRYPTION_DATA_NOT_COLLECTED]);
+        assert_eq!(
+            codes(&report),
+            vec![REASON_SEC_ENCRYPTION_DATA_NOT_COLLECTED]
+        );
     }
 
     #[test]

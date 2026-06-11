@@ -12,20 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 use crate::errors::AppError;
 use crate::middleware::auth::Claims; // Assuming you have auth middleware
 use crate::models::cluster::{CreateKubernetesClusterRequest, KubernetesClusterConfig};
 use crate::services::kubernetes::prelude::*;
 use actix_web::{web, HttpResponse, Responder};
+use actix_web_lab::sse;
+use futures::StreamExt;
 use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
 use serde::Deserialize;
 use std::collections::BTreeMap;
 use std::sync::Arc;
-use tracing::{debug, info};
-use actix_web_lab::sse;
-use futures::StreamExt;
 use std::time::Duration;
+use tracing::{debug, info};
 use uuid::Uuid;
 
 // Helper function to get cluster config (you'll need to implement this based on your DB structure)
@@ -416,7 +415,14 @@ pub async fn stream_pod_logs_controller(
         .map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
 
     let log_stream = pod_service
-        .stream_pod_logs(&cluster_config, &namespace, &pod_name, container_name, previous, tail_lines)
+        .stream_pod_logs(
+            &cluster_config,
+            &namespace,
+            &pod_name,
+            container_name,
+            previous,
+            tail_lines,
+        )
         .await
         .map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
 
@@ -426,9 +432,9 @@ pub async fn stream_pod_logs_controller(
                 let string_chunk = String::from_utf8_lossy(&bytes);
                 Ok(sse::Event::Data(sse::Data::new(string_chunk.to_string())))
             }
-            Err(e) => {
-                Ok(sse::Event::Data(sse::Data::new(format!("ERROR: {}", e)).event("error")))
-            }
+            Err(e) => Ok(sse::Event::Data(
+                sse::Data::new(format!("ERROR: {}", e)).event("error"),
+            )),
         }
     });
 
@@ -456,16 +462,22 @@ pub async fn watch_pods_controller(
         match event_result {
             Ok(event) => {
                 let json = match event {
-                    kube::runtime::watcher::Event::Applied(obj) => serde_json::json!({"type": "Applied", "object": obj}),
-                    kube::runtime::watcher::Event::Deleted(obj) => serde_json::json!({"type": "Deleted", "object": obj}),
-                    kube::runtime::watcher::Event::Restarted(objs) => serde_json::json!({"type": "Restarted", "objects": objs}),
+                    kube::runtime::watcher::Event::Applied(obj) => {
+                        serde_json::json!({"type": "Applied", "object": obj})
+                    }
+                    kube::runtime::watcher::Event::Deleted(obj) => {
+                        serde_json::json!({"type": "Deleted", "object": obj})
+                    }
+                    kube::runtime::watcher::Event::Restarted(objs) => {
+                        serde_json::json!({"type": "Restarted", "objects": objs})
+                    }
                 };
                 let json_string = serde_json::to_string(&json).unwrap_or_default();
                 Ok(sse::Event::Data(sse::Data::new(json_string)))
-            },
-            Err(e) => {
-                Ok(sse::Event::Data(sse::Data::new(format!("ERROR: {}", e)).event("error")))
             }
+            Err(e) => Ok(sse::Event::Data(
+                sse::Data::new(format!("ERROR: {}", e)).event("error"),
+            )),
         }
     });
 
@@ -493,16 +505,22 @@ pub async fn watch_events_controller(
         match event_result {
             Ok(event) => {
                 let json = match event {
-                    kube::runtime::watcher::Event::Applied(obj) => serde_json::json!({"type": "Applied", "object": obj}),
-                    kube::runtime::watcher::Event::Deleted(obj) => serde_json::json!({"type": "Deleted", "object": obj}),
-                    kube::runtime::watcher::Event::Restarted(objs) => serde_json::json!({"type": "Restarted", "objects": objs}),
+                    kube::runtime::watcher::Event::Applied(obj) => {
+                        serde_json::json!({"type": "Applied", "object": obj})
+                    }
+                    kube::runtime::watcher::Event::Deleted(obj) => {
+                        serde_json::json!({"type": "Deleted", "object": obj})
+                    }
+                    kube::runtime::watcher::Event::Restarted(objs) => {
+                        serde_json::json!({"type": "Restarted", "objects": objs})
+                    }
                 };
                 let json_string = serde_json::to_string(&json).unwrap_or_default();
                 Ok(sse::Event::Data(sse::Data::new(json_string)))
-            },
-            Err(e) => {
-                Ok(sse::Event::Data(sse::Data::new(format!("ERROR: {}", e)).event("error")))
             }
+            Err(e) => Ok(sse::Event::Data(
+                sse::Data::new(format!("ERROR: {}", e)).event("error"),
+            )),
         }
     });
 

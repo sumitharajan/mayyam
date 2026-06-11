@@ -197,10 +197,7 @@ mod tests {
             region: "us-east-1".to_string(),
             resource_type: resource_type.to_string(),
             resource_id: resource_id.to_string(),
-            arn: format!(
-                "arn:aws:cloudwatch:us-east-1:123456789012:{}",
-                resource_id
-            ),
+            arn: format!("arn:aws:cloudwatch:us-east-1:123456789012:{}", resource_id),
             name: Some(resource_id.to_string()),
             tags,
             resource_data,
@@ -210,7 +207,12 @@ mod tests {
         }
     }
 
-    fn alarm_fixture(resource_id: &str, tags: Value, state: Value, now: DateTime<Utc>) -> AwsResourceModel {
+    fn alarm_fixture(
+        resource_id: &str,
+        tags: Value,
+        state: Value,
+        now: DateTime<Utc>,
+    ) -> AwsResourceModel {
         // ActionsEnabled is not persisted by the collector today; tests set
         // it explicitly to exercise the gap firing and staying quiet.
         let mut data = json!({
@@ -246,7 +248,11 @@ mod tests {
         let alarm = alarm_fixture("cpu-high", json!({}), json!("OK"), now());
         let dashboard = dashboard_fixture("ops-overview", json!({}), now());
         let report = evaluate_cloudwatch_fleet(&[alarm, dashboard], Pillar::Cost, now());
-        let codes: Vec<&str> = report.findings.iter().map(|f| f.reason_code.as_str()).collect();
+        let codes: Vec<&str> = report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect();
         assert_eq!(codes, vec![REASON_COST_NO_TAGS, REASON_COST_NO_TAGS]);
     }
 
@@ -259,7 +265,11 @@ mod tests {
             now(),
         );
         let report = evaluate_cloudwatch_fleet(&[r], Pillar::Resilience, now());
-        let codes: Vec<&str> = report.findings.iter().map(|f| f.reason_code.as_str()).collect();
+        let codes: Vec<&str> = report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect();
         assert!(codes.contains(&REASON_RES_ALARM_INSUFFICIENT_DATA));
     }
 
@@ -267,7 +277,11 @@ mod tests {
     fn resilience_reports_gap_when_alarm_state_not_collected() {
         let r = alarm_fixture("no-state", json!({"team": "obs"}), json!(null), now());
         let report = evaluate_cloudwatch_fleet(&[r], Pillar::Resilience, now());
-        let codes: Vec<&str> = report.findings.iter().map(|f| f.reason_code.as_str()).collect();
+        let codes: Vec<&str> = report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect();
         assert!(codes.contains(&REASON_RES_ALARM_STATE_DATA_NOT_COLLECTED));
     }
 
@@ -291,7 +305,11 @@ mod tests {
         );
         let report = evaluate_cloudwatch_fleet(&[r], Pillar::Resilience, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_RES_ALARM_ACTION_DATA_NOT_COLLECTED]
         );
     }
@@ -302,7 +320,11 @@ mod tests {
         let r = alarm_fixture("old-alarm", json!({"team": "obs"}), json!("OK"), stale_now);
         let report = evaluate_cloudwatch_fleet(&[r], Pillar::Cost, now());
         assert_eq!(report.stale_resources, 1);
-        let codes: Vec<&str> = report.findings.iter().map(|f| f.reason_code.as_str()).collect();
+        let codes: Vec<&str> = report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect();
         assert!(codes.contains(&REASON_INV_STALE_DATA));
     }
 

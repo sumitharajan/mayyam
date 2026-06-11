@@ -179,7 +179,10 @@ mod tests {
             region: "us-east-1".to_string(),
             resource_type: "AppSyncApi".to_string(),
             resource_id: resource_id.to_string(),
-            arn: format!("arn:aws:appsync:us-east-1:123456789012:apis/{}", resource_id),
+            arn: format!(
+                "arn:aws:appsync:us-east-1:123456789012:apis/{}",
+                resource_id
+            ),
             name: Some(resource_id.to_string()),
             tags,
             resource_data,
@@ -211,7 +214,11 @@ mod tests {
         let r = fixture("api-untagged", json!({}), healthy_data(), now());
         let report = evaluate_appsync_fleet(&[r], Pillar::Cost, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_COST_NO_TAGS]
         );
     }
@@ -223,7 +230,11 @@ mod tests {
         let r = fixture("api-key-auth", json!({"team": "graphql"}), data, now());
         let report = evaluate_appsync_fleet(&[r], Pillar::Security, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_SEC_API_KEY_AUTH]
         );
     }
@@ -238,7 +249,11 @@ mod tests {
         );
         let report = evaluate_appsync_fleet(&[r], Pillar::Security, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_SEC_AUTH_DATA_NOT_COLLECTED]
         );
     }
@@ -253,14 +268,23 @@ mod tests {
         );
         let report = evaluate_appsync_fleet(&[r], Pillar::Resilience, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_RES_XRAY_DATA_NOT_COLLECTED]
         );
     }
 
     #[test]
     fn stale_inventory_is_flagged() {
-        let r = fixture("api-stale", json!({"team": "graphql"}), healthy_data(), now());
+        let r = fixture(
+            "api-stale",
+            json!({"team": "graphql"}),
+            healthy_data(),
+            now(),
+        );
         let later = now() + Duration::hours(48);
         let report = evaluate_appsync_fleet(&[r], Pillar::Cost, later);
         assert_eq!(report.stale_resources, 1);

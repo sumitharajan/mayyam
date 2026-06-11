@@ -231,12 +231,21 @@ mod tests {
     }
 
     fn codes(report: &PillarReport) -> Vec<&str> {
-        report.findings.iter().map(|f| f.reason_code.as_str()).collect()
+        report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect()
     }
 
     #[test]
     fn healthy_zone_passes_all_pillars() {
-        let r = fixture("Z111EXAMPLE", json!({"team": "core"}), healthy_data(), now());
+        let r = fixture(
+            "Z111EXAMPLE",
+            json!({"team": "core"}),
+            healthy_data(),
+            now(),
+        );
         for pillar in [Pillar::Cost, Pillar::Security, Pillar::Resilience] {
             let report = evaluate_route53_fleet(std::slice::from_ref(&r), pillar, now());
             assert!(
@@ -291,14 +300,22 @@ mod tests {
         data["query_logging_enabled"] = json!(false);
         let r = fixture("Z111PRIVATE", json!({"team": "core"}), data, now());
         let report = evaluate_route53_fleet(&[r], Pillar::Security, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
     fn security_passes_public_zone_with_query_logging() {
         let r = fixture("Z111LOGGED", json!({"team": "core"}), healthy_data(), now());
         let report = evaluate_route53_fleet(&[r], Pillar::Security, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]

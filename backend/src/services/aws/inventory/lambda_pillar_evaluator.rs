@@ -135,7 +135,11 @@ fn evaluate_cost(resource: &AwsResourceModel, findings: &mut Vec<InventoryFindin
 }
 
 fn evaluate_security(resource: &AwsResourceModel, findings: &mut Vec<InventoryFinding>) {
-    if let Some(runtime) = resource.resource_data.get("runtime").and_then(|v| v.as_str()) {
+    if let Some(runtime) = resource
+        .resource_data
+        .get("runtime")
+        .and_then(|v| v.as_str())
+    {
         if DEPRECATED_RUNTIMES.contains(&runtime) {
             findings.push(InventoryFinding {
                 resource_id: resource.resource_id.clone(),
@@ -169,8 +173,14 @@ fn evaluate_security(resource: &AwsResourceModel, findings: &mut Vec<InventoryFi
 }
 
 fn evaluate_resilience(resource: &AwsResourceModel, findings: &mut Vec<InventoryFinding>) {
-    let timeout = resource.resource_data.get("timeout").and_then(|v| v.as_i64());
-    let memory_size = resource.resource_data.get("memory_size").and_then(|v| v.as_i64());
+    let timeout = resource
+        .resource_data
+        .get("timeout")
+        .and_then(|v| v.as_i64());
+    let memory_size = resource
+        .resource_data
+        .get("memory_size")
+        .and_then(|v| v.as_i64());
     if timeout.is_none() || memory_size.is_none() {
         findings.push(InventoryFinding {
             resource_id: resource.resource_id.clone(),
@@ -210,7 +220,10 @@ mod tests {
             region: "us-east-1".to_string(),
             resource_type: "LambdaFunction".to_string(),
             resource_id: resource_id.to_string(),
-            arn: format!("arn:aws:lambda:us-east-1:123456789012:function:{}", resource_id),
+            arn: format!(
+                "arn:aws:lambda:us-east-1:123456789012:function:{}",
+                resource_id
+            ),
             name: Some(resource_id.to_string()),
             tags,
             resource_data,
@@ -242,7 +255,11 @@ mod tests {
         data["architectures"] = json!(["x86_64"]);
         let r = fixture("fn-untagged", json!({}), data, 1, now());
         let report = evaluate_lambda_fleet(&[r], Pillar::Cost, now());
-        let codes: Vec<&str> = report.findings.iter().map(|f| f.reason_code.as_str()).collect();
+        let codes: Vec<&str> = report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect();
         assert!(codes.contains(&REASON_COST_MISSING_ALLOCATION_TAGS));
         assert!(codes.contains(&REASON_COST_X86_ONLY_ARCHITECTURE));
         let arch = report
@@ -255,9 +272,19 @@ mod tests {
 
     #[test]
     fn cost_passes_for_tagged_arm64_function() {
-        let r = fixture("fn-good", json!({"team": "payments"}), healthy_data(), 1, now());
+        let r = fixture(
+            "fn-good",
+            json!({"team": "payments"}),
+            healthy_data(),
+            1,
+            now(),
+        );
         let report = evaluate_lambda_fleet(&[r], Pillar::Cost, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
         assert_eq!(report.score, 100);
     }
 
@@ -281,7 +308,11 @@ mod tests {
         let r = fixture("fn-orphan", json!({}), healthy_data(), 1, now());
         let report = evaluate_lambda_fleet(&[r], Pillar::Security, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_SEC_MISSING_OWNER_TAG]
         );
     }
@@ -290,7 +321,11 @@ mod tests {
     fn security_passes_for_owned_current_runtime() {
         let r = fixture("fn-ok", json!({"owner": "sre"}), healthy_data(), 1, now());
         let report = evaluate_lambda_fleet(&[r], Pillar::Security, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -313,7 +348,13 @@ mod tests {
 
     #[test]
     fn stale_inventory_is_reported_as_failure_path() {
-        let r = fixture("fn-stale", json!({"owner": "sre", "project": "mayyam"}), healthy_data(), 48, now());
+        let r = fixture(
+            "fn-stale",
+            json!({"owner": "sre", "project": "mayyam"}),
+            healthy_data(),
+            48,
+            now(),
+        );
         let report = evaluate_lambda_fleet(&[r], Pillar::Cost, now());
         assert_eq!(report.stale_resources, 1);
         assert!(report

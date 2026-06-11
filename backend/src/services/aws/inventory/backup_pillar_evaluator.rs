@@ -36,8 +36,7 @@ pub const RESOURCE_TYPE: &str = "BackupVault";
 // Reason codes are the stable contract for findings; never reuse or rename.
 pub const REASON_COST_NO_TAGS: &str = "BACKUP_COST_NO_TAGS";
 pub const REASON_COST_EMPTY_VAULT: &str = "BACKUP_COST_EMPTY_VAULT";
-pub const REASON_COST_UNBOUNDED_LOCKED_RETENTION: &str =
-    "BACKUP_COST_UNBOUNDED_LOCKED_RETENTION";
+pub const REASON_COST_UNBOUNDED_LOCKED_RETENTION: &str = "BACKUP_COST_UNBOUNDED_LOCKED_RETENTION";
 pub const REASON_RES_NO_RECOVERY_POINTS: &str = "BACKUP_RES_NO_RECOVERY_POINTS";
 pub const REASON_RES_RECOVERY_POINT_DATA_NOT_COLLECTED: &str =
     "BACKUP_RES_RECOVERY_POINT_DATA_NOT_COLLECTED";
@@ -97,7 +96,10 @@ fn recovery_points(resource: &AwsResourceModel) -> Option<i64> {
 }
 
 fn locked(resource: &AwsResourceModel) -> Option<bool> {
-    resource.resource_data.get("locked").and_then(|v| v.as_bool())
+    resource
+        .resource_data
+        .get("locked")
+        .and_then(|v| v.as_bool())
 }
 
 fn retention_days(resource: &AwsResourceModel, key: &str) -> Option<i64> {
@@ -146,9 +148,7 @@ fn evaluate_cost(resource: &AwsResourceModel, findings: &mut Vec<InventoryFindin
 
     // A locked vault without a maximum retention ceiling keeps recovery
     // points immutable forever, so storage spend grows without bound.
-    if locked(resource) == Some(true)
-        && retention_days(resource, "max_retention_days").is_none()
-    {
+    if locked(resource) == Some(true) && retention_days(resource, "max_retention_days").is_none() {
         findings.push(InventoryFinding {
             resource_id: resource.resource_id.clone(),
             arn: resource.arn.clone(),
@@ -200,9 +200,7 @@ fn evaluate_resilience(resource: &AwsResourceModel, findings: &mut Vec<Inventory
     // min_retention_days only exists on locked vaults. A lock without a
     // retention floor does not actually protect recovery points from early
     // deletion, which defeats the resilience purpose of the lock.
-    if locked(resource) == Some(true)
-        && retention_days(resource, "min_retention_days").is_none()
-    {
+    if locked(resource) == Some(true) && retention_days(resource, "min_retention_days").is_none() {
         findings.push(InventoryFinding {
             resource_id: resource.resource_id.clone(),
             arn: resource.arn.clone(),
@@ -346,12 +344,21 @@ mod tests {
     }
 
     fn codes(report: &PillarReport) -> Vec<&str> {
-        report.findings.iter().map(|f| f.reason_code.as_str()).collect()
+        report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect()
     }
 
     #[test]
     fn healthy_vault_passes_all_pillars() {
-        let r = fixture("vault-ok", json!({"team": "sre"}), healthy_vault_data(), now());
+        let r = fixture(
+            "vault-ok",
+            json!({"team": "sre"}),
+            healthy_vault_data(),
+            now(),
+        );
         for pillar in [Pillar::Cost, Pillar::Security, Pillar::Resilience] {
             let report = evaluate_backup_fleet(std::slice::from_ref(&r), pillar, now());
             assert!(
@@ -383,10 +390,16 @@ mod tests {
     #[test]
     fn cost_skips_empty_vault_check_when_recovery_points_not_collected() {
         let mut data = healthy_vault_data();
-        data.as_object_mut().unwrap().remove("number_of_recovery_points");
+        data.as_object_mut()
+            .unwrap()
+            .remove("number_of_recovery_points");
         let r = fixture("vault-gap", json!({"team": "sre"}), data, now());
         let report = evaluate_backup_fleet(&[r], Pillar::Cost, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -406,7 +419,11 @@ mod tests {
         data.as_object_mut().unwrap().remove("min_retention_days");
         let r = fixture("vault-unlocked", json!({"team": "sre"}), data, now());
         let report = evaluate_backup_fleet(&[r], Pillar::Cost, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -422,7 +439,9 @@ mod tests {
     #[test]
     fn resilience_reports_gap_when_recovery_points_not_collected() {
         let mut data = healthy_vault_data();
-        data.as_object_mut().unwrap().remove("number_of_recovery_points");
+        data.as_object_mut()
+            .unwrap()
+            .remove("number_of_recovery_points");
         let r = fixture("vault-gap", json!({"team": "sre"}), data, now());
         let report = evaluate_backup_fleet(&[r], Pillar::Resilience, now());
         assert_eq!(
@@ -448,7 +467,11 @@ mod tests {
         data.as_object_mut().unwrap().remove("max_retention_days");
         let r = fixture("vault-unlocked", json!({"team": "sre"}), data, now());
         let report = evaluate_backup_fleet(&[r], Pillar::Resilience, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]

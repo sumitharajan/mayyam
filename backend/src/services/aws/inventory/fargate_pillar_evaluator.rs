@@ -36,8 +36,7 @@ use crate::services::aws::inventory::types::{
 // Reason codes are the stable contract for findings; never reuse or rename.
 pub const REASON_COST_NO_TAGS: &str = "FARGATE_COST_NO_TAGS";
 pub const REASON_RES_PROFILE_NOT_ACTIVE: &str = "FARGATE_RES_PROFILE_NOT_ACTIVE";
-pub const REASON_RES_STATUS_DATA_NOT_COLLECTED: &str =
-    "FARGATE_RES_STATUS_DATA_NOT_COLLECTED";
+pub const REASON_RES_STATUS_DATA_NOT_COLLECTED: &str = "FARGATE_RES_STATUS_DATA_NOT_COLLECTED";
 pub const REASON_RES_SINGLE_SUBNET: &str = "FARGATE_RES_SINGLE_SUBNET";
 pub const REASON_SEC_POD_EXECUTION_ROLE_DATA_NOT_COLLECTED: &str =
     "FARGATE_SEC_POD_EXECUTION_ROLE_DATA_NOT_COLLECTED";
@@ -169,7 +168,11 @@ fn evaluate_resilience(resource: &AwsResourceModel, findings: &mut Vec<Inventory
 
     // Single-subnet profiles place every pod in one AZ. Absent/null Subnets
     // emits no finding (see module doc comment): we do not guess AZ spread.
-    if let Some(subnets) = resource.resource_data.get("Subnets").and_then(|v| v.as_array()) {
+    if let Some(subnets) = resource
+        .resource_data
+        .get("Subnets")
+        .and_then(|v| v.as_array())
+    {
         if subnets.len() == 1 {
             findings.push(InventoryFinding {
                 resource_id: resource.resource_id.clone(),
@@ -240,7 +243,11 @@ mod tests {
     }
 
     fn codes(report: &PillarReport) -> Vec<&str> {
-        report.findings.iter().map(|f| f.reason_code.as_str()).collect()
+        report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect()
     }
 
     #[test]

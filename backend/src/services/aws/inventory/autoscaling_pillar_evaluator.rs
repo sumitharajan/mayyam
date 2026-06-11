@@ -322,7 +322,11 @@ mod tests {
     }
 
     fn codes(report: &PillarReport) -> Vec<&str> {
-        report.findings.iter().map(|f| f.reason_code.as_str()).collect()
+        report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect()
     }
 
     #[test]
@@ -351,7 +355,11 @@ mod tests {
         data["desired_capacity"] = json!(0);
         let r = fixture("asg-empty", json!({"team": "core"}), data, now());
         let report = evaluate_autoscaling_fleet(&[r], Pillar::Cost, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -381,7 +389,11 @@ mod tests {
         data["load_balancer_names"] = json!([]);
         let r = fixture("asg-nolb", json!({"team": "core"}), data, now());
         let report = evaluate_autoscaling_fleet(&[r], Pillar::Resilience, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -429,7 +441,11 @@ mod tests {
     fn security_passes_launch_template_group() {
         let r = fixture("asg-lt", json!({"team": "core"}), healthy_data(), now());
         let report = evaluate_autoscaling_fleet(&[r], Pillar::Security, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]

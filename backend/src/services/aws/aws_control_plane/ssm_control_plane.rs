@@ -55,7 +55,10 @@ impl SsmControlPlane {
                 .values("Self")
                 .build();
 
-            let mut request = client.list_documents().filters(owner_filter).max_results(50);
+            let mut request = client
+                .list_documents()
+                .filters(owner_filter)
+                .max_results(50);
             if let Some(t) = next_token {
                 request = request.next_token(t);
             }
@@ -94,8 +97,7 @@ impl SsmControlPlane {
                 }
 
                 if let Some(document_version) = doc.document_version() {
-                    resource_data
-                        .insert("document_version".to_string(), json!(document_version));
+                    resource_data.insert("document_version".to_string(), json!(document_version));
                 }
 
                 if let Some(document_type) = doc.document_type() {
@@ -144,15 +146,15 @@ impl SsmControlPlane {
                     .await
                 {
                     Ok(permission) => {
-                        let account_ids: Vec<&str> =
-                            permission.account_ids().iter().map(|s| s.as_str()).collect();
-                        let shared_publicly = account_ids
+                        let account_ids: Vec<&str> = permission
+                            .account_ids()
                             .iter()
-                            .any(|id| id.eq_ignore_ascii_case("all"));
-                        resource_data
-                            .insert("shared_account_ids".to_string(), json!(account_ids));
-                        resource_data
-                            .insert("shared_publicly".to_string(), json!(shared_publicly));
+                            .map(|s| s.as_str())
+                            .collect();
+                        let shared_publicly =
+                            account_ids.iter().any(|id| id.eq_ignore_ascii_case("all"));
+                        resource_data.insert("shared_account_ids".to_string(), json!(account_ids));
+                        resource_data.insert("shared_publicly".to_string(), json!(shared_publicly));
                     }
                     Err(e) => {
                         debug!(

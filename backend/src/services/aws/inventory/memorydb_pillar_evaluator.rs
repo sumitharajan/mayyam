@@ -30,7 +30,8 @@ use crate::services::aws::inventory::types::{
 pub const RESOURCE_TYPE: &str = "MemoryDbCluster";
 
 pub const REASON_COST_NO_TAGS: &str = "MEMORYDB_COST_NO_TAGS";
-pub const REASON_COST_SINGLE_SHARD_OVER_REPLICATED: &str = "MEMORYDB_COST_SINGLE_SHARD_OVER_REPLICATED";
+pub const REASON_COST_SINGLE_SHARD_OVER_REPLICATED: &str =
+    "MEMORYDB_COST_SINGLE_SHARD_OVER_REPLICATED";
 pub const REASON_RES_SINGLE_AVAILABILITY_ZONE: &str = "MEMORYDB_RES_SINGLE_AVAILABILITY_ZONE";
 pub const REASON_RES_NO_REPLICAS: &str = "MEMORYDB_RES_NO_REPLICAS";
 pub const REASON_RES_LOW_SNAPSHOT_RETENTION: &str = "MEMORYDB_RES_LOW_SNAPSHOT_RETENTION";
@@ -315,15 +316,29 @@ mod tests {
     }
 
     fn codes(report: &PillarReport) -> Vec<&str> {
-        report.findings.iter().map(|f| f.reason_code.as_str()).collect()
+        report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect()
     }
 
     #[test]
     fn healthy_cluster_passes_all_pillars() {
-        let r = fixture("my-memorydb", json!({"team": "cache"}), healthy_data(), now());
+        let r = fixture(
+            "my-memorydb",
+            json!({"team": "cache"}),
+            healthy_data(),
+            now(),
+        );
         for pillar in [Pillar::Cost, Pillar::Resilience, Pillar::Security] {
             let report = evaluate_memorydb_fleet(std::slice::from_ref(&r), pillar, now());
-            assert!(report.findings.is_empty(), "unexpected for {:?}: {:?}", pillar, report.findings);
+            assert!(
+                report.findings.is_empty(),
+                "unexpected for {:?}: {:?}",
+                pillar,
+                report.findings
+            );
             assert_eq!(report.score, 100);
         }
     }

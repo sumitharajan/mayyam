@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 use aws_sdk_ec2::Client as Ec2Client;
 use std::sync::Arc;
 use tracing::{debug, error, info};

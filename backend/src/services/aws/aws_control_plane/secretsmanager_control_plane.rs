@@ -57,10 +57,7 @@ impl SecretsManagerControlPlane {
 
             let response = request.send().await.map_err(|e| {
                 error!("Failed to list Secrets Manager secrets: {}", e);
-                AppError::ExternalService(format!(
-                    "Failed to list Secrets Manager secrets: {}",
-                    e
-                ))
+                AppError::ExternalService(format!("Failed to list Secrets Manager secrets: {}", e))
             })?;
 
             for entry in response.secret_list() {
@@ -87,8 +84,7 @@ impl SecretsManagerControlPlane {
                 }
 
                 if let Some(rotation_enabled) = entry.rotation_enabled() {
-                    resource_data
-                        .insert("rotation_enabled".to_string(), json!(rotation_enabled));
+                    resource_data.insert("rotation_enabled".to_string(), json!(rotation_enabled));
                 }
 
                 if let Some(rotation_lambda_arn) = entry.rotation_lambda_arn() {

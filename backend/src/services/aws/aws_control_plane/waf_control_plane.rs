@@ -46,8 +46,14 @@ impl WafControlPlane {
         let mut resources: Vec<AwsResourceModel> = Vec::new();
 
         // Regional web ACLs exist in every region; a failure here fails the sync.
-        self.sync_scope(&client, aws_account_dto, sync_id, Scope::Regional, &mut resources)
-            .await?;
+        self.sync_scope(
+            &client,
+            aws_account_dto,
+            sync_id,
+            Scope::Regional,
+            &mut resources,
+        )
+        .await?;
 
         // CLOUDFRONT-scoped web ACLs are global but the WAFv2 API only serves
         // them from us-east-1. Sync them only when the account's default
@@ -55,7 +61,13 @@ impl WafControlPlane {
         // failure does not discard the regional results.
         if aws_account_dto.default_region == "us-east-1" {
             if let Err(e) = self
-                .sync_scope(&client, aws_account_dto, sync_id, Scope::Cloudfront, &mut resources)
+                .sync_scope(
+                    &client,
+                    aws_account_dto,
+                    sync_id,
+                    Scope::Cloudfront,
+                    &mut resources,
+                )
                 .await
             {
                 error!(
@@ -141,8 +153,7 @@ impl WafControlPlane {
                                 } else {
                                     "allow"
                                 };
-                                resource_data
-                                    .insert("default_action".to_string(), json!(action));
+                                resource_data.insert("default_action".to_string(), json!(action));
                             }
 
                             let rules = acl.rules();
@@ -167,10 +178,8 @@ impl WafControlPlane {
                             );
 
                             if let Some(label_namespace) = acl.label_namespace() {
-                                resource_data.insert(
-                                    "label_namespace".to_string(),
-                                    json!(label_namespace),
-                                );
+                                resource_data
+                                    .insert("label_namespace".to_string(), json!(label_namespace));
                             }
 
                             if let Some(visibility) = acl.visibility_config() {
@@ -208,22 +217,18 @@ impl WafControlPlane {
                     .send()
                     .await
                 {
-                    Ok(logging_response) => {
-                        match logging_response.logging_configuration() {
-                            Some(config) => {
-                                resource_data
-                                    .insert("logging_enabled".to_string(), json!(true));
-                                resource_data.insert(
-                                    "log_destination_configs".to_string(),
-                                    json!(config.log_destination_configs()),
-                                );
-                            }
-                            None => {
-                                resource_data
-                                    .insert("logging_enabled".to_string(), json!(false));
-                            }
+                    Ok(logging_response) => match logging_response.logging_configuration() {
+                        Some(config) => {
+                            resource_data.insert("logging_enabled".to_string(), json!(true));
+                            resource_data.insert(
+                                "log_destination_configs".to_string(),
+                                json!(config.log_destination_configs()),
+                            );
                         }
-                    }
+                        None => {
+                            resource_data.insert("logging_enabled".to_string(), json!(false));
+                        }
+                    },
                     Err(e) => {
                         let not_configured = e
                             .as_service_error()

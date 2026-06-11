@@ -57,10 +57,7 @@ impl AutoScalingControlPlane {
 
             let response = request.send().await.map_err(|e| {
                 error!("Failed to describe Auto Scaling groups: {}", e);
-                AppError::ExternalService(format!(
-                    "Failed to describe Auto Scaling groups: {}",
-                    e
-                ))
+                AppError::ExternalService(format!("Failed to describe Auto Scaling groups: {}", e))
             })?;
 
             for group in response.auto_scaling_groups() {
@@ -96,8 +93,7 @@ impl AutoScalingControlPlane {
                 );
 
                 if let Some(health_check_type) = group.health_check_type() {
-                    resource_data
-                        .insert("health_check_type".to_string(), json!(health_check_type));
+                    resource_data.insert("health_check_type".to_string(), json!(health_check_type));
                 }
 
                 if let Some(grace_period) = group.health_check_grace_period() {
@@ -130,10 +126,7 @@ impl AutoScalingControlPlane {
                     json!(group.mixed_instances_policy().is_some()),
                 );
 
-                resource_data.insert(
-                    "instance_count".to_string(),
-                    json!(group.instances().len()),
-                );
+                resource_data.insert("instance_count".to_string(), json!(group.instances().len()));
 
                 resource_data.insert(
                     "suspended_process_count".to_string(),

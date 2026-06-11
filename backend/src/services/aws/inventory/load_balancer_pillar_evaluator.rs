@@ -297,7 +297,11 @@ mod tests {
         let r = fixture("Nlb", "nlb-untagged", json!({}), healthy_nlb_data(), now());
         let report = evaluate_load_balancer_fleet(&[r], Pillar::Cost, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_COST_NO_TAGS]
         );
     }
@@ -309,7 +313,11 @@ mod tests {
         let r = fixture("Alb", "alb-public", json!({"team": "edge"}), data, now());
         let report = evaluate_load_balancer_fleet(&[r], Pillar::Security, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_SEC_INTERNET_FACING]
         );
         assert_eq!(report.findings[0].severity, Severity::Low);
@@ -317,9 +325,19 @@ mod tests {
 
     #[test]
     fn security_flags_classic_generation() {
-        let r = fixture("Elb", "legacy-elb", json!({"team": "edge"}), healthy_elb_data(), now());
+        let r = fixture(
+            "Elb",
+            "legacy-elb",
+            json!({"team": "edge"}),
+            healthy_elb_data(),
+            now(),
+        );
         let report = evaluate_load_balancer_fleet(&[r], Pillar::Security, now());
-        let codes: Vec<&str> = report.findings.iter().map(|f| f.reason_code.as_str()).collect();
+        let codes: Vec<&str> = report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect();
         assert_eq!(codes, vec![REASON_SEC_CLASSIC_GENERATION]);
     }
 
@@ -329,7 +347,11 @@ mod tests {
         data["security_groups"] = json!([]);
         let r = fixture("Alb", "alb-open", json!({"team": "edge"}), data, now());
         let report = evaluate_load_balancer_fleet(&[r], Pillar::Security, now());
-        let codes: Vec<&str> = report.findings.iter().map(|f| f.reason_code.as_str()).collect();
+        let codes: Vec<&str> = report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect();
         assert!(codes.contains(&REASON_SEC_NO_SECURITY_GROUPS));
     }
 
@@ -344,7 +366,11 @@ mod tests {
         );
         let report = evaluate_load_balancer_fleet(&[r], Pillar::Security, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_SEC_SCHEME_DATA_NOT_COLLECTED]
         );
     }
@@ -356,7 +382,11 @@ mod tests {
         let r = fixture("Alb", "alb-one-az", json!({"team": "edge"}), data, now());
         let report = evaluate_load_balancer_fleet(&[r], Pillar::Resilience, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_RES_SINGLE_AZ]
         );
     }
@@ -368,7 +398,11 @@ mod tests {
         let r = fixture("Nlb", "nlb-failed", json!({"team": "edge"}), data, now());
         let report = evaluate_load_balancer_fleet(&[r], Pillar::Resilience, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_RES_STATE_NOT_ACTIVE]
         );
         assert_eq!(report.findings[0].severity, Severity::High);
@@ -376,7 +410,13 @@ mod tests {
 
     #[test]
     fn stale_inventory_data_is_flagged() {
-        let r = fixture("Alb", "alb-stale", json!({"team": "edge"}), healthy_alb_data(), now());
+        let r = fixture(
+            "Alb",
+            "alb-stale",
+            json!({"team": "edge"}),
+            healthy_alb_data(),
+            now(),
+        );
         let later = now() + Duration::hours(48);
         let report = evaluate_load_balancer_fleet(&[r], Pillar::Resilience, later);
         assert_eq!(report.stale_resources, 1);
@@ -388,9 +428,27 @@ mod tests {
 
     #[test]
     fn healthy_load_balancers_pass_all_pillars() {
-        let alb = fixture("Alb", "alb-ok", json!({"team": "edge"}), healthy_alb_data(), now());
-        let nlb = fixture("Nlb", "nlb-ok", json!({"team": "edge"}), healthy_nlb_data(), now());
-        let elb = fixture("Elb", "elb-ok", json!({"team": "edge"}), healthy_elb_data(), now());
+        let alb = fixture(
+            "Alb",
+            "alb-ok",
+            json!({"team": "edge"}),
+            healthy_alb_data(),
+            now(),
+        );
+        let nlb = fixture(
+            "Nlb",
+            "nlb-ok",
+            json!({"team": "edge"}),
+            healthy_nlb_data(),
+            now(),
+        );
+        let elb = fixture(
+            "Elb",
+            "elb-ok",
+            json!({"team": "edge"}),
+            healthy_elb_data(),
+            now(),
+        );
 
         for pillar in [Pillar::Cost, Pillar::Security, Pillar::Resilience] {
             let report = evaluate_load_balancer_fleet(
@@ -407,7 +465,11 @@ mod tests {
                 vec![]
             };
             assert_eq!(
-                report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+                report
+                    .findings
+                    .iter()
+                    .map(|f| f.reason_code.as_str())
+                    .collect::<Vec<_>>(),
                 expected,
                 "unexpected findings for {:?}",
                 pillar

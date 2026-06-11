@@ -33,8 +33,7 @@ use crate::services::aws::inventory::types::{
 pub const REASON_COST_NO_TAGS: &str = "ROUTETABLE_COST_NO_TAGS";
 pub const REASON_COST_UNASSOCIATED: &str = "ROUTETABLE_COST_UNASSOCIATED";
 pub const REASON_SEC_DEFAULT_ROUTE_TO_IGW: &str = "ROUTETABLE_SEC_DEFAULT_ROUTE_TO_IGW";
-pub const REASON_SEC_ROUTES_DATA_NOT_COLLECTED: &str =
-    "ROUTETABLE_SEC_ROUTES_DATA_NOT_COLLECTED";
+pub const REASON_SEC_ROUTES_DATA_NOT_COLLECTED: &str = "ROUTETABLE_SEC_ROUTES_DATA_NOT_COLLECTED";
 pub const REASON_RES_BLACKHOLE_ROUTE: &str = "ROUTETABLE_RES_BLACKHOLE_ROUTE";
 pub const REASON_INV_STALE_DATA: &str = "ROUTETABLE_INV_STALE_DATA";
 
@@ -79,7 +78,10 @@ pub fn evaluate_route_table_fleet(
 
 /// The collected `routes` array, if the collector has persisted it.
 fn collected_routes(resource: &AwsResourceModel) -> Option<&Vec<Value>> {
-    resource.resource_data.get("routes").and_then(|v| v.as_array())
+    resource
+        .resource_data
+        .get("routes")
+        .and_then(|v| v.as_array())
 }
 
 fn evaluate_cost(resource: &AwsResourceModel, findings: &mut Vec<InventoryFinding>) {
@@ -151,7 +153,10 @@ fn evaluate_security(resource: &AwsResourceModel, findings: &mut Vec<InventoryFi
             .get("destination_cidr_block")
             .and_then(|v| v.as_str())
             .unwrap_or("");
-        let gateway = route.get("gateway_id").and_then(|v| v.as_str()).unwrap_or("");
+        let gateway = route
+            .get("gateway_id")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
         if destination == "0.0.0.0/0" && gateway.starts_with("igw-") {
             findings.push(InventoryFinding {
                 resource_id: resource.resource_id.clone(),
@@ -265,7 +270,11 @@ mod tests {
         let r = fixture("rtb-untagged", json!({}), healthy_data(), now());
         let report = evaluate_route_table_fleet(&[r], Pillar::Cost, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_COST_NO_TAGS]
         );
     }
@@ -277,7 +286,11 @@ mod tests {
         let r = fixture("rtb-orphan", json!({"team": "net"}), data, now());
         let report = evaluate_route_table_fleet(&[r], Pillar::Cost, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_COST_UNASSOCIATED]
         );
     }
@@ -291,7 +304,11 @@ mod tests {
             now(),
         );
         let report = evaluate_route_table_fleet(&[r], Pillar::Cost, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -304,7 +321,11 @@ mod tests {
         let r = fixture("rtb-public", json!({"team": "net"}), data, now());
         let report = evaluate_route_table_fleet(&[r], Pillar::Security, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_SEC_DEFAULT_ROUTE_TO_IGW]
         );
         assert!(
@@ -323,7 +344,11 @@ mod tests {
         );
         let report = evaluate_route_table_fleet(&[r], Pillar::Security, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_SEC_ROUTES_DATA_NOT_COLLECTED]
         );
     }
@@ -337,7 +362,11 @@ mod tests {
         let r = fixture("rtb-blackhole", json!({"team": "net"}), data, now());
         let report = evaluate_route_table_fleet(&[r], Pillar::Resilience, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_RES_BLACKHOLE_ROUTE]
         );
     }
@@ -351,7 +380,11 @@ mod tests {
             now(),
         );
         let report = evaluate_route_table_fleet(&[r], Pillar::Resilience, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -373,7 +406,11 @@ mod tests {
         let rt = fixture("rtb-ok", json!({"team": "net"}), healthy_data(), now());
         let report = evaluate_route_table_fleet(&[other, rt], Pillar::Cost, now());
         assert_eq!(report.resources_evaluated, 1);
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]

@@ -41,7 +41,10 @@ impl AppRunnerControlPlane {
             &aws_account_dto.account_id, sync_id
         );
 
-        let client = self.aws_service.create_apprunner_client(aws_account_dto).await?;
+        let client = self
+            .aws_service
+            .create_apprunner_client(aws_account_dto)
+            .await?;
         let mut resources: Vec<AwsResourceModel> = Vec::new();
 
         let mut next_token: Option<String> = None;
@@ -85,10 +88,7 @@ impl AppRunnerControlPlane {
                 let service = match describe_response.service() {
                     Some(s) => s,
                     None => {
-                        debug!(
-                            "DescribeService returned no service for {}",
-                            summary_arn
-                        );
+                        debug!("DescribeService returned no service for {}", summary_arn);
                         continue;
                     }
                 };
@@ -137,7 +137,8 @@ impl AppRunnerControlPlane {
                 if let Some(instance) = service.instance_configuration() {
                     // Marker that instance configuration was collected, so the
                     // evaluator can distinguish "no role" from a data gap.
-                    resource_data.insert("instance_configuration_collected".to_string(), json!(true));
+                    resource_data
+                        .insert("instance_configuration_collected".to_string(), json!(true));
                     if let Some(cpu) = instance.cpu() {
                         resource_data.insert("instance_cpu".to_string(), json!(cpu));
                     }
@@ -155,8 +156,7 @@ impl AppRunnerControlPlane {
                 match service.encryption_configuration() {
                     Some(encryption) => {
                         resource_data.insert("customer_managed_kms".to_string(), json!(true));
-                        resource_data
-                            .insert("kms_key".to_string(), json!(encryption.kms_key()));
+                        resource_data.insert("kms_key".to_string(), json!(encryption.kms_key()));
                     }
                     None => {
                         resource_data.insert("customer_managed_kms".to_string(), json!(false));
@@ -165,8 +165,10 @@ impl AppRunnerControlPlane {
 
                 if let Some(health) = service.health_check_configuration() {
                     if let Some(protocol) = health.protocol() {
-                        resource_data
-                            .insert("health_check_protocol".to_string(), json!(protocol.as_str()));
+                        resource_data.insert(
+                            "health_check_protocol".to_string(),
+                            json!(protocol.as_str()),
+                        );
                     }
                     if let Some(path) = health.path() {
                         resource_data.insert("health_check_path".to_string(), json!(path));

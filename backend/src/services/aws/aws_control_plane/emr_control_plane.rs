@@ -100,7 +100,11 @@ impl EmrControlPlane {
                 let mut name = summary_name.clone();
                 let mut tags = json!({});
 
-                let described = match client.describe_cluster().cluster_id(&cluster_id).send().await
+                let described = match client
+                    .describe_cluster()
+                    .cluster_id(&cluster_id)
+                    .send()
+                    .await
                 {
                     Ok(res) => res.cluster().cloned(),
                     Err(e) => {
@@ -162,14 +166,16 @@ impl EmrControlPlane {
                             resource_data.insert("release_label".to_string(), json!(release_label));
                         }
                         if let Some(auto_terminate) = cluster.auto_terminate() {
-                            resource_data.insert("auto_terminate".to_string(), json!(auto_terminate));
+                            resource_data
+                                .insert("auto_terminate".to_string(), json!(auto_terminate));
                         }
                         if let Some(protected) = cluster.termination_protected() {
                             resource_data
                                 .insert("termination_protected".to_string(), json!(protected));
                         }
                         if let Some(visible) = cluster.visible_to_all_users() {
-                            resource_data.insert("visible_to_all_users".to_string(), json!(visible));
+                            resource_data
+                                .insert("visible_to_all_users".to_string(), json!(visible));
                         }
                         if let Some(unhealthy_replacement) = cluster.unhealthy_node_replacement() {
                             resource_data.insert(
@@ -200,8 +206,10 @@ impl EmrControlPlane {
                             resource_data.insert("log_uri".to_string(), json!(log_uri));
                         }
                         if let Some(log_kms_key) = cluster.log_encryption_kms_key_id() {
-                            resource_data
-                                .insert("log_encryption_kms_key_id".to_string(), json!(log_kms_key));
+                            resource_data.insert(
+                                "log_encryption_kms_key_id".to_string(),
+                                json!(log_kms_key),
+                            );
                         }
                         if let Some(service_role) = cluster.service_role() {
                             resource_data.insert("service_role".to_string(), json!(service_role));
@@ -211,11 +219,14 @@ impl EmrControlPlane {
                                 .insert("auto_scaling_role".to_string(), json!(auto_scaling_role));
                         }
                         if let Some(scale_down) = cluster.scale_down_behavior() {
-                            resource_data
-                                .insert("scale_down_behavior".to_string(), json!(scale_down.as_str()));
+                            resource_data.insert(
+                                "scale_down_behavior".to_string(),
+                                json!(scale_down.as_str()),
+                            );
                         }
                         if let Some(ebs_root) = cluster.ebs_root_volume_size() {
-                            resource_data.insert("ebs_root_volume_size".to_string(), json!(ebs_root));
+                            resource_data
+                                .insert("ebs_root_volume_size".to_string(), json!(ebs_root));
                         }
                         if let Some(collection_type) = cluster.instance_collection_type() {
                             resource_data.insert(

@@ -19,8 +19,7 @@ use crate::services::aws::client_factory::AwsClientFactory;
 use crate::services::AwsService;
 use aws_sdk_ec2::types::{
     AutoAcceptSharedAttachmentsValue, DefaultRouteTableAssociationValue,
-    DefaultRouteTablePropagationValue, DnsSupportValue, MulticastSupportValue,
-    VpnEcmpSupportValue,
+    DefaultRouteTablePropagationValue, DnsSupportValue, MulticastSupportValue, VpnEcmpSupportValue,
 };
 use serde_json::json;
 use std::collections::HashMap;
@@ -91,10 +90,7 @@ impl TransitGatewayControlPlane {
 
             let response = request.send().await.map_err(|e| {
                 error!("Failed to describe Transit Gateways: {}", e);
-                AppError::ExternalService(format!(
-                    "Failed to describe Transit Gateways: {}",
-                    e
-                ))
+                AppError::ExternalService(format!("Failed to describe Transit Gateways: {}", e))
             })?;
 
             for tgw in response.transit_gateways() {
@@ -133,8 +129,7 @@ impl TransitGatewayControlPlane {
 
                 if let Some(options) = tgw.options() {
                     if let Some(amazon_side_asn) = options.amazon_side_asn() {
-                        resource_data
-                            .insert("amazon_side_asn".to_string(), json!(amazon_side_asn));
+                        resource_data.insert("amazon_side_asn".to_string(), json!(amazon_side_asn));
                     }
 
                     if let Some(auto_accept) = options.auto_accept_shared_attachments() {

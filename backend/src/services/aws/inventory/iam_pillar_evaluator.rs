@@ -311,7 +311,14 @@ mod tests {
     }
 
     fn group_fixture(id: &str, data: Value, now: DateTime<Utc>) -> AwsResourceModel {
-        fixture("IamGroup", id, &format!("group/{}", id), json!({}), data, now)
+        fixture(
+            "IamGroup",
+            id,
+            &format!("group/{}", id),
+            json!({}),
+            data,
+            now,
+        )
     }
 
     fn now() -> DateTime<Utc> {
@@ -372,7 +379,11 @@ mod tests {
         let role = role_fixture("AROAUNTAGGED", json!({}), healthy_role_data(), now());
         let policy = policy_fixture("ANPAUNTAGGED", json!({}), healthy_policy_data(), now());
         let report = evaluate_iam_fleet(&[user, role, policy], Pillar::Cost, now());
-        let codes: Vec<&str> = report.findings.iter().map(|f| f.reason_code.as_str()).collect();
+        let codes: Vec<&str> = report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect();
         assert_eq!(codes, vec![REASON_COST_NO_TAGS, REASON_COST_NO_TAGS]);
     }
 
@@ -384,7 +395,11 @@ mod tests {
         let policy = policy_fixture("ANPAUNUSED", json!({"team": "sec"}), data, now());
         let report = evaluate_iam_fleet(&[policy], Pillar::Cost, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_COST_UNUSED_POLICY]
         );
     }
@@ -396,7 +411,11 @@ mod tests {
         data["password_last_used"] = json!("2025-06-01T00:00:00Z");
         let user = user_fixture("AIDARISKY", json!({"team": "sec"}), data, now());
         let report = evaluate_iam_fleet(&[user], Pillar::Security, now());
-        let codes: Vec<&str> = report.findings.iter().map(|f| f.reason_code.as_str()).collect();
+        let codes: Vec<&str> = report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect();
         assert!(codes.contains(&REASON_SEC_USER_NO_PERMISSIONS_BOUNDARY));
         assert!(codes.contains(&REASON_SEC_USER_STALE_PASSWORD));
         let stale = report
@@ -413,7 +432,11 @@ mod tests {
         data["password_last_used"] = json!(null);
         let user = user_fixture("AIDANOPASS", json!({"team": "sec"}), data, now());
         let report = evaluate_iam_fleet(&[user], Pillar::Security, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -423,7 +446,11 @@ mod tests {
         let role = role_fixture("AROAUNBOUND", json!({"team": "sec"}), data, now());
         let report = evaluate_iam_fleet(&[role], Pillar::Security, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_SEC_ROLE_NO_PERMISSIONS_BOUNDARY]
         );
     }
@@ -437,7 +464,11 @@ mod tests {
         );
         let report = evaluate_iam_fleet(&[group], Pillar::Security, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_SEC_GROUP_POSTURE_DATA_NOT_COLLECTED]
         );
     }
@@ -449,14 +480,23 @@ mod tests {
         let role = role_fixture("AROANOTRUST", json!({"team": "sec"}), data, now());
         let report = evaluate_iam_fleet(&[role], Pillar::Resilience, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_RES_ROLE_TRUST_POLICY_NOT_COLLECTED]
         );
     }
 
     #[test]
     fn stale_inventory_rows_are_flagged() {
-        let mut user = user_fixture("AIDAOLD", json!({"team": "sec"}), healthy_user_data(), now());
+        let mut user = user_fixture(
+            "AIDAOLD",
+            json!({"team": "sec"}),
+            healthy_user_data(),
+            now(),
+        );
         user.last_refreshed = now() - Duration::hours(48);
         let report = evaluate_iam_fleet(&[user], Pillar::Cost, now());
         assert_eq!(report.stale_resources, 1);
@@ -468,10 +508,24 @@ mod tests {
 
     #[test]
     fn healthy_identities_pass_all_pillars() {
-        let user = user_fixture("AIDAHEALTHY", json!({"team": "sec"}), healthy_user_data(), now());
-        let role = role_fixture("AROAHEALTHY", json!({"team": "sec"}), healthy_role_data(), now());
-        let policy =
-            policy_fixture("ANPAHEALTHY", json!({"team": "sec"}), healthy_policy_data(), now());
+        let user = user_fixture(
+            "AIDAHEALTHY",
+            json!({"team": "sec"}),
+            healthy_user_data(),
+            now(),
+        );
+        let role = role_fixture(
+            "AROAHEALTHY",
+            json!({"team": "sec"}),
+            healthy_role_data(),
+            now(),
+        );
+        let policy = policy_fixture(
+            "ANPAHEALTHY",
+            json!({"team": "sec"}),
+            healthy_policy_data(),
+            now(),
+        );
         let fleet = [user, role, policy];
         for pillar in [Pillar::Cost, Pillar::Security, Pillar::Resilience] {
             let report = evaluate_iam_fleet(&fleet, pillar, now());

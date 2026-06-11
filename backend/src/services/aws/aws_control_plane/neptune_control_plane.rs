@@ -41,10 +41,7 @@ impl NeptuneControlPlane {
             &aws_account_dto.account_id, sync_id
         );
 
-        let client = self
-            .aws_service
-            .create_rds_client(aws_account_dto)
-            .await?;
+        let client = self.aws_service.create_rds_client(aws_account_dto).await?;
         let mut resources: Vec<AwsResourceModel> = Vec::new();
         let mut marker: Option<String> = None;
 
@@ -65,10 +62,7 @@ impl NeptuneControlPlane {
             })?;
 
             for cluster in response.db_clusters() {
-                let cluster_id = cluster
-                    .db_cluster_identifier()
-                    .unwrap_or("")
-                    .to_string();
+                let cluster_id = cluster.db_cluster_identifier().unwrap_or("").to_string();
                 if cluster_id.is_empty() {
                     continue;
                 }
@@ -89,10 +83,7 @@ impl NeptuneControlPlane {
                     "deletion_protection".to_string(),
                     json!(cluster.deletion_protection().unwrap_or(false)),
                 );
-                resource_data.insert(
-                    "multi_az".to_string(),
-                    json!(cluster.multi_az()),
-                );
+                resource_data.insert("multi_az".to_string(), json!(cluster.multi_az()));
                 if let Some(retention) = cluster.backup_retention_period() {
                     resource_data.insert("backup_retention_period".to_string(), json!(retention));
                 }
@@ -117,11 +108,14 @@ impl NeptuneControlPlane {
                     json!(cluster.db_cluster_members().len()),
                 );
                 if let Some(backup_window) = cluster.preferred_backup_window() {
-                    resource_data.insert("preferred_backup_window".to_string(), json!(backup_window));
+                    resource_data
+                        .insert("preferred_backup_window".to_string(), json!(backup_window));
                 }
                 if let Some(maint_window) = cluster.preferred_maintenance_window() {
-                    resource_data
-                        .insert("preferred_maintenance_window".to_string(), json!(maint_window));
+                    resource_data.insert(
+                        "preferred_maintenance_window".to_string(),
+                        json!(maint_window),
+                    );
                 }
                 if let Some(iam_auth) = cluster.iam_database_authentication_enabled() {
                     resource_data.insert(
@@ -136,8 +130,10 @@ impl NeptuneControlPlane {
                     json!(log_exports.iter().any(|l| l == "audit")),
                 );
                 if !log_exports.is_empty() {
-                    resource_data
-                        .insert("enabled_cloudwatch_logs_exports".to_string(), json!(log_exports));
+                    resource_data.insert(
+                        "enabled_cloudwatch_logs_exports".to_string(),
+                        json!(log_exports),
+                    );
                 }
 
                 let mut tags_map = serde_json::Map::new();

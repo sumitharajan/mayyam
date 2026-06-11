@@ -270,7 +270,11 @@ mod tests {
     }
 
     fn codes(report: &PillarReport) -> Vec<&str> {
-        report.findings.iter().map(|f| f.reason_code.as_str()).collect()
+        report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect()
     }
 
     #[test]
@@ -291,9 +295,18 @@ mod tests {
 
     #[test]
     fn cost_does_not_flag_available_gateway_with_attachments() {
-        let r = fixture("tgw-busy", json!({"team": "network"}), healthy_data(), now());
+        let r = fixture(
+            "tgw-busy",
+            json!({"team": "network"}),
+            healthy_data(),
+            now(),
+        );
         let report = evaluate_transitgateway_fleet(&[r], Pillar::Cost, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -362,12 +375,21 @@ mod tests {
         data["default_route_table_propagation"] = json!(false);
         let r = fixture("tgw-assoc-only", json!({"team": "network"}), data, now());
         let report = evaluate_transitgateway_fleet(&[r], Pillar::Security, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
     fn stale_inventory_is_flagged() {
-        let mut r = fixture("tgw-stale", json!({"team": "network"}), healthy_data(), now());
+        let mut r = fixture(
+            "tgw-stale",
+            json!({"team": "network"}),
+            healthy_data(),
+            now(),
+        );
         r.last_refreshed = now() - Duration::hours(48);
         let report = evaluate_transitgateway_fleet(&[r], Pillar::Resilience, now());
         assert_eq!(report.stale_resources, 1);
@@ -387,8 +409,7 @@ mod tests {
     fn healthy_transit_gateway_passes_all_pillars() {
         let r = fixture("tgw-ok", json!({"team": "network"}), healthy_data(), now());
         for pillar in [Pillar::Cost, Pillar::Security, Pillar::Resilience] {
-            let report =
-                evaluate_transitgateway_fleet(std::slice::from_ref(&r), pillar, now());
+            let report = evaluate_transitgateway_fleet(std::slice::from_ref(&r), pillar, now());
             assert!(
                 report.findings.is_empty(),
                 "unexpected for {:?}: {:?}",

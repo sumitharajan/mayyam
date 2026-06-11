@@ -32,8 +32,7 @@ use crate::services::aws::inventory::types::{
 // Reason codes are the stable contract for findings; never reuse or rename.
 pub const REASON_COST_NO_TAGS: &str = "GLACIER_COST_NO_TAGS";
 pub const REASON_COST_EMPTY_VAULT: &str = "GLACIER_COST_EMPTY_VAULT";
-pub const REASON_SEC_POSTURE_DATA_NOT_COLLECTED: &str =
-    "GLACIER_SEC_POSTURE_DATA_NOT_COLLECTED";
+pub const REASON_SEC_POSTURE_DATA_NOT_COLLECTED: &str = "GLACIER_SEC_POSTURE_DATA_NOT_COLLECTED";
 pub const REASON_RES_NO_VAULT_INVENTORY: &str = "GLACIER_RES_NO_VAULT_INVENTORY";
 pub const REASON_INV_STALE_DATA: &str = "GLACIER_INV_STALE_DATA";
 
@@ -218,7 +217,11 @@ mod tests {
         let r = fixture("vault-untagged", json!({}), healthy_data(), now());
         let report = evaluate_glacier_fleet(&[r], Pillar::Cost, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_COST_NO_TAGS]
         );
     }
@@ -230,17 +233,30 @@ mod tests {
         data["SizeInBytes"] = json!(0);
         let r = fixture("vault-empty", json!({"team": "archive"}), data, now());
         let report = evaluate_glacier_fleet(&[r], Pillar::Cost, now());
-        let codes: Vec<&str> = report.findings.iter().map(|f| f.reason_code.as_str()).collect();
+        let codes: Vec<&str> = report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect();
         assert!(codes.contains(&REASON_COST_EMPTY_VAULT));
         assert!(!codes.contains(&REASON_COST_NO_TAGS));
     }
 
     #[test]
     fn security_reports_posture_data_gap_for_every_vault() {
-        let r = fixture("vault-gap", json!({"team": "archive"}), healthy_data(), now());
+        let r = fixture(
+            "vault-gap",
+            json!({"team": "archive"}),
+            healthy_data(),
+            now(),
+        );
         let report = evaluate_glacier_fleet(&[r], Pillar::Security, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_SEC_POSTURE_DATA_NOT_COLLECTED]
         );
     }
@@ -252,18 +268,31 @@ mod tests {
         let r = fixture("vault-noinv", json!({"team": "archive"}), data, now());
         let report = evaluate_glacier_fleet(&[r], Pillar::Resilience, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_RES_NO_VAULT_INVENTORY]
         );
     }
 
     #[test]
     fn stale_inventory_row_is_flagged() {
-        let mut r = fixture("vault-stale", json!({"team": "archive"}), healthy_data(), now());
+        let mut r = fixture(
+            "vault-stale",
+            json!({"team": "archive"}),
+            healthy_data(),
+            now(),
+        );
         r.last_refreshed = now() - Duration::hours(48);
         let report = evaluate_glacier_fleet(&[r], Pillar::Resilience, now());
         assert_eq!(report.stale_resources, 1);
-        let codes: Vec<&str> = report.findings.iter().map(|f| f.reason_code.as_str()).collect();
+        let codes: Vec<&str> = report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect();
         assert!(codes.contains(&REASON_INV_STALE_DATA));
     }
 
@@ -281,7 +310,12 @@ mod tests {
         // Tags use a non-empty fixture to prove the check logic even though
         // the collector currently persists {}. Security always reports the
         // posture data gap, so it is asserted separately.
-        let r = fixture("vault-ok", json!({"team": "archive"}), healthy_data(), now());
+        let r = fixture(
+            "vault-ok",
+            json!({"team": "archive"}),
+            healthy_data(),
+            now(),
+        );
         for pillar in [Pillar::Cost, Pillar::Resilience] {
             let report = evaluate_glacier_fleet(std::slice::from_ref(&r), pillar, now());
             assert!(
@@ -293,7 +327,11 @@ mod tests {
         }
         let security = evaluate_glacier_fleet(std::slice::from_ref(&r), Pillar::Security, now());
         assert_eq!(
-            security.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            security
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_SEC_POSTURE_DATA_NOT_COLLECTED]
         );
     }

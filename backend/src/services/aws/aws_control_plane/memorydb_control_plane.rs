@@ -85,12 +85,13 @@ impl MemoryDbControlPlane {
                 if !shards.is_empty() {
                     let nodes_in_shard = shards[0].number_of_nodes().unwrap_or(1);
                     let replicas = (nodes_in_shard - 1).max(0);
-                    resource_data
-                        .insert("num_replicas_per_shard".to_string(), json!(replicas));
+                    resource_data.insert("num_replicas_per_shard".to_string(), json!(replicas));
                 }
                 if let Some(availability_mode) = cluster.availability_mode() {
-                    resource_data
-                        .insert("availability_mode".to_string(), json!(availability_mode.as_str()));
+                    resource_data.insert(
+                        "availability_mode".to_string(),
+                        json!(availability_mode.as_str()),
+                    );
                 }
                 resource_data.insert(
                     "tls_enabled".to_string(),
@@ -112,8 +113,10 @@ impl MemoryDbControlPlane {
                     resource_data.insert("sns_topic_arn".to_string(), json!(sns_topic));
                 }
                 if let Some(snapshot_retention) = cluster.snapshot_retention_limit() {
-                    resource_data
-                        .insert("snapshot_retention_limit".to_string(), json!(snapshot_retention));
+                    resource_data.insert(
+                        "snapshot_retention_limit".to_string(),
+                        json!(snapshot_retention),
+                    );
                 }
                 if let Some(snapshot_window) = cluster.snapshot_window() {
                     resource_data.insert("snapshot_window".to_string(), json!(snapshot_window));

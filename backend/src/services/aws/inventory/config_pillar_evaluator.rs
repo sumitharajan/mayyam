@@ -155,9 +155,7 @@ fn evaluate_cost(resource: &AwsResourceModel, findings: &mut Vec<InventoryFindin
     // An ACTIVE rule that errors and has never produced a successful
     // evaluation bills per evaluation attempt while returning no compliance
     // signal at all.
-    if rule_state(resource).as_deref() == Some("ACTIVE")
-        && evaluation_status_collected(resource)
-    {
+    if rule_state(resource).as_deref() == Some("ACTIVE") && evaluation_status_collected(resource) {
         let error_code = data_str(&resource.resource_data, "last_error_code");
         let never_succeeded = resource
             .resource_data
@@ -237,8 +235,7 @@ fn evaluate_security(resource: &AwsResourceModel, findings: &mut Vec<InventoryFi
     // A rule whose latest error has not been followed by a successful
     // evaluation is a compliance blind spot: violations go undetected.
     if let Some(code) = data_str(&resource.resource_data, "last_error_code") {
-        let success = parse_time(resource, "last_successful_evaluation_time")
-            .and_then(|r| r.ok());
+        let success = parse_time(resource, "last_successful_evaluation_time").and_then(|r| r.ok());
         let failed = parse_time(resource, "last_failed_evaluation_time").and_then(|r| r.ok());
         let unrecovered = match (failed, success) {
             (_, None) => true,
@@ -523,7 +520,11 @@ mod tests {
     }
 
     fn codes(report: &PillarReport) -> Vec<&str> {
-        report.findings.iter().map(|f| f.reason_code.as_str()).collect()
+        report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect()
     }
 
     #[test]
@@ -537,7 +538,10 @@ mod tests {
         data["last_failed_evaluation_time"] = json!("2026-06-09T23:00:00Z");
         let r = fixture("rule-neversucceeded", json!({"team": "sre"}), data, now());
         let report = evaluate_config_fleet(&[r], Pillar::Cost, now());
-        assert_eq!(codes(&report), vec![REASON_COST_ACTIVE_RULE_NEVER_SUCCEEDED]);
+        assert_eq!(
+            codes(&report),
+            vec![REASON_COST_ACTIVE_RULE_NEVER_SUCCEEDED]
+        );
     }
 
     #[test]
@@ -550,7 +554,11 @@ mod tests {
         data["last_error_code"] = json!("INSUFFICIENT_DELIVERY_POLICY");
         let r = fixture("rule-deleting", json!({"team": "sre"}), data, now());
         let report = evaluate_config_fleet(&[r], Pillar::Cost, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -559,7 +567,10 @@ mod tests {
         data["maximum_execution_frequency"] = json!("One_Hour");
         let r = fixture("rule-hourly-untagged", json!({}), data, now());
         let report = evaluate_config_fleet(&[r], Pillar::Cost, now());
-        assert_eq!(codes(&report), vec![REASON_COST_HIGH_FREQUENCY_UNTAGGED_RULE]);
+        assert_eq!(
+            codes(&report),
+            vec![REASON_COST_HIGH_FREQUENCY_UNTAGGED_RULE]
+        );
     }
 
     #[test]
@@ -568,7 +579,11 @@ mod tests {
         data["maximum_execution_frequency"] = json!("One_Hour");
         let r = fixture("rule-hourly-tagged", json!({"team": "sre"}), data, now());
         let report = evaluate_config_fleet(&[r], Pillar::Cost, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -590,7 +605,11 @@ mod tests {
         // last_successful_evaluation_time is 2026-06-09T20:00:00Z: recovered.
         let r = fixture("rule-recovered", json!({"team": "sre"}), data, now());
         let report = evaluate_config_fleet(&[r], Pillar::Security, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -650,7 +669,11 @@ mod tests {
         data["last_successful_evaluation_time"] = json!("2026-05-01T00:00:00Z");
         let r = fixture("rule-change-triggered", json!({"team": "sre"}), data, now());
         let report = evaluate_config_fleet(&[r], Pillar::Resilience, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -664,7 +687,12 @@ mod tests {
 
     #[test]
     fn stale_inventory_is_flagged() {
-        let mut r = fixture("rule-stale", json!({"team": "sre"}), healthy_rule_data(), now());
+        let mut r = fixture(
+            "rule-stale",
+            json!({"team": "sre"}),
+            healthy_rule_data(),
+            now(),
+        );
         r.last_refreshed = now() - Duration::hours(48);
         let report = evaluate_config_fleet(&[r], Pillar::Resilience, now());
         assert_eq!(report.stale_resources, 1);
@@ -711,10 +739,16 @@ mod tests {
         data["last_failed_evaluation_time"] = json!("2026-06-09T23:00:00Z");
         let r = fixture("rule-perf-failing", json!({"team": "sre"}), data, now());
         let report = evaluate_config_fleet(&[r], Pillar::Performance, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
 
         let mut gap = healthy_rule_data();
-        gap.as_object_mut().unwrap().remove("evaluation_status_collected");
+        gap.as_object_mut()
+            .unwrap()
+            .remove("evaluation_status_collected");
         let r2 = fixture("rule-perf-gap", json!({"team": "sre"}), gap, now());
         let report = evaluate_config_fleet(&[r2], Pillar::Performance, now());
         assert_eq!(codes(&report), vec![REASON_DATA_GAP_EVALUATION_STATUS]);
@@ -736,7 +770,11 @@ mod tests {
             .remove("maximum_execution_frequency");
         let r2 = fixture("rule-ct", json!({"team": "sre"}), change_triggered, now());
         let report = evaluate_config_fleet(&[r2], Pillar::Scalability, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -776,7 +814,12 @@ mod tests {
 
     #[test]
     fn healthy_rule_passes_all_pillars() {
-        let r = fixture("rule-ok", json!({"team": "sre"}), healthy_rule_data(), now());
+        let r = fixture(
+            "rule-ok",
+            json!({"team": "sre"}),
+            healthy_rule_data(),
+            now(),
+        );
         for pillar in [
             Pillar::Cost,
             Pillar::Security,

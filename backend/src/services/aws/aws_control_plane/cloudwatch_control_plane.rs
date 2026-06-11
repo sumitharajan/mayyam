@@ -41,7 +41,10 @@ impl CloudWatchControlPlane {
             &aws_account_dto.account_id, sync_id
         );
 
-        let client = self.aws_service.create_cloudwatch_client(aws_account_dto).await?;
+        let client = self
+            .aws_service
+            .create_cloudwatch_client(aws_account_dto)
+            .await?;
         let mut resources: Vec<AwsResourceModel> = Vec::new();
 
         let mut next_token = None;
@@ -100,7 +103,9 @@ impl CloudWatchControlPlane {
 
         debug!(
             "Successfully synced {} CloudWatch alarms for account: {} with sync_id: {}",
-            resources.len(), &aws_account_dto.account_id, sync_id
+            resources.len(),
+            &aws_account_dto.account_id,
+            sync_id
         );
 
         Ok(resources)
@@ -116,7 +121,10 @@ impl CloudWatchControlPlane {
             &aws_account_dto.account_id, sync_id
         );
 
-        let client = self.aws_service.create_cloudwatch_client(aws_account_dto).await?;
+        let client = self
+            .aws_service
+            .create_cloudwatch_client(aws_account_dto)
+            .await?;
         let mut resources: Vec<AwsResourceModel> = Vec::new();
 
         let mut next_token = None;
@@ -173,7 +181,9 @@ impl CloudWatchControlPlane {
 
         debug!(
             "Successfully synced {} CloudWatch dashboards for account: {} with sync_id: {}",
-            resources.len(), &aws_account_dto.account_id, sync_id
+            resources.len(),
+            &aws_account_dto.account_id,
+            sync_id
         );
 
         Ok(resources)
@@ -189,7 +199,10 @@ impl CloudWatchControlPlane {
             &aws_account_dto.account_id, sync_id
         );
 
-        let client = self.aws_service.create_cloudwatch_client(aws_account_dto).await?;
+        let client = self
+            .aws_service
+            .create_cloudwatch_client(aws_account_dto)
+            .await?;
         let mut resources: Vec<AwsResourceModel> = Vec::new();
 
         let mut next_token = None;
@@ -276,7 +289,9 @@ impl CloudWatchControlPlane {
 
         debug!(
             "Successfully synced {} CloudWatch metrics for account: {} with sync_id: {}",
-            resources.len(), &aws_account_dto.account_id, sync_id
+            resources.len(),
+            &aws_account_dto.account_id,
+            sync_id
         );
 
         Ok(resources)
@@ -353,7 +368,9 @@ impl CloudWatchControlPlane {
 
         debug!(
             "Successfully synced {} CloudWatch log groups for account: {} with sync_id: {}",
-            resources.len(), &aws_account_dto.account_id, sync_id
+            resources.len(),
+            &aws_account_dto.account_id,
+            sync_id
         );
 
         Ok(resources)

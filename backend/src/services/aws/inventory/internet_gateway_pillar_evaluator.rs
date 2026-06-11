@@ -44,8 +44,7 @@ use crate::services::aws::inventory::types::{
 pub const REASON_COST_NO_TAGS: &str = "IGW_COST_NO_TAGS";
 pub const REASON_COST_DETACHED: &str = "IGW_COST_DETACHED";
 pub const REASON_RES_ATTACHMENT_NOT_AVAILABLE: &str = "IGW_RES_ATTACHMENT_NOT_AVAILABLE";
-pub const REASON_RES_ATTACHMENT_DATA_NOT_COLLECTED: &str =
-    "IGW_RES_ATTACHMENT_DATA_NOT_COLLECTED";
+pub const REASON_RES_ATTACHMENT_DATA_NOT_COLLECTED: &str = "IGW_RES_ATTACHMENT_DATA_NOT_COLLECTED";
 pub const REASON_INV_STALE_DATA: &str = "IGW_INV_STALE_DATA";
 
 /// Attachment states that count as a healthy VPC attachment.
@@ -114,7 +113,10 @@ fn evaluate_cost(resource: &AwsResourceModel, findings: &mut Vec<InventoryFindin
     // Detached-gateway sprawl is only assessable when attachments were
     // actually collected; the collector does not persist them yet, so this
     // check stays silent until it does.
-    if let Some(attachments) = resource.resource_data.get("attachments").and_then(|v| v.as_array())
+    if let Some(attachments) = resource
+        .resource_data
+        .get("attachments")
+        .and_then(|v| v.as_array())
     {
         if attachments.is_empty() {
             findings.push(InventoryFinding {
@@ -141,7 +143,10 @@ fn evaluate_security(_resource: &AwsResourceModel, _findings: &mut Vec<Inventory
 }
 
 fn evaluate_resilience(resource: &AwsResourceModel, findings: &mut Vec<InventoryFinding>) {
-    let attachments = resource.resource_data.get("attachments").and_then(|v| v.as_array());
+    let attachments = resource
+        .resource_data
+        .get("attachments")
+        .and_then(|v| v.as_array());
     let Some(attachments) = attachments else {
         findings.push(InventoryFinding {
             resource_id: resource.resource_id.clone(),
@@ -235,7 +240,11 @@ mod tests {
         let r = fixture("igw-untagged", json!({}), healthy_data(), now());
         let report = evaluate_internet_gateway_fleet(&[r], Pillar::Cost, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_COST_NO_TAGS]
         );
     }
@@ -250,7 +259,11 @@ mod tests {
         );
         let report = evaluate_internet_gateway_fleet(&[r], Pillar::Cost, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_COST_DETACHED]
         );
     }
@@ -264,7 +277,11 @@ mod tests {
             now(),
         );
         let report = evaluate_internet_gateway_fleet(&[r], Pillar::Cost, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -280,7 +297,11 @@ mod tests {
         );
         let report = evaluate_internet_gateway_fleet(&[r], Pillar::Resilience, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_RES_ATTACHMENT_NOT_AVAILABLE]
         );
     }
@@ -295,7 +316,11 @@ mod tests {
         );
         let report = evaluate_internet_gateway_fleet(&[r], Pillar::Resilience, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_RES_ATTACHMENT_DATA_NOT_COLLECTED]
         );
     }
@@ -319,15 +344,18 @@ mod tests {
         let igw = fixture("igw-only", json!({"team": "net"}), healthy_data(), now());
         let report = evaluate_internet_gateway_fleet(&[other, igw], Pillar::Cost, now());
         assert_eq!(report.resources_evaluated, 1);
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
     fn healthy_gateway_passes_all_pillars() {
         let r = fixture("igw-ok", json!({"team": "net"}), healthy_data(), now());
         for pillar in [Pillar::Cost, Pillar::Security, Pillar::Resilience] {
-            let report =
-                evaluate_internet_gateway_fleet(std::slice::from_ref(&r), pillar, now());
+            let report = evaluate_internet_gateway_fleet(std::slice::from_ref(&r), pillar, now());
             assert!(
                 report.findings.is_empty(),
                 "unexpected for {:?}: {:?}",

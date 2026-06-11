@@ -397,7 +397,10 @@ mod tests {
         let r = fixture("cert-bad-date", json!({"team": "web"}), data, now());
         let report = evaluate_acm_fleet(&[r], Pillar::Resilience, now());
         assert_eq!(codes(&report), vec![REASON_RES_EXPIRY_DATA_UNPARSEABLE]);
-        assert_eq!(report.findings[0].evidence["not_after"], json!("not-a-date"));
+        assert_eq!(
+            report.findings[0].evidence["not_after"],
+            json!("not-a-date")
+        );
     }
 
     #[test]
@@ -413,8 +416,7 @@ mod tests {
         // managed renewal concerns apply to imported certificates only.
         let mut amazon_data = healthy_data();
         amazon_data["renewal_eligibility"] = json!("INELIGIBLE");
-        let amazon =
-            fixture("cert-amazon", json!({"team": "web"}), amazon_data, now());
+        let amazon = fixture("cert-amazon", json!({"team": "web"}), amazon_data, now());
         let report = evaluate_acm_fleet(&[amazon], Pillar::Resilience, now());
         assert!(
             report.findings.is_empty(),

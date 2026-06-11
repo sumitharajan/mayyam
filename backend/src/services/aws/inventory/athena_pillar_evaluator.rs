@@ -107,7 +107,11 @@ fn workgroup_state(resource: &AwsResourceModel) -> Option<String> {
     data_str(&resource.resource_data, "state")
 }
 
-fn data_gap_finding(resource: &AwsResourceModel, pillar: Pillar, reason_code: &str) -> InventoryFinding {
+fn data_gap_finding(
+    resource: &AwsResourceModel,
+    pillar: Pillar,
+    reason_code: &str,
+) -> InventoryFinding {
     InventoryFinding {
         resource_id: resource.resource_id.clone(),
         arn: resource.arn.clone(),
@@ -426,7 +430,11 @@ mod tests {
     }
 
     fn codes(report: &PillarReport) -> Vec<&str> {
-        report.findings.iter().map(|f| f.reason_code.as_str()).collect()
+        report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect()
     }
 
     #[test]
@@ -538,7 +546,10 @@ mod tests {
         obj.remove("result_encryption_kms_key");
         let r = fixture("wg-noenc", json!({}), data, now());
         let report = evaluate_athena_fleet(&[r], Pillar::Security, now());
-        assert_eq!(codes(&report), vec![REASON_SEC_RESULT_ENCRYPTION_NOT_CONFIGURED]);
+        assert_eq!(
+            codes(&report),
+            vec![REASON_SEC_RESULT_ENCRYPTION_NOT_CONFIGURED]
+        );
         assert!(matches!(report.findings[0].severity, Severity::Medium));
     }
 
@@ -546,7 +557,9 @@ mod tests {
     fn security_flags_sse_s3_as_not_kms_backed() {
         let mut data = healthy_data();
         data["result_encryption_option"] = json!("SSE_S3");
-        data.as_object_mut().unwrap().remove("result_encryption_kms_key");
+        data.as_object_mut()
+            .unwrap()
+            .remove("result_encryption_kms_key");
         let r = fixture("wg-sses3", json!({}), data, now());
         let report = evaluate_athena_fleet(&[r], Pillar::Security, now());
         assert_eq!(codes(&report), vec![REASON_SEC_RESULT_ENCRYPTION_NOT_KMS]);
@@ -559,7 +572,11 @@ mod tests {
         data["result_encryption_option"] = json!("CSE_KMS");
         let r = fixture("wg-csekms", json!({}), data, now());
         let report = evaluate_athena_fleet(&[r], Pillar::Security, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]

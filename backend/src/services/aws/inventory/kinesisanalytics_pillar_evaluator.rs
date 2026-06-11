@@ -250,17 +250,30 @@ mod tests {
         let r = fixture("app-untagged", json!({}), app_data("RUNNING"), now());
         let report = evaluate_kinesisanalytics_fleet(&[r], Pillar::Cost, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_COST_NO_TAGS]
         );
     }
 
     #[test]
     fn cost_flags_idle_ready_application() {
-        let r = fixture("app-idle", json!({"team": "stream"}), app_data("READY"), now());
+        let r = fixture(
+            "app-idle",
+            json!({"team": "stream"}),
+            app_data("READY"),
+            now(),
+        );
         let report = evaluate_kinesisanalytics_fleet(&[r], Pillar::Cost, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_COST_IDLE_APPLICATION]
         );
         assert_eq!(report.findings[0].severity, Severity::Low);
@@ -268,20 +281,38 @@ mod tests {
 
     #[test]
     fn security_reports_posture_data_gap() {
-        let r = fixture("app-sec", json!({"team": "stream"}), app_data("RUNNING"), now());
+        let r = fixture(
+            "app-sec",
+            json!({"team": "stream"}),
+            app_data("RUNNING"),
+            now(),
+        );
         let report = evaluate_kinesisanalytics_fleet(&[r], Pillar::Security, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_SEC_POSTURE_DATA_NOT_COLLECTED]
         );
     }
 
     #[test]
     fn resilience_flags_application_not_running() {
-        let r = fixture("app-stopped", json!({"team": "stream"}), app_data("STOPPING"), now());
+        let r = fixture(
+            "app-stopped",
+            json!({"team": "stream"}),
+            app_data("STOPPING"),
+            now(),
+        );
         let report = evaluate_kinesisanalytics_fleet(&[r], Pillar::Resilience, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_RES_APP_NOT_RUNNING]
         );
     }
@@ -296,14 +327,23 @@ mod tests {
         );
         let report = evaluate_kinesisanalytics_fleet(&[r], Pillar::Resilience, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_RES_STATUS_DATA_NOT_COLLECTED]
         );
     }
 
     #[test]
     fn stale_inventory_is_flagged() {
-        let mut r = fixture("app-stale", json!({"team": "stream"}), app_data("RUNNING"), now());
+        let mut r = fixture(
+            "app-stale",
+            json!({"team": "stream"}),
+            app_data("RUNNING"),
+            now(),
+        );
         r.last_refreshed = now() - Duration::hours(48);
         let report = evaluate_kinesisanalytics_fleet(&[r], Pillar::Resilience, now());
         assert_eq!(report.stale_resources, 1);
@@ -324,10 +364,14 @@ mod tests {
 
     #[test]
     fn healthy_running_application_passes_cost_and_resilience() {
-        let r = fixture("app-ok", json!({"team": "stream"}), app_data("RUNNING"), now());
+        let r = fixture(
+            "app-ok",
+            json!({"team": "stream"}),
+            app_data("RUNNING"),
+            now(),
+        );
         for pillar in [Pillar::Cost, Pillar::Resilience] {
-            let report =
-                evaluate_kinesisanalytics_fleet(std::slice::from_ref(&r), pillar, now());
+            let report = evaluate_kinesisanalytics_fleet(std::slice::from_ref(&r), pillar, now());
             assert!(
                 report.findings.is_empty(),
                 "unexpected for {:?}: {:?}",
@@ -339,7 +383,11 @@ mod tests {
         // collector persists security fields.
         let security = evaluate_kinesisanalytics_fleet(&[r], Pillar::Security, now());
         assert_eq!(
-            security.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            security
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_SEC_POSTURE_DATA_NOT_COLLECTED]
         );
     }

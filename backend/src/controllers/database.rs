@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 use actix_web::{web, HttpResponse, Responder};
 use chrono::{DateTime, Utc};
 use sea_orm::DatabaseConnection;
@@ -173,7 +172,10 @@ pub async fn get_mysql_telemetry(
     let dynamic_conn = connect_to_dynamic_database(&conn_model, config.get_ref()).await?;
     let telemetry = MySqlTelemetryCollector::collect(&dynamic_conn).await?;
     let telemetry_repo = MySqlTelemetrySnapshotRepository::new(db_pool.get_ref().clone());
-    if let Err(error) = telemetry_repo.create_from_snapshot(conn_id, &telemetry).await {
+    if let Err(error) = telemetry_repo
+        .create_from_snapshot(conn_id, &telemetry)
+        .await
+    {
         tracing::warn!(
             connection_id = %conn_id,
             error = %error,

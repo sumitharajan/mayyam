@@ -436,7 +436,9 @@ fn evaluate_disaster_recovery(resource: &AwsResourceModel, findings: &mut Vec<In
         (Some(count), Some(targets)) => {
             let no_dlq: Vec<String> = targets
                 .iter()
-                .filter(|t| t.get("has_dead_letter_config").and_then(|v| v.as_bool()) == Some(false))
+                .filter(|t| {
+                    t.get("has_dead_letter_config").and_then(|v| v.as_bool()) == Some(false)
+                })
                 .map(|t| {
                     t.get("id")
                         .and_then(|v| v.as_str())
@@ -514,10 +516,7 @@ mod tests {
             region: "us-east-1".to_string(),
             resource_type: RESOURCE_TYPE.to_string(),
             resource_id: resource_id.to_string(),
-            arn: format!(
-                "arn:aws:events:us-east-1:123456789012:rule/{}",
-                resource_id
-            ),
+            arn: format!("arn:aws:events:us-east-1:123456789012:rule/{}", resource_id),
             name: Some(resource_id.to_string()),
             tags,
             resource_data,
@@ -556,7 +555,11 @@ mod tests {
     }
 
     fn codes(report: &PillarReport) -> Vec<&str> {
-        report.findings.iter().map(|f| f.reason_code.as_str()).collect()
+        report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect()
     }
 
     #[test]
@@ -608,7 +611,11 @@ mod tests {
         data["targets"] = json!([]);
         let r = fixture("rule-defaultbus", json!({"team": "sre"}), data, now());
         let report = evaluate_eventbridge_fleet(&[r], Pillar::Security, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -685,12 +692,21 @@ mod tests {
         data["targets"] = json!([]);
         let r = fixture("rule-zero", json!({"team": "sre"}), data, now());
         let report = evaluate_eventbridge_fleet(&[r], Pillar::Resilience, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
     fn stale_inventory_is_flagged() {
-        let mut r = fixture("rule-stale", json!({"team": "sre"}), healthy_rule_data(), now());
+        let mut r = fixture(
+            "rule-stale",
+            json!({"team": "sre"}),
+            healthy_rule_data(),
+            now(),
+        );
         r.last_refreshed = now() - Duration::hours(48);
         let report = evaluate_eventbridge_fleet(&[r], Pillar::Resilience, now());
         assert_eq!(report.stale_resources, 1);
@@ -727,17 +743,26 @@ mod tests {
     #[test]
     fn performance_accepts_detail_type_filter_and_skips_schedule_only_rules() {
         let mut data = healthy_rule_data();
-        data["event_pattern"] = json!("{\"detail-type\":[\"EC2 Instance State-change Notification\"]}");
+        data["event_pattern"] =
+            json!("{\"detail-type\":[\"EC2 Instance State-change Notification\"]}");
         let r = fixture("rule-dt", json!({"team": "sre"}), data, now());
         let report = evaluate_eventbridge_fleet(&[r], Pillar::Performance, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
 
         let mut scheduled = healthy_rule_data();
         scheduled.as_object_mut().unwrap().remove("event_pattern");
         scheduled["schedule_expression"] = json!("rate(5 minutes)");
         let r2 = fixture("rule-cron", json!({"team": "sre"}), scheduled, now());
         let report = evaluate_eventbridge_fleet(&[r2], Pillar::Performance, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -772,7 +797,11 @@ mod tests {
         disabled["target_count"] = json!(5);
         let r2 = fixture("rule-off", json!({"team": "sre"}), disabled, now());
         let report = evaluate_eventbridge_fleet(&[r2], Pillar::Scalability, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -796,7 +825,11 @@ mod tests {
         data["targets"][0]["has_dead_letter_config"] = json!(false);
         let r = fixture("rule-pattern-nodlq", json!({"team": "sre"}), data, now());
         let report = evaluate_eventbridge_fleet(&[r], Pillar::DisasterRecovery, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
 
         let mut gap = healthy_rule_data();
         gap.as_object_mut().unwrap().remove("event_pattern");
@@ -823,7 +856,12 @@ mod tests {
 
     #[test]
     fn healthy_rule_passes_all_pillars() {
-        let r = fixture("rule-ok", json!({"team": "sre"}), healthy_rule_data(), now());
+        let r = fixture(
+            "rule-ok",
+            json!({"team": "sre"}),
+            healthy_rule_data(),
+            now(),
+        );
         for pillar in [
             Pillar::Cost,
             Pillar::Security,

@@ -42,8 +42,7 @@ pub const REASON_RES_SINGLE_NODE: &str = "REDSHIFT_RES_SINGLE_NODE";
 pub const REASON_RES_NODE_COUNT_DATA_NOT_COLLECTED: &str =
     "REDSHIFT_RES_NODE_COUNT_DATA_NOT_COLLECTED";
 pub const REASON_RES_NO_AUTOMATED_SNAPSHOTS: &str = "REDSHIFT_RES_NO_AUTOMATED_SNAPSHOTS";
-pub const REASON_RES_SNAPSHOT_DATA_NOT_COLLECTED: &str =
-    "REDSHIFT_RES_SNAPSHOT_DATA_NOT_COLLECTED";
+pub const REASON_RES_SNAPSHOT_DATA_NOT_COLLECTED: &str = "REDSHIFT_RES_SNAPSHOT_DATA_NOT_COLLECTED";
 pub const REASON_RES_VERSION_UPGRADE_DISABLED: &str = "REDSHIFT_RES_VERSION_UPGRADE_DISABLED";
 pub const REASON_RES_CLUSTER_UNAVAILABLE: &str = "REDSHIFT_RES_CLUSTER_UNAVAILABLE";
 pub const REASON_SEC_PUBLICLY_ACCESSIBLE: &str = "REDSHIFT_SEC_PUBLICLY_ACCESSIBLE";
@@ -164,7 +163,11 @@ fn evaluate_cost(resource: &AwsResourceModel, findings: &mut Vec<InventoryFindin
     let status = data_str(&resource.resource_data, "cluster_status");
     let availability = data_str(&resource.resource_data, "cluster_availability_status");
     let paused = status.as_deref().map(str::to_ascii_lowercase).as_deref() == Some("paused")
-        || availability.as_deref().map(str::to_ascii_lowercase).as_deref() == Some("paused");
+        || availability
+            .as_deref()
+            .map(str::to_ascii_lowercase)
+            .as_deref()
+            == Some("paused");
     if paused {
         findings.push(InventoryFinding {
             resource_id: resource.resource_id.clone(),
@@ -310,18 +313,15 @@ fn evaluate_security(resource: &AwsResourceModel, findings: &mut Vec<InventoryFi
                 pillar: Pillar::Security,
                 reason_code: REASON_SEC_NOT_ENCRYPTED.to_string(),
                 severity: Severity::High,
-                message: format!(
-                    "Cluster {} is not encrypted at rest",
-                    resource.resource_id
-                ),
+                message: format!("Cluster {} is not encrypted at rest", resource.resource_id),
                 evidence: json!({ "encrypted": false }),
             });
         }
         Some(true) => {
             // Encrypted but no KMS key id recorded means the AWS-owned default
             // key is in use; customer-managed keys give auditable control.
-            let kms_key_id = data_str(&resource.resource_data, "kms_key_id")
-                .filter(|k| !k.is_empty());
+            let kms_key_id =
+                data_str(&resource.resource_data, "kms_key_id").filter(|k| !k.is_empty());
             if kms_key_id.is_none() {
                 findings.push(InventoryFinding {
                     resource_id: resource.resource_id.clone(),
@@ -439,7 +439,11 @@ mod tests {
     }
 
     fn codes(report: &PillarReport) -> Vec<&str> {
-        report.findings.iter().map(|f| f.reason_code.as_str()).collect()
+        report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect()
     }
 
     #[test]
@@ -473,7 +477,10 @@ mod tests {
         data.as_object_mut().unwrap().remove("node_type");
         let r = fixture("warehouse-nogen", ok_tags(), data, now());
         let report = evaluate_redshift_fleet(&[r], Pillar::Cost, now());
-        assert_eq!(codes(&report), vec![REASON_COST_NODE_TYPE_DATA_NOT_COLLECTED]);
+        assert_eq!(
+            codes(&report),
+            vec![REASON_COST_NODE_TYPE_DATA_NOT_COLLECTED]
+        );
         assert!(matches!(report.findings[0].severity, Severity::Low));
     }
 
@@ -509,7 +516,10 @@ mod tests {
         data.as_object_mut().unwrap().remove("number_of_nodes");
         let r = fixture("warehouse-nocount", ok_tags(), data, now());
         let report = evaluate_redshift_fleet(&[r], Pillar::Resilience, now());
-        assert_eq!(codes(&report), vec![REASON_RES_NODE_COUNT_DATA_NOT_COLLECTED]);
+        assert_eq!(
+            codes(&report),
+            vec![REASON_RES_NODE_COUNT_DATA_NOT_COLLECTED]
+        );
     }
 
     #[test]
@@ -556,7 +566,11 @@ mod tests {
         paused["cluster_availability_status"] = json!("Paused");
         let r2 = fixture("warehouse-paused", ok_tags(), paused, now());
         let report = evaluate_redshift_fleet(&[r2], Pillar::Resilience, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -587,7 +601,10 @@ mod tests {
         data.as_object_mut().unwrap().remove("kms_key_id");
         let r = fixture("warehouse-encgap", ok_tags(), data, now());
         let report = evaluate_redshift_fleet(&[r], Pillar::Security, now());
-        assert_eq!(codes(&report), vec![REASON_SEC_ENCRYPTION_DATA_NOT_COLLECTED]);
+        assert_eq!(
+            codes(&report),
+            vec![REASON_SEC_ENCRYPTION_DATA_NOT_COLLECTED]
+        );
     }
 
     #[test]
@@ -606,7 +623,10 @@ mod tests {
         data["enhanced_vpc_routing"] = json!(false);
         let r = fixture("warehouse-novpc", ok_tags(), data, now());
         let report = evaluate_redshift_fleet(&[r], Pillar::Security, now());
-        assert_eq!(codes(&report), vec![REASON_SEC_ENHANCED_VPC_ROUTING_DISABLED]);
+        assert_eq!(
+            codes(&report),
+            vec![REASON_SEC_ENHANCED_VPC_ROUTING_DISABLED]
+        );
     }
 
     #[test]

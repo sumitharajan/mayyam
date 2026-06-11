@@ -41,10 +41,7 @@ impl AuroraControlPlane {
             &aws_account_dto.account_id, sync_id
         );
 
-        let client = self
-            .aws_service
-            .create_rds_client(aws_account_dto)
-            .await?;
+        let client = self.aws_service.create_rds_client(aws_account_dto).await?;
         let mut resources: Vec<AwsResourceModel> = Vec::new();
         let mut marker: Option<String> = None;
 
@@ -57,9 +54,7 @@ impl AuroraControlPlane {
                 .values("aurora-postgresql")
                 .build();
 
-            let mut request = client
-                .describe_db_clusters()
-                .filters(engine_filter);
+            let mut request = client.describe_db_clusters().filters(engine_filter);
             if let Some(m) = marker {
                 request = request.marker(m);
             }
@@ -70,10 +65,7 @@ impl AuroraControlPlane {
             })?;
 
             for cluster in response.db_clusters() {
-                let cluster_id = cluster
-                    .db_cluster_identifier()
-                    .unwrap_or("")
-                    .to_string();
+                let cluster_id = cluster.db_cluster_identifier().unwrap_or("").to_string();
                 if cluster_id.is_empty() {
                     continue;
                 }
@@ -95,10 +87,7 @@ impl AuroraControlPlane {
                     "deletion_protection".to_string(),
                     json!(cluster.deletion_protection().unwrap_or(false)),
                 );
-                resource_data.insert(
-                    "multi_az".to_string(),
-                    json!(cluster.multi_az()),
-                );
+                resource_data.insert("multi_az".to_string(), json!(cluster.multi_az()));
                 if let Some(retention) = cluster.backup_retention_period() {
                     resource_data.insert("backup_retention_period".to_string(), json!(retention));
                 }
@@ -123,11 +112,14 @@ impl AuroraControlPlane {
                     json!(cluster.db_cluster_members().len()),
                 );
                 if let Some(backup_window) = cluster.preferred_backup_window() {
-                    resource_data.insert("preferred_backup_window".to_string(), json!(backup_window));
+                    resource_data
+                        .insert("preferred_backup_window".to_string(), json!(backup_window));
                 }
                 if let Some(maint_window) = cluster.preferred_maintenance_window() {
-                    resource_data
-                        .insert("preferred_maintenance_window".to_string(), json!(maint_window));
+                    resource_data.insert(
+                        "preferred_maintenance_window".to_string(),
+                        json!(maint_window),
+                    );
                 }
                 let azs = cluster.availability_zones();
                 if !azs.is_empty() {
@@ -145,10 +137,8 @@ impl AuroraControlPlane {
                 }
                 if let Some(ca) = cluster.certificate_details() {
                     if let Some(exp) = ca.valid_till() {
-                        resource_data.insert(
-                            "certificate_valid_till".to_string(),
-                            json!(exp.to_string()),
-                        );
+                        resource_data
+                            .insert("certificate_valid_till".to_string(), json!(exp.to_string()));
                     }
                 }
 

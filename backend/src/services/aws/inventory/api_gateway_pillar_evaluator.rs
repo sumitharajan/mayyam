@@ -346,10 +346,20 @@ mod tests {
 
     #[test]
     fn cost_flags_untagged_rest_api() {
-        let r = fixture("ApiGatewayRestApi", "abc123", json!({}), healthy_rest_api_data(), now());
+        let r = fixture(
+            "ApiGatewayRestApi",
+            "abc123",
+            json!({}),
+            healthy_rest_api_data(),
+            now(),
+        );
         let report = evaluate_api_gateway_fleet(&[r], Pillar::Cost, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_COST_NO_TAGS]
         );
     }
@@ -359,10 +369,20 @@ mod tests {
         let mut data = healthy_stage_data();
         data["cache_cluster_enabled"] = json!(true);
         data["cache_cluster_size"] = json!("6.1");
-        let r = fixture("ApiGatewayStage", "abc123/prod", json!({"team": "api"}), data, now());
+        let r = fixture(
+            "ApiGatewayStage",
+            "abc123/prod",
+            json!({"team": "api"}),
+            data,
+            now(),
+        );
         let report = evaluate_api_gateway_fleet(&[r], Pillar::Cost, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_COST_CACHE_CLUSTER_ENABLED]
         );
     }
@@ -372,9 +392,19 @@ mod tests {
         let mut data = healthy_method_data();
         data["authorization_type"] = json!("NONE");
         data["api_key_required"] = json!(false);
-        let r = fixture("ApiGatewayMethod", "abc123/res1/GET/GET", json!({"team": "api"}), data, now());
+        let r = fixture(
+            "ApiGatewayMethod",
+            "abc123/res1/GET/GET",
+            json!({"team": "api"}),
+            data,
+            now(),
+        );
         let report = evaluate_api_gateway_fleet(&[r], Pillar::Security, now());
-        let codes: Vec<&str> = report.findings.iter().map(|f| f.reason_code.as_str()).collect();
+        let codes: Vec<&str> = report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect();
         assert!(codes.contains(&REASON_SEC_METHOD_AUTH_NONE));
         assert!(codes.contains(&REASON_SEC_OPEN_METHOD_NO_API_KEY));
         let auth_none = report
@@ -396,7 +426,11 @@ mod tests {
         );
         let report = evaluate_api_gateway_fleet(&[r], Pillar::Security, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_SEC_AUTH_DATA_NOT_COLLECTED]
         );
     }
@@ -405,10 +439,20 @@ mod tests {
     fn security_flags_stage_without_waf() {
         let mut data = healthy_stage_data();
         data["web_acl_arn"] = json!(null);
-        let r = fixture("ApiGatewayStage", "abc123/prod", json!({"team": "api"}), data, now());
+        let r = fixture(
+            "ApiGatewayStage",
+            "abc123/prod",
+            json!({"team": "api"}),
+            data,
+            now(),
+        );
         let report = evaluate_api_gateway_fleet(&[r], Pillar::Security, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_SEC_STAGE_NO_WAF]
         );
     }
@@ -418,9 +462,19 @@ mod tests {
         let mut data = healthy_stage_data();
         data["access_log_settings"] = json!(null);
         data["tracing_enabled"] = json!(false);
-        let r = fixture("ApiGatewayStage", "abc123/prod", json!({"team": "api"}), data, now());
+        let r = fixture(
+            "ApiGatewayStage",
+            "abc123/prod",
+            json!({"team": "api"}),
+            data,
+            now(),
+        );
         let report = evaluate_api_gateway_fleet(&[r], Pillar::Resilience, now());
-        let codes: Vec<&str> = report.findings.iter().map(|f| f.reason_code.as_str()).collect();
+        let codes: Vec<&str> = report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect();
         assert!(codes.contains(&REASON_RES_STAGE_ACCESS_LOGS_DISABLED));
         assert!(codes.contains(&REASON_RES_STAGE_TRACING_DISABLED));
     }
@@ -429,10 +483,20 @@ mod tests {
     fn resilience_reports_gap_when_endpoint_configuration_not_collected() {
         let mut data = healthy_rest_api_data();
         data["endpoint_configuration"] = json!(null);
-        let r = fixture("ApiGatewayRestApi", "abc123", json!({"team": "api"}), data, now());
+        let r = fixture(
+            "ApiGatewayRestApi",
+            "abc123",
+            json!({"team": "api"}),
+            data,
+            now(),
+        );
         let report = evaluate_api_gateway_fleet(&[r], Pillar::Resilience, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_RES_ENDPOINT_DATA_NOT_COLLECTED]
         );
     }

@@ -41,10 +41,7 @@ impl MskControlPlane {
             &aws_account_dto.account_id, sync_id
         );
 
-        let client = self
-            .aws_service
-            .create_msk_client(aws_account_dto)
-            .await?;
+        let client = self.aws_service.create_msk_client(aws_account_dto).await?;
         let mut resources: Vec<AwsResourceModel> = Vec::new();
         let mut next_token: Option<String> = None;
 
@@ -83,15 +80,13 @@ impl MskControlPlane {
                     // kafka version via current_broker_software_info
                     if let Some(sw) = provisioned.current_broker_software_info() {
                         if let Some(kafka_version) = sw.kafka_version() {
-                            resource_data
-                                .insert("kafka_version".to_string(), json!(kafka_version));
+                            resource_data.insert("kafka_version".to_string(), json!(kafka_version));
                         }
                     }
                     // broker node group info for instance type
                     if let Some(broker_info) = provisioned.broker_node_group_info() {
                         if let Some(instance_type) = broker_info.instance_type() {
-                            resource_data
-                                .insert("instance_type".to_string(), json!(instance_type));
+                            resource_data.insert("instance_type".to_string(), json!(instance_type));
                         }
                         if let Some(storage) = broker_info
                             .storage_info()
@@ -135,8 +130,7 @@ impl MskControlPlane {
                             .and_then(|s| s.scram())
                             .and_then(|sc| sc.enabled())
                             .unwrap_or(false);
-                        resource_data
-                            .insert("sasl_scram_enabled".to_string(), json!(sasl_scram));
+                        resource_data.insert("sasl_scram_enabled".to_string(), json!(sasl_scram));
                         let sasl_iam = auth
                             .sasl()
                             .and_then(|s| s.iam())
@@ -149,8 +143,7 @@ impl MskControlPlane {
                             .unauthenticated()
                             .and_then(|u| u.enabled())
                             .unwrap_or(false);
-                        resource_data
-                            .insert("unauthenticated_enabled".to_string(), json!(unauth));
+                        resource_data.insert("unauthenticated_enabled".to_string(), json!(unauth));
                     }
                     if let Some(monitoring) = provisioned.enhanced_monitoring() {
                         resource_data.insert(
@@ -167,12 +160,9 @@ impl MskControlPlane {
                                 .unwrap_or(false);
                             resource_data
                                 .insert("cloudwatch_logs_enabled".to_string(), json!(cw_enabled));
-                            let s3_enabled = broker_logs
-                                .s3()
-                                .and_then(|s| s.enabled())
-                                .unwrap_or(false);
-                            resource_data
-                                .insert("s3_logs_enabled".to_string(), json!(s3_enabled));
+                            let s3_enabled =
+                                broker_logs.s3().and_then(|s| s.enabled()).unwrap_or(false);
+                            resource_data.insert("s3_logs_enabled".to_string(), json!(s3_enabled));
                         } else {
                             resource_data
                                 .insert("cloudwatch_logs_enabled".to_string(), json!(false));
@@ -189,8 +179,7 @@ impl MskControlPlane {
                                 .and_then(|s| s.iam())
                                 .and_then(|i| i.enabled())
                                 .unwrap_or(false);
-                            resource_data
-                                .insert("sasl_iam_enabled".to_string(), json!(sasl_iam));
+                            resource_data.insert("sasl_iam_enabled".to_string(), json!(sasl_iam));
                         }
                     }
                 } else {

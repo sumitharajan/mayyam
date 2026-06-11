@@ -243,7 +243,10 @@ mod tests {
             region: "us-east-1".to_string(),
             resource_type: RESOURCE_TYPE.to_string(),
             resource_id: resource_id.to_string(),
-            arn: format!("arn:aws:cloudtrail:us-east-1:123456789012:trail/{}", resource_id),
+            arn: format!(
+                "arn:aws:cloudtrail:us-east-1:123456789012:trail/{}",
+                resource_id
+            ),
             name: Some(resource_id.to_string()),
             tags,
             resource_data,
@@ -274,7 +277,11 @@ mod tests {
     }
 
     fn codes(report: &PillarReport) -> Vec<&str> {
-        report.findings.iter().map(|f| f.reason_code.as_str()).collect()
+        report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect()
     }
 
     #[test]

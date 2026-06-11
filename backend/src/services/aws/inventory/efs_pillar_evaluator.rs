@@ -166,7 +166,11 @@ fn evaluate_resilience(resource: &AwsResourceModel, findings: &mut Vec<Inventory
         });
     }
 
-    if let Some(state) = resource.resource_data.get("life_cycle_state").and_then(|v| v.as_str()) {
+    if let Some(state) = resource
+        .resource_data
+        .get("life_cycle_state")
+        .and_then(|v| v.as_str())
+    {
         if state != "available" {
             findings.push(InventoryFinding {
                 resource_id: resource.resource_id.clone(),
@@ -241,7 +245,11 @@ mod tests {
         data["size_in_bytes"] = json!({"value": 1000, "value_in_standard": 1000, "value_in_ia": 0});
         let r = fixture("fs-cold", json!({}), data, 1, now());
         let report = evaluate_efs_fleet(&[r], Pillar::Cost, now());
-        let codes: Vec<&str> = report.findings.iter().map(|f| f.reason_code.as_str()).collect();
+        let codes: Vec<&str> = report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect();
         assert!(codes.contains(&REASON_COST_TAG_DATA_NOT_COLLECTED));
         assert!(codes.contains(&REASON_COST_NO_IA_USAGE));
     }
@@ -250,7 +258,11 @@ mod tests {
     fn cost_passes_for_tagged_fs_with_ia_usage() {
         let r = fixture("fs-good", json!({"team": "data"}), healthy_data(), 1, now());
         let report = evaluate_efs_fleet(&[r], Pillar::Cost, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -277,7 +289,11 @@ mod tests {
             now(),
         );
         let report = evaluate_efs_fleet(&[r], Pillar::Resilience, now());
-        let codes: Vec<&str> = report.findings.iter().map(|f| f.reason_code.as_str()).collect();
+        let codes: Vec<&str> = report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect();
         assert!(codes.contains(&REASON_RES_NO_MOUNT_TARGETS));
         assert!(codes.contains(&REASON_RES_NOT_AVAILABLE));
     }
@@ -286,14 +302,27 @@ mod tests {
     fn resilience_passes_for_available_mounted_fs() {
         let r = fixture("fs-ok", json!({"owner": "data"}), healthy_data(), 1, now());
         let report = evaluate_efs_fleet(&[r], Pillar::Resilience, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
     fn stale_inventory_is_reported_as_failure_path() {
-        let r = fixture("fs-stale", json!({"owner": "data"}), healthy_data(), 48, now());
+        let r = fixture(
+            "fs-stale",
+            json!({"owner": "data"}),
+            healthy_data(),
+            48,
+            now(),
+        );
         let report = evaluate_efs_fleet(&[r], Pillar::Security, now());
         assert_eq!(report.stale_resources, 1);
-        assert!(report.findings.iter().any(|f| f.reason_code == REASON_INV_STALE_DATA));
+        assert!(report
+            .findings
+            .iter()
+            .any(|f| f.reason_code == REASON_INV_STALE_DATA));
     }
 }

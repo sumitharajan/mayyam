@@ -86,8 +86,14 @@ impl Severity {
 pub const DEFAULT_STALE_AFTER_HOURS: i64 = 24;
 
 /// Tag keys accepted as cost allocation ownership.
-pub const COST_ALLOCATION_TAG_KEYS: &[&str] =
-    &["owner", "team", "cost-center", "costcenter", "cost_center", "project"];
+pub const COST_ALLOCATION_TAG_KEYS: &[&str] = &[
+    "owner",
+    "team",
+    "cost-center",
+    "costcenter",
+    "cost_center",
+    "project",
+];
 /// Tag keys accepted as a routable owner.
 pub const OWNER_TAG_KEYS: &[&str] = &["owner", "team"];
 
@@ -170,10 +176,7 @@ pub fn tag_value(tags: &Value, key: &str) -> Option<String> {
             .find(|(k, _)| k.to_ascii_lowercase() == wanted)
             .and_then(|(_, v)| v.as_str().map(|s| s.to_string())),
         Value::Array(entries) => entries.iter().find_map(|entry| {
-            let k = entry
-                .get("Key")
-                .or_else(|| entry.get("key"))?
-                .as_str()?;
+            let k = entry.get("Key").or_else(|| entry.get("key"))?.as_str()?;
             if k.to_ascii_lowercase() == wanted {
                 entry
                     .get("Value")
@@ -200,7 +203,8 @@ mod tests {
     fn tag_value_supports_object_map_and_key_value_array_case_insensitively() {
         let map = json!({"Owner": "sre"});
         assert_eq!(tag_value(&map, "owner").as_deref(), Some("sre"));
-        let array = json!([{"Key": "Cost-Center", "Value": "cc-1"}, {"key": "team", "value": "db"}]);
+        let array =
+            json!([{"Key": "Cost-Center", "Value": "cc-1"}, {"key": "team", "value": "db"}]);
         assert_eq!(tag_value(&array, "cost-center").as_deref(), Some("cc-1"));
         assert_eq!(tag_value(&array, "TEAM").as_deref(), Some("db"));
         assert_eq!(tag_value(&array, "missing"), None);
@@ -220,7 +224,10 @@ mod tests {
         };
         assert_eq!(score_pillar(&[]), 100);
         assert_eq!(score_pillar(&[make(Severity::High)]), 85);
-        assert_eq!(score_pillar(&[make(Severity::Medium), make(Severity::Low)]), 90);
+        assert_eq!(
+            score_pillar(&[make(Severity::Medium), make(Severity::Low)]),
+            90
+        );
         let many: Vec<InventoryFinding> = (0..10).map(|_| make(Severity::High)).collect();
         assert_eq!(score_pillar(&many), 0);
     }

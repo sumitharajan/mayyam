@@ -93,9 +93,9 @@ fn evaluate_cost(resource: &AwsResourceModel, findings: &mut Vec<InventoryFindin
         .get("lifecycle_rules")
         .and_then(|v| v.as_array())
         .map(|rules| {
-            rules.iter().any(|rule| {
-                rule.get("status").and_then(|s| s.as_str()) == Some("Enabled")
-            })
+            rules
+                .iter()
+                .any(|rule| rule.get("status").and_then(|s| s.as_str()) == Some("Enabled"))
         })
         .unwrap_or(false);
     if !has_active_lifecycle_rule {
@@ -230,9 +230,19 @@ mod tests {
 
     #[test]
     fn cost_flags_missing_tags_and_missing_lifecycle_rules() {
-        let r = fixture("bucket-untagged", json!({}), json!({"versioning_enabled": false}), 1, now());
+        let r = fixture(
+            "bucket-untagged",
+            json!({}),
+            json!({"versioning_enabled": false}),
+            1,
+            now(),
+        );
         let report = evaluate_s3_fleet(&[r], Pillar::Cost, now());
-        let codes: Vec<&str> = report.findings.iter().map(|f| f.reason_code.as_str()).collect();
+        let codes: Vec<&str> = report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect();
         assert!(codes.contains(&REASON_COST_MISSING_ALLOCATION_TAGS));
         assert!(codes.contains(&REASON_COST_NO_LIFECYCLE_RULES));
     }
@@ -241,19 +251,39 @@ mod tests {
     fn cost_treats_disabled_lifecycle_rule_as_missing() {
         let mut data = healthy_data();
         data["lifecycle_rules"] = json!([{"id": "off", "status": "Disabled"}]);
-        let r = fixture("bucket-disabled-rule", json!({"team": "data"}), data, 1, now());
+        let r = fixture(
+            "bucket-disabled-rule",
+            json!({"team": "data"}),
+            data,
+            1,
+            now(),
+        );
         let report = evaluate_s3_fleet(&[r], Pillar::Cost, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_COST_NO_LIFECYCLE_RULES]
         );
     }
 
     #[test]
     fn cost_passes_for_tagged_bucket_with_enabled_lifecycle_rule() {
-        let r = fixture("bucket-good", json!({"team": "data"}), healthy_data(), 1, now());
+        let r = fixture(
+            "bucket-good",
+            json!({"team": "data"}),
+            healthy_data(),
+            1,
+            now(),
+        );
         let report = evaluate_s3_fleet(&[r], Pillar::Cost, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
         assert_eq!(report.score, 100);
     }
 
@@ -278,9 +308,19 @@ mod tests {
 
     #[test]
     fn security_passes_when_posture_collected_and_owned() {
-        let r = fixture("bucket-ok", json!({"owner": "sre"}), healthy_data(), 1, now());
+        let r = fixture(
+            "bucket-ok",
+            json!({"owner": "sre"}),
+            healthy_data(),
+            1,
+            now(),
+        );
         let report = evaluate_s3_fleet(&[r], Pillar::Security, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -294,16 +334,29 @@ mod tests {
         );
         let report = evaluate_s3_fleet(&[r], Pillar::Resilience, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_RES_VERSIONING_DISABLED]
         );
     }
 
     #[test]
     fn stale_inventory_is_reported_as_failure_path() {
-        let r = fixture("bucket-stale", json!({"owner": "sre", "project": "mayyam"}), healthy_data(), 48, now());
+        let r = fixture(
+            "bucket-stale",
+            json!({"owner": "sre", "project": "mayyam"}),
+            healthy_data(),
+            48,
+            now(),
+        );
         let report = evaluate_s3_fleet(&[r], Pillar::Resilience, now());
         assert_eq!(report.stale_resources, 1);
-        assert!(report.findings.iter().any(|f| f.reason_code == REASON_INV_STALE_DATA));
+        assert!(report
+            .findings
+            .iter()
+            .any(|f| f.reason_code == REASON_INV_STALE_DATA));
     }
 }

@@ -41,7 +41,10 @@ impl AthenaControlPlane {
             &aws_account_dto.account_id, sync_id
         );
 
-        let client = self.aws_service.create_athena_client(aws_account_dto).await?;
+        let client = self
+            .aws_service
+            .create_athena_client(aws_account_dto)
+            .await?;
         let mut resources: Vec<AwsResourceModel> = Vec::new();
 
         let mut next_token: Option<String> = None;
@@ -105,26 +108,21 @@ impl AthenaControlPlane {
                     Ok(detail) => {
                         if let Some(work_group) = detail.work_group() {
                             if let Some(state) = work_group.state() {
-                                resource_data
-                                    .insert("state".to_string(), json!(state.as_str()));
+                                resource_data.insert("state".to_string(), json!(state.as_str()));
                             }
                             if let Some(description) = work_group.description() {
-                                resource_data
-                                    .insert("description".to_string(), json!(description));
+                                resource_data.insert("description".to_string(), json!(description));
                             }
                             if let Some(creation_time) = work_group.creation_time() {
                                 let formatted = creation_time
                                     .fmt(aws_smithy_types::date_time::Format::DateTime)
                                     .unwrap_or_else(|_| format!("{:?}", creation_time));
-                                resource_data
-                                    .insert("creation_time".to_string(), json!(formatted));
+                                resource_data.insert("creation_time".to_string(), json!(formatted));
                             }
 
                             if let Some(config) = work_group.configuration() {
-                                resource_data.insert(
-                                    "configuration_collected".to_string(),
-                                    json!(true),
-                                );
+                                resource_data
+                                    .insert("configuration_collected".to_string(), json!(true));
 
                                 if let Some(enforce) = config.enforce_work_group_configuration() {
                                     resource_data.insert(
@@ -132,8 +130,7 @@ impl AthenaControlPlane {
                                         json!(enforce),
                                     );
                                 }
-                                if let Some(metrics) =
-                                    config.publish_cloud_watch_metrics_enabled()
+                                if let Some(metrics) = config.publish_cloud_watch_metrics_enabled()
                                 {
                                     resource_data.insert(
                                         "publish_cloud_watch_metrics_enabled".to_string(),
@@ -161,12 +158,10 @@ impl AthenaControlPlane {
                                     );
                                 }
                                 if let Some(role) = config.execution_role() {
-                                    resource_data
-                                        .insert("execution_role".to_string(), json!(role));
+                                    resource_data.insert("execution_role".to_string(), json!(role));
                                 }
                                 if let Some(engine_version) = config.engine_version() {
-                                    if let Some(selected) =
-                                        engine_version.selected_engine_version()
+                                    if let Some(selected) = engine_version.selected_engine_version()
                                     {
                                         resource_data.insert(
                                             "engine_version_selected".to_string(),
@@ -183,9 +178,7 @@ impl AthenaControlPlane {
                                     }
                                 }
                                 if let Some(result_config) = config.result_configuration() {
-                                    if let Some(output_location) =
-                                        result_config.output_location()
-                                    {
+                                    if let Some(output_location) = result_config.output_location() {
                                         resource_data.insert(
                                             "output_location".to_string(),
                                             json!(output_location),
@@ -238,7 +231,10 @@ impl AthenaControlPlane {
                         serde_json::Value::Object(tags_map)
                     }
                     Err(e) => {
-                        debug!("Failed to list tags for Athena workgroup {}: {}", wg_name, e);
+                        debug!(
+                            "Failed to list tags for Athena workgroup {}: {}",
+                            wg_name, e
+                        );
                         json!({})
                     }
                 };

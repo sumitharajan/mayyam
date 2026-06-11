@@ -35,8 +35,7 @@ const RESOURCE_TYPE: &str = "NatGateway";
 pub const REASON_COST_NO_TAGS: &str = "NATGATEWAY_COST_NO_TAGS";
 pub const REASON_RES_STATE_NOT_AVAILABLE: &str = "NATGATEWAY_RES_STATE_NOT_AVAILABLE";
 pub const REASON_RES_SINGLE_NAT_IN_VPC: &str = "NATGATEWAY_RES_SINGLE_NAT_IN_VPC";
-pub const REASON_SEC_POSTURE_DATA_NOT_COLLECTED: &str =
-    "NATGATEWAY_SEC_POSTURE_DATA_NOT_COLLECTED";
+pub const REASON_SEC_POSTURE_DATA_NOT_COLLECTED: &str = "NATGATEWAY_SEC_POSTURE_DATA_NOT_COLLECTED";
 pub const REASON_INV_STALE_DATA: &str = "NATGATEWAY_INV_STALE_DATA";
 
 /// Evaluate every NAT gateway in the fleet for one pillar. Rows whose
@@ -238,7 +237,11 @@ mod tests {
         );
         let report = evaluate_nat_gateway_fleet(&[r], Pillar::Cost, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_COST_NO_TAGS]
         );
     }
@@ -256,7 +259,11 @@ mod tests {
         let r = fixture("nat-failed", json!({"team": "net"}), data, now());
         let report = evaluate_nat_gateway_fleet(&[r, other], Pillar::Resilience, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_RES_STATE_NOT_AVAILABLE]
         );
         assert_eq!(report.findings[0].resource_id, "nat-failed");
@@ -272,7 +279,11 @@ mod tests {
         );
         let report = evaluate_nat_gateway_fleet(&[lone], Pillar::Resilience, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_RES_SINGLE_NAT_IN_VPC]
         );
         assert_eq!(report.findings[0].resource_id, "nat-lone");
@@ -310,7 +321,11 @@ mod tests {
         );
         let report = evaluate_nat_gateway_fleet(&[r], Pillar::Security, now());
         assert_eq!(
-            report.findings.iter().map(|f| f.reason_code.as_str()).collect::<Vec<_>>(),
+            report
+                .findings
+                .iter()
+                .map(|f| f.reason_code.as_str())
+                .collect::<Vec<_>>(),
             vec![REASON_SEC_POSTURE_DATA_NOT_COLLECTED]
         );
     }
@@ -334,7 +349,12 @@ mod tests {
 
     #[test]
     fn non_nat_gateway_rows_are_skipped() {
-        let mut r = fixture("igw-1", json!({}), json!({"internet_gateway_id": "igw-1"}), now());
+        let mut r = fixture(
+            "igw-1",
+            json!({}),
+            json!({"internet_gateway_id": "igw-1"}),
+            now(),
+        );
         r.resource_type = "InternetGateway".to_string();
         let report = evaluate_nat_gateway_fleet(&[r], Pillar::Cost, now());
         assert_eq!(report.resources_evaluated, 0);

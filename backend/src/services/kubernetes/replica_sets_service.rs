@@ -62,7 +62,8 @@ impl ReplicaSetsService {
             AppError::ExternalService(format!("Failed to get ReplicaSet details: {}", e))
         })?;
 
-        serde_json::to_value(&rs)
-            .map_err(|e| AppError::Internal(format!("Failed to serialize ReplicaSet details: {}", e)))
+        serde_json::to_value(&rs).map_err(|e| {
+            AppError::Internal(format!("Failed to serialize ReplicaSet details: {}", e))
+        })
     }
 }

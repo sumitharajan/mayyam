@@ -35,10 +35,8 @@ pub const RESOURCE_TYPE: &str = "CloudWatchMetric";
 
 // Reason codes are the stable contract for findings; never reuse or rename.
 pub const REASON_COST_CUSTOM_NAMESPACE_METRIC: &str = "CWMETRIC_COST_CUSTOM_NAMESPACE_METRIC";
-pub const REASON_COST_HIGH_DIMENSION_CARDINALITY: &str =
-    "CWMETRIC_COST_HIGH_DIMENSION_CARDINALITY";
-pub const REASON_SEC_IDENTITY_DATA_NOT_COLLECTED: &str =
-    "CWMETRIC_SEC_IDENTITY_DATA_NOT_COLLECTED";
+pub const REASON_COST_HIGH_DIMENSION_CARDINALITY: &str = "CWMETRIC_COST_HIGH_DIMENSION_CARDINALITY";
+pub const REASON_SEC_IDENTITY_DATA_NOT_COLLECTED: &str = "CWMETRIC_SEC_IDENTITY_DATA_NOT_COLLECTED";
 pub const REASON_RES_NO_DIMENSIONS: &str = "CWMETRIC_RES_NO_DIMENSIONS";
 pub const REASON_INV_STALE_DATA: &str = "CWMETRIC_INV_STALE_DATA";
 
@@ -173,8 +171,7 @@ fn evaluate_security(resource: &AwsResourceModel, findings: &mut Vec<InventoryFi
 fn evaluate_resilience(resource: &AwsResourceModel, findings: &mut Vec<InventoryFinding>) {
     // A dimensionless custom metric aggregates every emitter into one series,
     // so a single failing instance is invisible behind the fleet average.
-    if is_custom_namespace(&resource.resource_data)
-        && dimension_count(&resource.resource_data) == 0
+    if is_custom_namespace(&resource.resource_data) && dimension_count(&resource.resource_data) == 0
     {
         findings.push(InventoryFinding {
             resource_id: resource.resource_id.clone(),
@@ -197,11 +194,7 @@ mod tests {
     use chrono::Duration;
     use uuid::Uuid;
 
-    fn fixture(
-        resource_id: &str,
-        resource_data: Value,
-        now: DateTime<Utc>,
-    ) -> AwsResourceModel {
+    fn fixture(resource_id: &str, resource_data: Value, now: DateTime<Utc>) -> AwsResourceModel {
         let refreshed = now - Duration::hours(1);
         AwsResourceModel {
             id: Uuid::new_v4(),
@@ -248,7 +241,11 @@ mod tests {
     }
 
     fn codes(report: &PillarReport) -> Vec<&str> {
-        report.findings.iter().map(|f| f.reason_code.as_str()).collect()
+        report
+            .findings
+            .iter()
+            .map(|f| f.reason_code.as_str())
+            .collect()
     }
 
     #[test]
@@ -262,7 +259,11 @@ mod tests {
     fn cost_does_not_flag_aws_namespace_metric() {
         let r = fixture("AWS/EC2:CPUUtilization", aws_metric_data(), now());
         let report = evaluate_cloudwatch_metric_fleet(&[r], Pillar::Cost, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
         assert_eq!(report.score, 100);
     }
 
@@ -287,7 +288,11 @@ mod tests {
         data["DimensionCount"] = json!(10);
         let r = fixture("AWS/EC2:Wide", data, now());
         let report = evaluate_cloudwatch_metric_fleet(&[r], Pillar::Cost, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -302,7 +307,11 @@ mod tests {
     fn security_passes_fully_identified_metric() {
         let r = fixture("AWS/EC2:CPUUtilization", aws_metric_data(), now());
         let report = evaluate_cloudwatch_metric_fleet(&[r], Pillar::Security, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -322,7 +331,11 @@ mod tests {
         data["DimensionCount"] = json!(0);
         let r = fixture("AWS/S3:Flat", data, now());
         let report = evaluate_cloudwatch_metric_fleet(&[r], Pillar::Resilience, now());
-        assert!(report.findings.is_empty(), "unexpected: {:?}", report.findings);
+        assert!(
+            report.findings.is_empty(),
+            "unexpected: {:?}",
+            report.findings
+        );
     }
 
     #[test]
@@ -347,8 +360,7 @@ mod tests {
     fn healthy_aws_metric_passes_all_pillars() {
         let r = fixture("AWS/EC2:CPUUtilization", aws_metric_data(), now());
         for pillar in [Pillar::Cost, Pillar::Security, Pillar::Resilience] {
-            let report =
-                evaluate_cloudwatch_metric_fleet(std::slice::from_ref(&r), pillar, now());
+            let report = evaluate_cloudwatch_metric_fleet(std::slice::from_ref(&r), pillar, now());
             assert!(
                 report.findings.is_empty(),
                 "unexpected for {:?}: {:?}",

@@ -41,7 +41,10 @@ impl BackupControlPlane {
             &aws_account_dto.account_id, sync_id
         );
 
-        let client = self.aws_service.create_backup_client(aws_account_dto).await?;
+        let client = self
+            .aws_service
+            .create_backup_client(aws_account_dto)
+            .await?;
         let mut resources: Vec<AwsResourceModel> = Vec::new();
 
         let mut next_token: Option<String> = None;

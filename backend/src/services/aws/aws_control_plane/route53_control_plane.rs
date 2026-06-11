@@ -93,10 +93,7 @@ impl Route53ControlPlane {
 
             let response = request.send().await.map_err(|e| {
                 error!("Failed to list Route 53 hosted zones: {}", e);
-                AppError::ExternalService(format!(
-                    "Failed to list Route 53 hosted zones: {}",
-                    e
-                ))
+                AppError::ExternalService(format!("Failed to list Route 53 hosted zones: {}", e))
             })?;
 
             for zone in response.hosted_zones() {
@@ -145,10 +142,8 @@ impl Route53ControlPlane {
                         if let Some(tag_set) = tags_response.resource_tag_set() {
                             for tag in tag_set.tags() {
                                 if let Some(key) = tag.key() {
-                                    tags_map.insert(
-                                        key.to_string(),
-                                        json!(tag.value().unwrap_or("")),
-                                    );
+                                    tags_map
+                                        .insert(key.to_string(), json!(tag.value().unwrap_or("")));
                                 }
                             }
                         }
