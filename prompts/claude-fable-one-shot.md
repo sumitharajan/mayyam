@@ -58,8 +58,14 @@ SQLite checkpointing rules:
 
 Multi-agent rules:
 - If the environment supports sub-agents, use them. Spawn focused agents for backlog triage, Rust backend/TDD, React UI, API tests, roadmap/docs alignment, and independent verification.
-- Keep one coordinator responsible for final decisions, staging, commits, and progress ledger updates.
-- Give each sub-agent a narrow batch of rows and require evidence-backed output: files inspected, implementation done, tests run, failures, and next action.
+- Prefer 2-4 parallel lanes when safe: for example one backlog/selection lane, one or two implementation lanes on disjoint services/files, and one verifier/test lane.
+- Keep one coordinator responsible for batch selection, file-conflict checks, final decisions, staging, commits, and progress ledger updates.
+- Give each sub-agent a narrow batch of rows and require evidence-backed output: claimed feature IDs, files inspected, files changed, tests run, failures, commit readiness, and next action.
+- Every agent must claim feature IDs in SQLite before work begins.
+- Parallelize only independent slices: different services, different files, or analysis/test work that will not edit the same modules.
+- Do not let two agents edit the same Rust module, route, controller, React file, migration, or generated file at the same time.
+- Commits must be serialized by the coordinator. One committed, verified batch at a time.
+- If two lanes conflict, pause the lower-priority lane, write an event to SQLite, and have the coordinator requeue or merge deliberately.
 - Use a fresh-context verifier agent before committing substantial changes.
 - If sub-agents are not available, simulate the same structure sequentially: backlog triage pass, backend pass, frontend pass, test pass, verifier pass.
 
@@ -159,13 +165,16 @@ Use SQLite checkpointing:
 - Use WAL mode, atomic feature claims, append-only event records, roadmap input hashes, and commit SHAs as recovery anchors.
 - Do not checkpoint long prose or the full backlog into context. Use feature IDs, batches, statuses, test commands, commits, and exact next action.
 
-Use multiple agents if available:
+Use multiple agents in parallel when available and safe:
 - Backlog triage agent: reads roadmap docs, release plans, CSV rows, and picks the next batch.
 - Rust backend agent: implements backend domain/service/API work using TDD and DDD.
 - React UI agent: implements frontend work for selected slices.
 - Test agent: adds unit, API, integration, and UI tests.
 - Verifier agent: independently reviews changed files, tests, and claims before commit.
 - Coordinator: owns final decisions, staging, commits, and progress ledger updates.
+- Run 2-4 lanes in parallel only when the selected slices are independent and do not edit the same files.
+- Every lane must claim feature IDs in SQLite before work starts.
+- Serialize final integration, validation, and commits through the coordinator.
 
 If sub-agents are not available, simulate those roles sequentially with separate passes.
 

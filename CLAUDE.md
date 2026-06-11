@@ -29,6 +29,21 @@ When the task is to execute the Mayyam product roadmap, do not ask the user whic
 - Commit each completed, verified batch when the task definition requires commits.
 - Never claim the whole roadmap is complete unless every row has been processed and verified.
 
+## Parallel Batch Execution
+
+Speed matters, but parallelism must not corrupt the worktree.
+
+- Prefer 2-4 parallel lanes when the runtime supports sub-agents or background agents.
+- Use SQLite as the coordination source of truth. Every agent must atomically claim feature IDs before work begins.
+- Parallelize only independent slices: different services, different files, or analysis/test work that will not edit the same modules.
+- Do not let two agents edit the same Rust module, route, controller, React file, migration, or generated file at the same time.
+- Keep one coordinator responsible for batch selection, conflict checks, final integration, validation, staging, commits, and checkpoint updates.
+- Agents should return compact evidence: claimed feature IDs, files changed, tests run, failures, commit readiness, and exact next action.
+- Run expensive validations in parallel only when they do not compete for the same build lock or mutate shared output. Otherwise serialize validation.
+- Commits must be serialized. One committed, verified batch at a time.
+- If parallel lanes conflict, pause the lower-priority lane, write an event to SQLite, and let the coordinator decide whether to rebase, merge manually, or requeue.
+- If sub-agents are unavailable, simulate parallel roles sequentially but keep the same SQLite claim/checkpoint protocol.
+
 ## SQLite Checkpointing Protocol
 
 For roadmap one-shot execution, use SQLite checkpointing. This is preferred over long prose checkpoints because the backlog has tens of thousands of feature rows and may be processed by multiple agents.
