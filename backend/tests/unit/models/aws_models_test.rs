@@ -244,6 +244,7 @@ mod aws_resource_model_tests {
             "QuickSightAsset",
             // Migration & DR
             "DmsResource",
+            "MgnResource",
         ];
 
         for resource_type in valid_types {

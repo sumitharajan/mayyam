@@ -47,6 +47,7 @@ use aws_sdk_lakeformation::Client as LakeFormationClient;
 use aws_sdk_lambda::Client as LambdaClient;
 use aws_sdk_lightsail::Client as LightsailClient;
 use aws_sdk_macie2::Client as MacieClient;
+use aws_sdk_mgn::Client as MgnClient;
 use aws_sdk_mq::Client as AmazonMqClient;
 use aws_sdk_opensearch::Client as OpenSearchClient;
 use aws_sdk_organizations::Client as OrganizationsClient;
@@ -375,6 +376,14 @@ impl AwsClientFactory for AwsService {
     ) -> Result<CloudControlClient, AppError> {
         let config = self.get_aws_sdk_config(aws_account_dto).await?;
         Ok(CloudControlClient::new(&config))
+    }
+
+    async fn create_mgn_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<MgnClient, AppError> {
+        let config = self.get_aws_sdk_config(aws_account_dto).await?;
+        Ok(MgnClient::new(&config))
     }
 
     async fn create_cost_explorer_client(

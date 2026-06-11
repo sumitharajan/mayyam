@@ -188,6 +188,7 @@ aws-sdk-computeoptimizer = "1.22.0"
 aws-sdk-health = "1.22.0"
 aws-sdk-resiliencehub = "1.22.0"
 aws-sdk-cloudcontrol = "1.22.0"
+aws-sdk-mgn = "1.22.0"
 
 [dev-dependencies]
 mockall = "0.11"

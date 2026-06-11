@@ -173,6 +173,7 @@ pub enum AwsResourceType {
     QuickSightAsset,
     // Migration & DR Resources
     DmsResource,
+    MgnResource,
 }
 
 impl ToString for AwsResourceType {
@@ -302,6 +303,7 @@ impl ToString for AwsResourceType {
             AwsResourceType::QuickSightAsset => "QuickSightAsset".to_string(),
             // Migration & DR Resources
             AwsResourceType::DmsResource => "DmsResource".to_string(),
+            AwsResourceType::MgnResource => "MgnResource".to_string(),
         }
     }
 }
@@ -431,6 +433,7 @@ impl From<&str> for AwsResourceType {
             "QuickSightAsset" => AwsResourceType::QuickSightAsset,
             // Migration & DR Resources
             "DmsResource" => AwsResourceType::DmsResource,
+            "MgnResource" => AwsResourceType::MgnResource,
             _ => panic!("Unknown resource type: {}", s),
         }
     }

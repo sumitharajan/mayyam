@@ -209,6 +209,7 @@ async fn storage_and_database_pillar_reports_contract() {
         ("lightsail", "LightsailResource", 3),
         ("quicksight", "QuickSightAsset", 3),
         ("dms", "DmsResource", 3),
+        ("mgn", "MgnResource", 3),
         ("amazonmq", "AmazonMqBroker", 3),
         ("privatelink", "VpcEndpoint", 3),
         ("shield", "ShieldProtection", 3),

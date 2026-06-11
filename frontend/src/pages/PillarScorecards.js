@@ -95,6 +95,7 @@ const SERVICES = [
   { key: "lightsail", label: "Lightsail" },
   { key: "quicksight", label: "QuickSight" },
   { key: "dms", label: "DMS" },
+  { key: "mgn", label: "Application Migration" },
   { key: "amazonmq", label: "Amazon MQ" },
   { key: "privatelink", label: "PrivateLink" },
   { key: "shield", label: "Shield" },

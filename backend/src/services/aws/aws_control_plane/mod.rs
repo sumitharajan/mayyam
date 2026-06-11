@@ -96,4 +96,5 @@ pub mod firehose_control_plane;
 pub mod fsx_control_plane;
 pub mod lakeformation_control_plane;
 pub mod lightsail_control_plane;
+pub mod mgn_control_plane;
 pub mod timestream_control_plane;

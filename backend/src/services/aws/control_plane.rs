@@ -91,6 +91,7 @@ use crate::services::aws::aws_control_plane::lakeformation_control_plane::LakeFo
 use crate::services::aws::aws_control_plane::lightsail_control_plane::LightsailControlPlane;
 use crate::services::aws::aws_control_plane::macie_control_plane::MacieControlPlane;
 use crate::services::aws::aws_control_plane::memorydb_control_plane::MemoryDbControlPlane;
+use crate::services::aws::aws_control_plane::mgn_control_plane::MgnControlPlane;
 use crate::services::aws::aws_control_plane::msk_control_plane::MskControlPlane;
 use crate::services::aws::aws_control_plane::neptune_control_plane::NeptuneControlPlane;
 use crate::services::aws::aws_control_plane::organizations_control_plane::OrganizationsControlPlane;
@@ -828,6 +829,7 @@ impl AwsControlPlane {
                 AwsResourceType::QuickSightAsset.to_string(),
                 // Migration & DR
                 AwsResourceType::DmsResource.to_string(),
+                AwsResourceType::MgnResource.to_string(),
             ],
         };
 
@@ -1182,6 +1184,10 @@ impl AwsControlPlane {
                 // Migration & DR
                 "DmsResource" => {
                     let cp = DmsControlPlane::new(self.aws_service.clone());
+                    cp.sync_resources(aws_account_dto, request.sync_id).await
+                }
+                "MgnResource" => {
+                    let cp = MgnControlPlane::new(self.aws_service.clone());
                     cp.sync_resources(aws_account_dto, request.sync_id).await
                 }
                 _ => Ok(vec![]),

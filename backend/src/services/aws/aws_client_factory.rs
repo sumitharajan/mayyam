@@ -61,6 +61,7 @@ use aws_sdk_lambda::Client as LambdaClient;
 use aws_sdk_lightsail::Client as LightsailClient;
 use aws_sdk_macie2::Client as MacieClient;
 use aws_sdk_memorydb::Client as MemoryDbClient;
+use aws_sdk_mgn::Client as MgnClient;
 use aws_sdk_mq::Client as AmazonMqClient;
 use aws_sdk_opensearch::Client as OpenSearchClient;
 use aws_sdk_organizations::Client as OrganizationsClient;
@@ -103,6 +104,10 @@ pub trait AwsClientFactory {
         &self,
         aws_account_dto: &AwsAccountDto,
     ) -> Result<CloudControlClient, AppError>;
+    async fn create_mgn_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<MgnClient, AppError>;
     async fn create_cost_explorer_client(
         &self,
         aws_account_dto: &AwsAccountDto,

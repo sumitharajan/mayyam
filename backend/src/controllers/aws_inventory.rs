@@ -77,6 +77,7 @@ use crate::services::aws::inventory::lightsail_pillar_evaluator::evaluate_lights
 use crate::services::aws::inventory::load_balancer_pillar_evaluator::evaluate_load_balancer_fleet;
 use crate::services::aws::inventory::macie_pillar_evaluator::evaluate_macie_fleet;
 use crate::services::aws::inventory::memorydb_pillar_evaluator::evaluate_memorydb_fleet;
+use crate::services::aws::inventory::mgn_pillar_evaluator::evaluate_mgn_fleet;
 use crate::services::aws::inventory::msk_pillar_evaluator::evaluate_msk_fleet;
 use crate::services::aws::inventory::nat_gateway_pillar_evaluator::evaluate_nat_gateway_fleet;
 use crate::services::aws::inventory::neptune_pillar_evaluator::evaluate_neptune_fleet;
@@ -1483,6 +1484,24 @@ pub async fn get_dms_pillar_reports(
         query,
         AwsResourceType::DmsResource,
         evaluate_dms_fleet,
+    )
+    .await
+}
+
+pub async fn get_mgn_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!(
+        "Application Migration Service pillar report request: {:?}",
+        query
+    );
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::MgnResource,
+        evaluate_mgn_fleet,
     )
     .await
 }
