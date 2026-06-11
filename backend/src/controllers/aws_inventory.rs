@@ -31,61 +31,64 @@ use crate::services::aws::inventory::api_gateway_pillar_evaluator::evaluate_api_
 use crate::services::aws::inventory::apprunner_pillar_evaluator::evaluate_apprunner_fleet;
 use crate::services::aws::inventory::appsync_pillar_evaluator::evaluate_appsync_fleet;
 use crate::services::aws::inventory::athena_pillar_evaluator::evaluate_athena_fleet;
+use crate::services::aws::inventory::aurora_pillar_evaluator::evaluate_aurora_fleet;
 use crate::services::aws::inventory::autoscaling_pillar_evaluator::evaluate_autoscaling_fleet;
 use crate::services::aws::inventory::backup_pillar_evaluator::evaluate_backup_fleet;
 use crate::services::aws::inventory::batch_pillar_evaluator::evaluate_batch_fleet;
-use crate::services::aws::inventory::emr_pillar_evaluator::evaluate_emr_fleet;
-use crate::services::aws::inventory::globalaccelerator_pillar_evaluator::evaluate_globalaccelerator_fleet;
-use crate::services::aws::inventory::glue_pillar_evaluator::evaluate_glue_fleet;
-use crate::services::aws::inventory::redshift_pillar_evaluator::evaluate_redshift_fleet;
-use crate::services::aws::inventory::aurora_pillar_evaluator::evaluate_aurora_fleet;
-use crate::services::aws::inventory::documentdb_pillar_evaluator::evaluate_documentdb_fleet;
-use crate::services::aws::inventory::guardduty_pillar_evaluator::evaluate_guardduty_fleet;
-use crate::services::aws::inventory::memorydb_pillar_evaluator::evaluate_memorydb_fleet;
-use crate::services::aws::inventory::msk_pillar_evaluator::evaluate_msk_fleet;
-use crate::services::aws::inventory::neptune_pillar_evaluator::evaluate_neptune_fleet;
-use crate::services::aws::inventory::route53_pillar_evaluator::evaluate_route53_fleet;
-use crate::services::aws::inventory::secretsmanager_pillar_evaluator::evaluate_secretsmanager_fleet;
-use crate::services::aws::inventory::transitgateway_pillar_evaluator::evaluate_transitgateway_fleet;
-use crate::services::aws::inventory::ssm_pillar_evaluator::evaluate_ssm_fleet;
-use crate::services::aws::inventory::waf_pillar_evaluator::evaluate_waf_fleet;
 use crate::services::aws::inventory::cloudfront_pillar_evaluator::evaluate_cloudfront_fleet;
 use crate::services::aws::inventory::cloudtrail_pillar_evaluator::evaluate_cloudtrail_fleet;
 use crate::services::aws::inventory::cloudwatch_log_group_pillar_evaluator::evaluate_cloudwatch_log_group_fleet;
 use crate::services::aws::inventory::cloudwatch_metric_pillar_evaluator::evaluate_cloudwatch_metric_fleet;
 use crate::services::aws::inventory::cloudwatch_pillar_evaluator::evaluate_cloudwatch_fleet;
 use crate::services::aws::inventory::config_pillar_evaluator::evaluate_config_fleet;
-use crate::services::aws::inventory::eventbridge_pillar_evaluator::evaluate_eventbridge_fleet;
-use crate::services::aws::inventory::stepfunctions_pillar_evaluator::evaluate_stepfunctions_fleet;
+use crate::services::aws::inventory::datasync_pillar_evaluator::evaluate_datasync_fleet;
+use crate::services::aws::inventory::documentdb_pillar_evaluator::evaluate_documentdb_fleet;
 use crate::services::aws::inventory::dynamodb_pillar_evaluator::evaluate_dynamodb_fleet;
 use crate::services::aws::inventory::ebs_pillar_evaluator::evaluate_ebs_fleet;
 use crate::services::aws::inventory::ec2_pillar_evaluator::evaluate_ec2_fleet;
 use crate::services::aws::inventory::ecs_pillar_evaluator::evaluate_ecs_fleet;
-use crate::services::aws::inventory::eks_pillar_evaluator::evaluate_eks_fleet;
 use crate::services::aws::inventory::efs_pillar_evaluator::evaluate_efs_fleet;
+use crate::services::aws::inventory::eks_pillar_evaluator::evaluate_eks_fleet;
 use crate::services::aws::inventory::elasticache_pillar_evaluator::evaluate_elasticache_fleet;
+use crate::services::aws::inventory::elasticbeanstalk_pillar_evaluator::evaluate_elasticbeanstalk_fleet;
+use crate::services::aws::inventory::emr_pillar_evaluator::evaluate_emr_fleet;
+use crate::services::aws::inventory::eventbridge_pillar_evaluator::evaluate_eventbridge_fleet;
 use crate::services::aws::inventory::fargate_pillar_evaluator::evaluate_fargate_fleet;
+use crate::services::aws::inventory::fsx_pillar_evaluator::evaluate_fsx_fleet;
 use crate::services::aws::inventory::glacier_pillar_evaluator::evaluate_glacier_fleet;
+use crate::services::aws::inventory::globalaccelerator_pillar_evaluator::evaluate_globalaccelerator_fleet;
+use crate::services::aws::inventory::glue_pillar_evaluator::evaluate_glue_fleet;
+use crate::services::aws::inventory::guardduty_pillar_evaluator::evaluate_guardduty_fleet;
 use crate::services::aws::inventory::iam_pillar_evaluator::evaluate_iam_fleet;
+use crate::services::aws::inventory::internet_gateway_pillar_evaluator::evaluate_internet_gateway_fleet;
 use crate::services::aws::inventory::kinesis_pillar_evaluator::evaluate_kinesis_fleet;
 use crate::services::aws::inventory::kinesisanalytics_pillar_evaluator::evaluate_kinesisanalytics_fleet;
 use crate::services::aws::inventory::kms_pillar_evaluator::evaluate_kms_fleet;
-use crate::services::aws::inventory::internet_gateway_pillar_evaluator::evaluate_internet_gateway_fleet;
 use crate::services::aws::inventory::lambda_pillar_evaluator::evaluate_lambda_fleet;
-use crate::services::aws::inventory::nat_gateway_pillar_evaluator::evaluate_nat_gateway_fleet;
-use crate::services::aws::inventory::network_acl_pillar_evaluator::evaluate_network_acl_fleet;
-use crate::services::aws::inventory::route_table_pillar_evaluator::evaluate_route_table_fleet;
-use crate::services::aws::inventory::security_group_pillar_evaluator::evaluate_security_group_fleet;
-use crate::services::aws::inventory::subnet_pillar_evaluator::evaluate_subnet_fleet;
 use crate::services::aws::inventory::load_balancer_pillar_evaluator::evaluate_load_balancer_fleet;
+use crate::services::aws::inventory::memorydb_pillar_evaluator::evaluate_memorydb_fleet;
+use crate::services::aws::inventory::msk_pillar_evaluator::evaluate_msk_fleet;
+use crate::services::aws::inventory::nat_gateway_pillar_evaluator::evaluate_nat_gateway_fleet;
+use crate::services::aws::inventory::neptune_pillar_evaluator::evaluate_neptune_fleet;
+use crate::services::aws::inventory::network_acl_pillar_evaluator::evaluate_network_acl_fleet;
 use crate::services::aws::inventory::opensearch_pillar_evaluator::evaluate_opensearch_fleet;
 use crate::services::aws::inventory::rds_pillar_evaluator::evaluate_rds_fleet;
+use crate::services::aws::inventory::redshift_pillar_evaluator::evaluate_redshift_fleet;
+use crate::services::aws::inventory::route53_pillar_evaluator::evaluate_route53_fleet;
+use crate::services::aws::inventory::route_table_pillar_evaluator::evaluate_route_table_fleet;
 use crate::services::aws::inventory::s3_pillar_evaluator::evaluate_s3_fleet;
+use crate::services::aws::inventory::secretsmanager_pillar_evaluator::evaluate_secretsmanager_fleet;
+use crate::services::aws::inventory::security_group_pillar_evaluator::evaluate_security_group_fleet;
 use crate::services::aws::inventory::sns_pillar_evaluator::evaluate_sns_fleet;
 use crate::services::aws::inventory::sqs_pillar_evaluator::evaluate_sqs_fleet;
+use crate::services::aws::inventory::ssm_pillar_evaluator::evaluate_ssm_fleet;
+use crate::services::aws::inventory::stepfunctions_pillar_evaluator::evaluate_stepfunctions_fleet;
 use crate::services::aws::inventory::storagegateway_pillar_evaluator::evaluate_storagegateway_fleet;
+use crate::services::aws::inventory::subnet_pillar_evaluator::evaluate_subnet_fleet;
+use crate::services::aws::inventory::transitgateway_pillar_evaluator::evaluate_transitgateway_fleet;
 use crate::services::aws::inventory::types::{Pillar, DEFAULT_STALE_AFTER_HOURS};
 use crate::services::aws::inventory::vpc_pillar_evaluator::evaluate_vpc_fleet;
+use crate::services::aws::inventory::waf_pillar_evaluator::evaluate_waf_fleet;
 
 #[derive(Clone)]
 pub struct AwsInventoryController {
@@ -263,7 +266,13 @@ pub async fn get_ec2_pillar_reports(
 ) -> Result<HttpResponse, AppError> {
     let query = query.into_inner();
     debug!("EC2 pillar report request: {:?}", query);
-    pillar_reports(&controller, query, AwsResourceType::EC2Instance, evaluate_ec2_fleet).await
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::EC2Instance,
+        evaluate_ec2_fleet,
+    )
+    .await
 }
 
 pub async fn get_lambda_pillar_reports(
@@ -272,7 +281,13 @@ pub async fn get_lambda_pillar_reports(
 ) -> Result<HttpResponse, AppError> {
     let query = query.into_inner();
     debug!("Lambda pillar report request: {:?}", query);
-    pillar_reports(&controller, query, AwsResourceType::LambdaFunction, evaluate_lambda_fleet).await
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::LambdaFunction,
+        evaluate_lambda_fleet,
+    )
+    .await
 }
 
 pub async fn get_s3_pillar_reports(
@@ -281,7 +296,13 @@ pub async fn get_s3_pillar_reports(
 ) -> Result<HttpResponse, AppError> {
     let query = query.into_inner();
     debug!("S3 pillar report request: {:?}", query);
-    pillar_reports(&controller, query, AwsResourceType::S3Bucket, evaluate_s3_fleet).await
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::S3Bucket,
+        evaluate_s3_fleet,
+    )
+    .await
 }
 
 pub async fn get_rds_pillar_reports(
@@ -290,7 +311,13 @@ pub async fn get_rds_pillar_reports(
 ) -> Result<HttpResponse, AppError> {
     let query = query.into_inner();
     debug!("RDS pillar report request: {:?}", query);
-    pillar_reports(&controller, query, AwsResourceType::RdsInstance, evaluate_rds_fleet).await
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::RdsInstance,
+        evaluate_rds_fleet,
+    )
+    .await
 }
 
 pub async fn get_ebs_pillar_reports(
@@ -299,7 +326,13 @@ pub async fn get_ebs_pillar_reports(
 ) -> Result<HttpResponse, AppError> {
     let query = query.into_inner();
     debug!("EBS pillar report request: {:?}", query);
-    pillar_reports(&controller, query, AwsResourceType::EbsVolume, evaluate_ebs_fleet).await
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::EbsVolume,
+        evaluate_ebs_fleet,
+    )
+    .await
 }
 
 pub async fn get_efs_pillar_reports(
@@ -308,7 +341,13 @@ pub async fn get_efs_pillar_reports(
 ) -> Result<HttpResponse, AppError> {
     let query = query.into_inner();
     debug!("EFS pillar report request: {:?}", query);
-    pillar_reports(&controller, query, AwsResourceType::EfsFileSystem, evaluate_efs_fleet).await
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::EfsFileSystem,
+        evaluate_efs_fleet,
+    )
+    .await
 }
 
 /// ECS pillar reports span clusters and services, so this handler loads
@@ -356,7 +395,13 @@ pub async fn get_sqs_pillar_reports(
 ) -> Result<HttpResponse, AppError> {
     let query = query.into_inner();
     debug!("SQS pillar report request: {:?}", query);
-    pillar_reports(&controller, query, AwsResourceType::SqsQueue, evaluate_sqs_fleet).await
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::SqsQueue,
+        evaluate_sqs_fleet,
+    )
+    .await
 }
 
 pub async fn get_sns_pillar_reports(
@@ -365,7 +410,13 @@ pub async fn get_sns_pillar_reports(
 ) -> Result<HttpResponse, AppError> {
     let query = query.into_inner();
     debug!("SNS pillar report request: {:?}", query);
-    pillar_reports(&controller, query, AwsResourceType::SnsTopics, evaluate_sns_fleet).await
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::SnsTopics,
+        evaluate_sns_fleet,
+    )
+    .await
 }
 
 pub async fn get_kinesis_pillar_reports(
@@ -374,7 +425,13 @@ pub async fn get_kinesis_pillar_reports(
 ) -> Result<HttpResponse, AppError> {
     let query = query.into_inner();
     debug!("Kinesis pillar report request: {:?}", query);
-    pillar_reports(&controller, query, AwsResourceType::KinesisStream, evaluate_kinesis_fleet).await
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::KinesisStream,
+        evaluate_kinesis_fleet,
+    )
+    .await
 }
 
 pub async fn get_elasticache_pillar_reports(
@@ -383,7 +440,13 @@ pub async fn get_elasticache_pillar_reports(
 ) -> Result<HttpResponse, AppError> {
     let query = query.into_inner();
     debug!("ElastiCache pillar report request: {:?}", query);
-    pillar_reports(&controller, query, AwsResourceType::ElasticacheCluster, evaluate_elasticache_fleet).await
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::ElasticacheCluster,
+        evaluate_elasticache_fleet,
+    )
+    .await
 }
 
 pub async fn get_opensearch_pillar_reports(
@@ -392,7 +455,13 @@ pub async fn get_opensearch_pillar_reports(
 ) -> Result<HttpResponse, AppError> {
     let query = query.into_inner();
     debug!("OpenSearch pillar report request: {:?}", query);
-    pillar_reports(&controller, query, AwsResourceType::OpenSearchDomain, evaluate_opensearch_fleet).await
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::OpenSearchDomain,
+        evaluate_opensearch_fleet,
+    )
+    .await
 }
 
 pub async fn get_vpc_pillar_reports(
@@ -410,7 +479,13 @@ pub async fn get_dynamodb_pillar_reports(
 ) -> Result<HttpResponse, AppError> {
     let query = query.into_inner();
     debug!("DynamoDB pillar report request: {:?}", query);
-    pillar_reports(&controller, query, AwsResourceType::DynamoDbTable, evaluate_dynamodb_fleet).await
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::DynamoDbTable,
+        evaluate_dynamodb_fleet,
+    )
+    .await
 }
 
 pub async fn get_eks_pillar_reports(
@@ -419,7 +494,13 @@ pub async fn get_eks_pillar_reports(
 ) -> Result<HttpResponse, AppError> {
     let query = query.into_inner();
     debug!("EKS pillar report request: {:?}", query);
-    pillar_reports(&controller, query, AwsResourceType::EksCluster, evaluate_eks_fleet).await
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::EksCluster,
+        evaluate_eks_fleet,
+    )
+    .await
 }
 
 pub async fn get_iam_pillar_reports(
@@ -467,7 +548,11 @@ pub async fn get_elb_pillar_reports(
     multi_type_pillar_reports(
         &controller,
         query,
-        &[AwsResourceType::Alb, AwsResourceType::Nlb, AwsResourceType::Elb],
+        &[
+            AwsResourceType::Alb,
+            AwsResourceType::Nlb,
+            AwsResourceType::Elb,
+        ],
         "AlbNlbAndElb",
         evaluate_load_balancer_fleet,
     )
@@ -519,7 +604,13 @@ pub async fn get_appsync_pillar_reports(
 ) -> Result<HttpResponse, AppError> {
     let query = query.into_inner();
     debug!("AppSync pillar report request: {:?}", query);
-    pillar_reports(&controller, query, AwsResourceType::AppSyncApi, evaluate_appsync_fleet).await
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::AppSyncApi,
+        evaluate_appsync_fleet,
+    )
+    .await
 }
 
 pub async fn get_glacier_pillar_reports(
@@ -528,8 +619,13 @@ pub async fn get_glacier_pillar_reports(
 ) -> Result<HttpResponse, AppError> {
     let query = query.into_inner();
     debug!("Glacier pillar report request: {:?}", query);
-    pillar_reports(&controller, query, AwsResourceType::GlacierArchive, evaluate_glacier_fleet)
-        .await
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::GlacierArchive,
+        evaluate_glacier_fleet,
+    )
+    .await
 }
 
 pub async fn get_storagegateway_pillar_reports(
@@ -568,7 +664,13 @@ pub async fn get_subnet_pillar_reports(
 ) -> Result<HttpResponse, AppError> {
     let query = query.into_inner();
     debug!("Subnet pillar report request: {:?}", query);
-    pillar_reports(&controller, query, AwsResourceType::Subnet, evaluate_subnet_fleet).await
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::Subnet,
+        evaluate_subnet_fleet,
+    )
+    .await
 }
 
 pub async fn get_security_group_pillar_reports(
@@ -592,8 +694,13 @@ pub async fn get_nat_gateway_pillar_reports(
 ) -> Result<HttpResponse, AppError> {
     let query = query.into_inner();
     debug!("NAT gateway pillar report request: {:?}", query);
-    pillar_reports(&controller, query, AwsResourceType::NatGateway, evaluate_nat_gateway_fleet)
-        .await
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::NatGateway,
+        evaluate_nat_gateway_fleet,
+    )
+    .await
 }
 
 pub async fn get_internet_gateway_pillar_reports(
@@ -617,8 +724,13 @@ pub async fn get_route_table_pillar_reports(
 ) -> Result<HttpResponse, AppError> {
     let query = query.into_inner();
     debug!("Route table pillar report request: {:?}", query);
-    pillar_reports(&controller, query, AwsResourceType::RouteTable, evaluate_route_table_fleet)
-        .await
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::RouteTable,
+        evaluate_route_table_fleet,
+    )
+    .await
 }
 
 pub async fn get_network_acl_pillar_reports(
@@ -627,8 +739,13 @@ pub async fn get_network_acl_pillar_reports(
 ) -> Result<HttpResponse, AppError> {
     let query = query.into_inner();
     debug!("Network ACL pillar report request: {:?}", query);
-    pillar_reports(&controller, query, AwsResourceType::NetworkAcl, evaluate_network_acl_fleet)
-        .await
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::NetworkAcl,
+        evaluate_network_acl_fleet,
+    )
+    .await
 }
 
 pub async fn get_fargate_pillar_reports(
@@ -637,8 +754,13 @@ pub async fn get_fargate_pillar_reports(
 ) -> Result<HttpResponse, AppError> {
     let query = query.into_inner();
     debug!("Fargate pillar report request: {:?}", query);
-    pillar_reports(&controller, query, AwsResourceType::FargateProfile, evaluate_fargate_fleet)
-        .await
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::FargateProfile,
+        evaluate_fargate_fleet,
+    )
+    .await
 }
 
 pub async fn get_kms_pillar_reports(
@@ -647,7 +769,13 @@ pub async fn get_kms_pillar_reports(
 ) -> Result<HttpResponse, AppError> {
     let query = query.into_inner();
     debug!("KMS pillar report request: {:?}", query);
-    pillar_reports(&controller, query, AwsResourceType::KmsKey, evaluate_kms_fleet).await
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::KmsKey,
+        evaluate_kms_fleet,
+    )
+    .await
 }
 
 pub async fn get_acm_pillar_reports(
@@ -656,7 +784,13 @@ pub async fn get_acm_pillar_reports(
 ) -> Result<HttpResponse, AppError> {
     let query = query.into_inner();
     debug!("ACM pillar report request: {:?}", query);
-    pillar_reports(&controller, query, AwsResourceType::AcmCertificate, evaluate_acm_fleet).await
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::AcmCertificate,
+        evaluate_acm_fleet,
+    )
+    .await
 }
 
 pub async fn get_cloudtrail_pillar_reports(
@@ -680,8 +814,13 @@ pub async fn get_config_pillar_reports(
 ) -> Result<HttpResponse, AppError> {
     let query = query.into_inner();
     debug!("AWS Config pillar report request: {:?}", query);
-    extended_pillar_reports(&controller, query, AwsResourceType::ConfigRule, evaluate_config_fleet)
-        .await
+    extended_pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::ConfigRule,
+        evaluate_config_fleet,
+    )
+    .await
 }
 
 pub async fn get_eventbridge_pillar_reports(
@@ -1040,6 +1179,51 @@ pub async fn get_memorydb_pillar_reports(
         query,
         AwsResourceType::MemoryDbCluster,
         evaluate_memorydb_fleet,
+    )
+    .await
+}
+
+pub async fn get_elasticbeanstalk_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Elastic Beanstalk pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::ElasticBeanstalkEnvironment,
+        evaluate_elasticbeanstalk_fleet,
+    )
+    .await
+}
+
+pub async fn get_datasync_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("DataSync pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::DataSyncTask,
+        evaluate_datasync_fleet,
+    )
+    .await
+}
+
+pub async fn get_fsx_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("FSx pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::FsxFileSystem,
+        evaluate_fsx_fleet,
     )
     .await
 }

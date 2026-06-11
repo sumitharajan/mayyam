@@ -227,7 +227,9 @@ mod aws_resource_model_tests {
             // Database Clusters, Streaming & Security Detection
             "AuroraCluster", "MskCluster", "GuardDutyDetector",
             // Document DB, Graph DB & In-Memory DB
-            "DocumentDbCluster", "NeptuneCluster", "MemoryDbCluster"
+            "DocumentDbCluster", "NeptuneCluster", "MemoryDbCluster",
+            // Platform, Data Movement & File Systems
+            "ElasticBeanstalkEnvironment", "DataSyncTask", "FsxFileSystem"
         ];
 
         for resource_type in valid_types {

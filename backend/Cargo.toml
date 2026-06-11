@@ -167,6 +167,9 @@ aws-sdk-secretsmanager = "1.22.0"
 aws-sdk-kafka = "1.22.0"
 aws-sdk-guardduty = "1.22.0"
 aws-sdk-memorydb = "1.22.0"
+aws-sdk-elasticbeanstalk = "1.22.0"
+aws-sdk-datasync = "1.22.0"
+aws-sdk-fsx = "1.22.0"
 
 [dev-dependencies]
 mockall = "0.11"

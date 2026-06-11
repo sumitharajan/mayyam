@@ -76,6 +76,9 @@ const SERVICES = [
   { key: "documentdb", label: "DocumentDB" },
   { key: "neptune", label: "Neptune" },
   { key: "memorydb", label: "MemoryDB" },
+  { key: "elasticbeanstalk", label: "Elastic Beanstalk" },
+  { key: "datasync", label: "DataSync" },
+  { key: "fsx", label: "FSx" },
 ];
 
 // Well-Architected pillar scorecards from deterministic inventory

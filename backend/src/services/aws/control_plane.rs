@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 use crate::errors::AppError;
 use crate::models::aws_account::AwsAccountDto;
 use crate::models::aws_resource::{AwsResourceDto, AwsResourceType, Model as AwsResourceModel};
@@ -29,62 +28,65 @@ use uuid::Uuid;
 use crate::services::aws::aws_control_plane::api_gateway_control_plane::ApiGatewayControlPlane;
 use crate::services::aws::aws_control_plane::cloudfront_control_plane::CloudFrontControlPlane;
 use crate::services::aws::aws_control_plane::dynamodb_control_plane::DynamoDbControlPlane;
-use crate::services::aws::aws_control_plane::ec2_control_plane::Ec2ControlPlane;
 use crate::services::aws::aws_control_plane::ebs_control_plane::EbsControlPlane;
+use crate::services::aws::aws_control_plane::ec2_control_plane::Ec2ControlPlane;
 use crate::services::aws::aws_control_plane::efs_control_plane::EfsControlPlane;
 use crate::services::aws::aws_control_plane::elasticache_control_plane::ElasticacheControlPlane;
 use crate::services::aws::aws_control_plane::iam_control_plane::IamControlPlane;
 use crate::services::aws::aws_control_plane::kinesis_control_plane::KinesisControlPlane;
 use crate::services::aws::aws_control_plane::lambda_control_plane::LambdaControlPlane;
 use crate::services::aws::aws_control_plane::load_balancer_control_plane::LoadBalancerControlPlane;
+use crate::services::aws::aws_control_plane::opensearch_control_plane::OpenSearchControlPlane;
 use crate::services::aws::aws_control_plane::rds_control_plane::RdsControlPlane;
 use crate::services::aws::aws_control_plane::s3_control_plane::S3ControlPlane;
 use crate::services::aws::aws_control_plane::sns_control_plane::SnsControlPlane;
 use crate::services::aws::aws_control_plane::sqs_control_plane::SqsControlPlane;
-use crate::services::aws::aws_control_plane::opensearch_control_plane::OpenSearchControlPlane;
 use crate::services::aws::aws_control_plane::vpc_control_plane::VpcControlPlane;
 // Batch 2: Security & Compliance
-use crate::services::aws::aws_control_plane::kms_control_plane::KmsControlPlane;
 use crate::services::aws::aws_control_plane::acm_control_plane::AcmControlPlane;
 use crate::services::aws::aws_control_plane::cloudtrail_control_plane::CloudTrailControlPlane;
 use crate::services::aws::aws_control_plane::config_control_plane::ConfigControlPlane;
+use crate::services::aws::aws_control_plane::kms_control_plane::KmsControlPlane;
 // Batch 3: Containers & Serverless
-use crate::services::aws::aws_control_plane::ecs_control_plane::EcsControlPlane;
-use crate::services::aws::aws_control_plane::eks_control_plane::EksControlPlane;
 use crate::services::aws::aws_control_plane::apprunner_control_plane::AppRunnerControlPlane;
 use crate::services::aws::aws_control_plane::batch_control_plane::BatchControlPlane;
+use crate::services::aws::aws_control_plane::ecs_control_plane::EcsControlPlane;
+use crate::services::aws::aws_control_plane::eks_control_plane::EksControlPlane;
 // Batch 4: Management & Monitoring
 use crate::services::aws::aws_control_plane::cloudwatch_control_plane::CloudWatchControlPlane;
 use crate::services::aws::aws_control_plane::ssm_control_plane::SsmControlPlane;
 // Batch 5: Application Integration
 use crate::services::aws::aws_control_plane::eventbridge_control_plane::EventBridgeControlPlane;
-use crate::services::aws::aws_control_plane::stepfunctions_control_plane::StepFunctionsControlPlane;
 use crate::services::aws::aws_control_plane::ses_control_plane::SesControlPlane;
+use crate::services::aws::aws_control_plane::stepfunctions_control_plane::StepFunctionsControlPlane;
 // Batch 6: Analytics & Big Data
-use crate::services::aws::aws_control_plane::redshift_control_plane::RedshiftControlPlane;
-use crate::services::aws::aws_control_plane::emr_control_plane::EmrControlPlane;
 use crate::services::aws::aws_control_plane::athena_control_plane::AthenaControlPlane;
+use crate::services::aws::aws_control_plane::emr_control_plane::EmrControlPlane;
 use crate::services::aws::aws_control_plane::glue_control_plane::GlueControlPlane;
+use crate::services::aws::aws_control_plane::redshift_control_plane::RedshiftControlPlane;
 // Batch 7: Edge & DR
-use crate::services::aws::aws_control_plane::waf_control_plane::WafControlPlane;
-use crate::services::aws::aws_control_plane::globalaccelerator_control_plane::GlobalAcceleratorControlPlane;
 use crate::services::aws::aws_control_plane::backup_control_plane::BackupControlPlane;
+use crate::services::aws::aws_control_plane::globalaccelerator_control_plane::GlobalAcceleratorControlPlane;
+use crate::services::aws::aws_control_plane::waf_control_plane::WafControlPlane;
 // Final Review Additions
-use crate::services::aws::aws_control_plane::glacier_control_plane::GlacierControlPlane;
-use crate::services::aws::aws_control_plane::autoscaling_control_plane::AutoScalingControlPlane;
-use crate::services::aws::aws_control_plane::route53_control_plane::Route53ControlPlane;
-use crate::services::aws::aws_control_plane::transitgateway_control_plane::TransitGatewayControlPlane;
-use crate::services::aws::aws_control_plane::secretsmanager_control_plane::SecretsManagerControlPlane;
-use crate::services::aws::aws_control_plane::aurora_control_plane::AuroraControlPlane;
-use crate::services::aws::aws_control_plane::msk_control_plane::MskControlPlane;
-use crate::services::aws::aws_control_plane::guardduty_control_plane::GuardDutyControlPlane;
-use crate::services::aws::aws_control_plane::documentdb_control_plane::DocumentDbControlPlane;
-use crate::services::aws::aws_control_plane::neptune_control_plane::NeptuneControlPlane;
-use crate::services::aws::aws_control_plane::memorydb_control_plane::MemoryDbControlPlane;
-use crate::services::aws::aws_control_plane::storagegateway_control_plane::StorageGatewayControlPlane;
-use crate::services::aws::aws_control_plane::connect_control_plane::ConnectControlPlane;
 use crate::services::aws::aws_control_plane::appsync_control_plane::AppSyncControlPlane;
+use crate::services::aws::aws_control_plane::aurora_control_plane::AuroraControlPlane;
+use crate::services::aws::aws_control_plane::autoscaling_control_plane::AutoScalingControlPlane;
+use crate::services::aws::aws_control_plane::connect_control_plane::ConnectControlPlane;
+use crate::services::aws::aws_control_plane::datasync_control_plane::DataSyncControlPlane;
+use crate::services::aws::aws_control_plane::documentdb_control_plane::DocumentDbControlPlane;
+use crate::services::aws::aws_control_plane::elasticbeanstalk_control_plane::ElasticBeanstalkControlPlane;
+use crate::services::aws::aws_control_plane::fsx_control_plane::FsxControlPlane;
+use crate::services::aws::aws_control_plane::glacier_control_plane::GlacierControlPlane;
+use crate::services::aws::aws_control_plane::guardduty_control_plane::GuardDutyControlPlane;
 use crate::services::aws::aws_control_plane::kinesisanalytics_control_plane::KinesisAnalyticsControlPlane;
+use crate::services::aws::aws_control_plane::memorydb_control_plane::MemoryDbControlPlane;
+use crate::services::aws::aws_control_plane::msk_control_plane::MskControlPlane;
+use crate::services::aws::aws_control_plane::neptune_control_plane::NeptuneControlPlane;
+use crate::services::aws::aws_control_plane::route53_control_plane::Route53ControlPlane;
+use crate::services::aws::aws_control_plane::secretsmanager_control_plane::SecretsManagerControlPlane;
+use crate::services::aws::aws_control_plane::storagegateway_control_plane::StorageGatewayControlPlane;
+use crate::services::aws::aws_control_plane::transitgateway_control_plane::TransitGatewayControlPlane;
 
 use crate::services::aws::aws_types::resource_sync::{
     ResourceSyncRequest, ResourceSyncResponse, ResourceTypeSyncSummary,
@@ -395,7 +397,10 @@ impl AwsControlPlane {
         let mut all_resources = Vec::new();
 
         // Sync CloudFront Distributions
-        match cloudfront.sync_distributions(aws_account_dto, sync_id).await {
+        match cloudfront
+            .sync_distributions(aws_account_dto, sync_id)
+            .await
+        {
             Ok(resources) => all_resources.extend(resources),
             Err(e) => error!("Failed to sync CloudFront distributions: {}", e),
         }
@@ -419,7 +424,8 @@ impl AwsControlPlane {
             &aws_account_dto.account_id
         );
         let sns = SnsControlPlane::new(self.aws_service.clone());
-        sns.sync_topics(&aws_account_dto.account_id, aws_account_dto).await
+        sns.sync_topics(&aws_account_dto.account_id, aws_account_dto)
+            .await
     }
 
     async fn sync_opensearch_resources(
@@ -432,7 +438,9 @@ impl AwsControlPlane {
             &aws_account_dto.account_id
         );
         let opensearch = OpenSearchControlPlane::new(self.aws_service.clone());
-        opensearch.sync_domains(&aws_account_dto.account_id, aws_account_dto).await
+        opensearch
+            .sync_domains(&aws_account_dto.account_id, aws_account_dto)
+            .await
     }
 
     async fn sync_api_gateway_resources(
@@ -774,6 +782,10 @@ impl AwsControlPlane {
                 AwsResourceType::DocumentDbCluster.to_string(),
                 AwsResourceType::NeptuneCluster.to_string(),
                 AwsResourceType::MemoryDbCluster.to_string(),
+                // Batch 13: Platform, Data Movement & File Systems
+                AwsResourceType::ElasticBeanstalkEnvironment.to_string(),
+                AwsResourceType::DataSyncTask.to_string(),
+                AwsResourceType::FsxFileSystem.to_string(),
             ],
         };
 
@@ -813,7 +825,8 @@ impl AwsControlPlane {
                     self.sync_iam_resources(aws_account_dto, request.sync_id)
                         .await
                 }
-                "Vpc" | "Subnet" | "SecurityGroup" | "InternetGateway" | "NatGateway" | "RouteTable" | "NetworkAcl" => {
+                "Vpc" | "Subnet" | "SecurityGroup" | "InternetGateway" | "NatGateway"
+                | "RouteTable" | "NetworkAcl" => {
                     self.sync_vpc_resources(aws_account_dto, request.sync_id)
                         .await
                 }
@@ -839,7 +852,8 @@ impl AwsControlPlane {
                     self.sync_cloudfront_resources(aws_account_dto, request.sync_id)
                         .await
                 }
-                "ApiGatewayRestApi" | "ApiGatewayStage" | "ApiGatewayResource" | "ApiGatewayMethod" => {
+                "ApiGatewayRestApi" | "ApiGatewayStage" | "ApiGatewayResource"
+                | "ApiGatewayMethod" => {
                     self.sync_api_gateway_resources(aws_account_dto, request.sync_id)
                         .await
                 }
@@ -887,7 +901,8 @@ impl AwsControlPlane {
                 }
                 "FargateProfile" => {
                     let cp = EksControlPlane::new(self.aws_service.clone());
-                    cp.sync_fargate_profiles(aws_account_dto, request.sync_id).await
+                    cp.sync_fargate_profiles(aws_account_dto, request.sync_id)
+                        .await
                 }
                 "AppRunnerService" => {
                     let cp = AppRunnerControlPlane::new(self.aws_service.clone());
@@ -917,7 +932,8 @@ impl AwsControlPlane {
                 }
                 "StepFunction" => {
                     let cp = StepFunctionsControlPlane::new(self.aws_service.clone());
-                    cp.sync_state_machines(aws_account_dto, request.sync_id).await
+                    cp.sync_state_machines(aws_account_dto, request.sync_id)
+                        .await
                 }
                 "SesIdentity" => {
                     let cp = SesControlPlane::new(self.aws_service.clone());
@@ -976,7 +992,8 @@ impl AwsControlPlane {
                 // Batch 8: Compute Scaling
                 "AutoScalingGroup" => {
                     let cp = AutoScalingControlPlane::new(self.aws_service.clone());
-                    cp.sync_auto_scaling_groups(aws_account_dto, request.sync_id).await
+                    cp.sync_auto_scaling_groups(aws_account_dto, request.sync_id)
+                        .await
                 }
                 // Batch 9: Observability Depth
                 "CloudWatchMetric" => {
@@ -994,7 +1011,8 @@ impl AwsControlPlane {
                 }
                 "TransitGateway" => {
                     let cp = TransitGatewayControlPlane::new(self.aws_service.clone());
-                    cp.sync_transit_gateways(aws_account_dto, request.sync_id).await
+                    cp.sync_transit_gateways(aws_account_dto, request.sync_id)
+                        .await
                 }
                 "SecretsManagerSecret" => {
                     let cp = SecretsManagerControlPlane::new(self.aws_service.clone());
@@ -1025,6 +1043,19 @@ impl AwsControlPlane {
                 "MemoryDbCluster" => {
                     let cp = MemoryDbControlPlane::new(self.aws_service.clone());
                     cp.sync_clusters(aws_account_dto, request.sync_id).await
+                }
+                // Batch 13: Platform, Data Movement & File Systems
+                "ElasticBeanstalkEnvironment" => {
+                    let cp = ElasticBeanstalkControlPlane::new(self.aws_service.clone());
+                    cp.sync_environments(aws_account_dto, request.sync_id).await
+                }
+                "DataSyncTask" => {
+                    let cp = DataSyncControlPlane::new(self.aws_service.clone());
+                    cp.sync_tasks(aws_account_dto, request.sync_id).await
+                }
+                "FsxFileSystem" => {
+                    let cp = FsxControlPlane::new(self.aws_service.clone());
+                    cp.sync_file_systems(aws_account_dto, request.sync_id).await
                 }
                 _ => Ok(vec![]),
             };

@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 use super::client_factory::AwsClientFactory;
 use crate::config::{AwsConfig, Config};
 use crate::errors::AppError;
@@ -21,22 +20,22 @@ use crate::repositories::aws_resource::AwsResourceRepository;
 use crate::repositories::cloud_resource::CloudResourceRepository;
 use async_trait::async_trait;
 use aws_config;
-use std::str::FromStr;
 use aws_config::sts::AssumeRoleProvider;
 use aws_config::BehaviorVersion;
 use aws_credential_types::provider::SharedCredentialsProvider;
 use aws_credential_types::Credentials as StaticCredentials;
+use aws_sdk_apigateway::Client as ApiGatewayClient;
+use aws_sdk_cloudfront::Client as CloudFrontClient;
 use aws_sdk_cloudwatch::Client as CloudWatchClient;
 use aws_sdk_cloudwatchlogs::Client as CloudWatchLogsClient;
 use aws_sdk_costexplorer::Client as CostExplorerClient;
-use aws_sdk_apigateway::Client as ApiGatewayClient;
-use aws_sdk_cloudfront::Client as CloudFrontClient;
-use aws_sdk_elasticloadbalancing::Client as ElbClient;
-use aws_sdk_elasticloadbalancingv2::Client as Elbv2Client;
 use aws_sdk_dynamodb::Client as DynamoDbClient;
 use aws_sdk_ec2::Client as Ec2Client;
 use aws_sdk_efs::Client as EfsClient;
 use aws_sdk_elasticache::Client as ElasticacheClient;
+use aws_sdk_elasticloadbalancing::Client as ElbClient;
+use aws_sdk_elasticloadbalancingv2::Client as Elbv2Client;
+use aws_sdk_iam::Client as IamClient;
 use aws_sdk_kinesis::Client as KinesisClient;
 use aws_sdk_lambda::Client as LambdaClient;
 use aws_sdk_opensearch::Client as OpenSearchClient;
@@ -45,9 +44,9 @@ use aws_sdk_s3::Client as S3Client;
 use aws_sdk_sns::Client as SnsClient;
 use aws_sdk_sqs::Client as SqsClient;
 use aws_sdk_sts::Client as StsClient;
-use aws_sdk_iam::Client as IamClient;
 use aws_types;
 use std::fs;
+use std::str::FromStr;
 use std::sync::Arc;
 use tracing::{debug, trace};
 
@@ -736,5 +735,29 @@ impl AwsClientFactory for AwsService {
     ) -> Result<aws_sdk_memorydb::Client, AppError> {
         let config = self.get_aws_sdk_config(aws_account_dto).await?;
         Ok(aws_sdk_memorydb::Client::new(&config))
+    }
+
+    async fn create_elasticbeanstalk_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<aws_sdk_elasticbeanstalk::Client, AppError> {
+        let config = self.get_aws_sdk_config(aws_account_dto).await?;
+        Ok(aws_sdk_elasticbeanstalk::Client::new(&config))
+    }
+
+    async fn create_datasync_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<aws_sdk_datasync::Client, AppError> {
+        let config = self.get_aws_sdk_config(aws_account_dto).await?;
+        Ok(aws_sdk_datasync::Client::new(&config))
+    }
+
+    async fn create_fsx_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<aws_sdk_fsx::Client, AppError> {
+        let config = self.get_aws_sdk_config(aws_account_dto).await?;
+        Ok(aws_sdk_fsx::Client::new(&config))
     }
 }

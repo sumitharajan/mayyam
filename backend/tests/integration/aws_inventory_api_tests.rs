@@ -190,6 +190,9 @@ async fn storage_and_database_pillar_reports_contract() {
         ("documentdb", "DocumentDbCluster", 3),
         ("neptune", "NeptuneCluster", 3),
         ("memorydb", "MemoryDbCluster", 3),
+        ("elasticbeanstalk", "ElasticBeanstalkEnvironment", 3),
+        ("datasync", "DataSyncTask", 3),
+        ("fsx", "FsxFileSystem", 3),
     ] {
         let resp = client
             .get(format!(

@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 use chrono::{DateTime, Utc};
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -147,6 +146,10 @@ pub enum AwsResourceType {
     NeptuneCluster,
     // In-Memory Database Resources
     MemoryDbCluster,
+    // Platform, Data Movement & File System Resources
+    ElasticBeanstalkEnvironment,
+    DataSyncTask,
+    FsxFileSystem,
 }
 
 impl ToString for AwsResourceType {
@@ -247,6 +250,12 @@ impl ToString for AwsResourceType {
             AwsResourceType::NeptuneCluster => "NeptuneCluster".to_string(),
             // In-Memory Database Resources
             AwsResourceType::MemoryDbCluster => "MemoryDbCluster".to_string(),
+            // Platform, Data Movement & File System Resources
+            AwsResourceType::ElasticBeanstalkEnvironment => {
+                "ElasticBeanstalkEnvironment".to_string()
+            }
+            AwsResourceType::DataSyncTask => "DataSyncTask".to_string(),
+            AwsResourceType::FsxFileSystem => "FsxFileSystem".to_string(),
         }
     }
 }
@@ -349,6 +358,10 @@ impl From<&str> for AwsResourceType {
             "NeptuneCluster" => AwsResourceType::NeptuneCluster,
             // In-Memory Database Resources
             "MemoryDbCluster" => AwsResourceType::MemoryDbCluster,
+            // Platform, Data Movement & File System Resources
+            "ElasticBeanstalkEnvironment" => AwsResourceType::ElasticBeanstalkEnvironment,
+            "DataSyncTask" => AwsResourceType::DataSyncTask,
+            "FsxFileSystem" => AwsResourceType::FsxFileSystem,
             _ => panic!("Unknown resource type: {}", s),
         }
     }

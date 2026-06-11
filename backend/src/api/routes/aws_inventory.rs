@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 use actix_web::{web, Scope};
 use std::sync::Arc;
 
@@ -21,63 +20,252 @@ use crate::controllers::aws_inventory::{self, AwsInventoryController};
 pub fn configure(controller: Arc<AwsInventoryController>) -> Scope {
     web::scope("/api/aws/inventory")
         .app_data(web::Data::new(controller))
-        .route("/ec2/pillars", web::get().to(aws_inventory::get_ec2_pillar_reports))
-        .route("/lambda/pillars", web::get().to(aws_inventory::get_lambda_pillar_reports))
-        .route("/s3/pillars", web::get().to(aws_inventory::get_s3_pillar_reports))
-        .route("/rds/pillars", web::get().to(aws_inventory::get_rds_pillar_reports))
-        .route("/ebs/pillars", web::get().to(aws_inventory::get_ebs_pillar_reports))
-        .route("/efs/pillars", web::get().to(aws_inventory::get_efs_pillar_reports))
-        .route("/ecs/pillars", web::get().to(aws_inventory::get_ecs_pillar_reports))
-        .route("/eks/pillars", web::get().to(aws_inventory::get_eks_pillar_reports))
-        .route("/dynamodb/pillars", web::get().to(aws_inventory::get_dynamodb_pillar_reports))
-        .route("/sqs/pillars", web::get().to(aws_inventory::get_sqs_pillar_reports))
-        .route("/sns/pillars", web::get().to(aws_inventory::get_sns_pillar_reports))
-        .route("/kinesis/pillars", web::get().to(aws_inventory::get_kinesis_pillar_reports))
-        .route("/elasticache/pillars", web::get().to(aws_inventory::get_elasticache_pillar_reports))
-        .route("/opensearch/pillars", web::get().to(aws_inventory::get_opensearch_pillar_reports))
-        .route("/vpc/pillars", web::get().to(aws_inventory::get_vpc_pillar_reports))
-        .route("/iam/pillars", web::get().to(aws_inventory::get_iam_pillar_reports))
-        .route("/cloudfront/pillars", web::get().to(aws_inventory::get_cloudfront_pillar_reports))
-        .route("/elb/pillars", web::get().to(aws_inventory::get_elb_pillar_reports))
-        .route("/apigateway/pillars", web::get().to(aws_inventory::get_api_gateway_pillar_reports))
-        .route("/cloudwatch/pillars", web::get().to(aws_inventory::get_cloudwatch_pillar_reports))
-        .route("/appsync/pillars", web::get().to(aws_inventory::get_appsync_pillar_reports))
-        .route("/glacier/pillars", web::get().to(aws_inventory::get_glacier_pillar_reports))
-        .route("/storagegateway/pillars", web::get().to(aws_inventory::get_storagegateway_pillar_reports))
-        .route("/kinesisanalytics/pillars", web::get().to(aws_inventory::get_kinesisanalytics_pillar_reports))
-        .route("/subnet/pillars", web::get().to(aws_inventory::get_subnet_pillar_reports))
-        .route("/securitygroup/pillars", web::get().to(aws_inventory::get_security_group_pillar_reports))
-        .route("/natgateway/pillars", web::get().to(aws_inventory::get_nat_gateway_pillar_reports))
-        .route("/internetgateway/pillars", web::get().to(aws_inventory::get_internet_gateway_pillar_reports))
-        .route("/routetable/pillars", web::get().to(aws_inventory::get_route_table_pillar_reports))
-        .route("/networkacl/pillars", web::get().to(aws_inventory::get_network_acl_pillar_reports))
-        .route("/fargate/pillars", web::get().to(aws_inventory::get_fargate_pillar_reports))
-        .route("/kms/pillars", web::get().to(aws_inventory::get_kms_pillar_reports))
-        .route("/acm/pillars", web::get().to(aws_inventory::get_acm_pillar_reports))
-        .route("/cloudtrail/pillars", web::get().to(aws_inventory::get_cloudtrail_pillar_reports))
-        .route("/config/pillars", web::get().to(aws_inventory::get_config_pillar_reports))
-        .route("/eventbridge/pillars", web::get().to(aws_inventory::get_eventbridge_pillar_reports))
-        .route("/stepfunctions/pillars", web::get().to(aws_inventory::get_stepfunctions_pillar_reports))
-        .route("/apprunner/pillars", web::get().to(aws_inventory::get_apprunner_pillar_reports))
-        .route("/athena/pillars", web::get().to(aws_inventory::get_athena_pillar_reports))
-        .route("/ssm/pillars", web::get().to(aws_inventory::get_ssm_pillar_reports))
-        .route("/backup/pillars", web::get().to(aws_inventory::get_backup_pillar_reports))
-        .route("/batch/pillars", web::get().to(aws_inventory::get_batch_pillar_reports))
-        .route("/emr/pillars", web::get().to(aws_inventory::get_emr_pillar_reports))
-        .route("/globalaccelerator/pillars", web::get().to(aws_inventory::get_globalaccelerator_pillar_reports))
-        .route("/glue/pillars", web::get().to(aws_inventory::get_glue_pillar_reports))
-        .route("/redshift/pillars", web::get().to(aws_inventory::get_redshift_pillar_reports))
-        .route("/waf/pillars", web::get().to(aws_inventory::get_waf_pillar_reports))
-        .route("/autoscaling/pillars", web::get().to(aws_inventory::get_autoscaling_pillar_reports))
-        .route("/cloudwatchmetrics/pillars", web::get().to(aws_inventory::get_cloudwatch_metric_pillar_reports))
-        .route("/cloudwatchlogs/pillars", web::get().to(aws_inventory::get_cloudwatch_log_group_pillar_reports))
-        .route("/route53/pillars", web::get().to(aws_inventory::get_route53_pillar_reports))
-        .route("/transitgateway/pillars", web::get().to(aws_inventory::get_transitgateway_pillar_reports))
-        .route("/secretsmanager/pillars", web::get().to(aws_inventory::get_secretsmanager_pillar_reports))
-        .route("/aurora/pillars", web::get().to(aws_inventory::get_aurora_pillar_reports))
-        .route("/msk/pillars", web::get().to(aws_inventory::get_msk_pillar_reports))
-        .route("/guardduty/pillars", web::get().to(aws_inventory::get_guardduty_pillar_reports))
-        .route("/documentdb/pillars", web::get().to(aws_inventory::get_documentdb_pillar_reports))
-        .route("/neptune/pillars", web::get().to(aws_inventory::get_neptune_pillar_reports))
-        .route("/memorydb/pillars", web::get().to(aws_inventory::get_memorydb_pillar_reports))
+        .route(
+            "/ec2/pillars",
+            web::get().to(aws_inventory::get_ec2_pillar_reports),
+        )
+        .route(
+            "/lambda/pillars",
+            web::get().to(aws_inventory::get_lambda_pillar_reports),
+        )
+        .route(
+            "/s3/pillars",
+            web::get().to(aws_inventory::get_s3_pillar_reports),
+        )
+        .route(
+            "/rds/pillars",
+            web::get().to(aws_inventory::get_rds_pillar_reports),
+        )
+        .route(
+            "/ebs/pillars",
+            web::get().to(aws_inventory::get_ebs_pillar_reports),
+        )
+        .route(
+            "/efs/pillars",
+            web::get().to(aws_inventory::get_efs_pillar_reports),
+        )
+        .route(
+            "/ecs/pillars",
+            web::get().to(aws_inventory::get_ecs_pillar_reports),
+        )
+        .route(
+            "/eks/pillars",
+            web::get().to(aws_inventory::get_eks_pillar_reports),
+        )
+        .route(
+            "/dynamodb/pillars",
+            web::get().to(aws_inventory::get_dynamodb_pillar_reports),
+        )
+        .route(
+            "/sqs/pillars",
+            web::get().to(aws_inventory::get_sqs_pillar_reports),
+        )
+        .route(
+            "/sns/pillars",
+            web::get().to(aws_inventory::get_sns_pillar_reports),
+        )
+        .route(
+            "/kinesis/pillars",
+            web::get().to(aws_inventory::get_kinesis_pillar_reports),
+        )
+        .route(
+            "/elasticache/pillars",
+            web::get().to(aws_inventory::get_elasticache_pillar_reports),
+        )
+        .route(
+            "/opensearch/pillars",
+            web::get().to(aws_inventory::get_opensearch_pillar_reports),
+        )
+        .route(
+            "/vpc/pillars",
+            web::get().to(aws_inventory::get_vpc_pillar_reports),
+        )
+        .route(
+            "/iam/pillars",
+            web::get().to(aws_inventory::get_iam_pillar_reports),
+        )
+        .route(
+            "/cloudfront/pillars",
+            web::get().to(aws_inventory::get_cloudfront_pillar_reports),
+        )
+        .route(
+            "/elb/pillars",
+            web::get().to(aws_inventory::get_elb_pillar_reports),
+        )
+        .route(
+            "/apigateway/pillars",
+            web::get().to(aws_inventory::get_api_gateway_pillar_reports),
+        )
+        .route(
+            "/cloudwatch/pillars",
+            web::get().to(aws_inventory::get_cloudwatch_pillar_reports),
+        )
+        .route(
+            "/appsync/pillars",
+            web::get().to(aws_inventory::get_appsync_pillar_reports),
+        )
+        .route(
+            "/glacier/pillars",
+            web::get().to(aws_inventory::get_glacier_pillar_reports),
+        )
+        .route(
+            "/storagegateway/pillars",
+            web::get().to(aws_inventory::get_storagegateway_pillar_reports),
+        )
+        .route(
+            "/kinesisanalytics/pillars",
+            web::get().to(aws_inventory::get_kinesisanalytics_pillar_reports),
+        )
+        .route(
+            "/subnet/pillars",
+            web::get().to(aws_inventory::get_subnet_pillar_reports),
+        )
+        .route(
+            "/securitygroup/pillars",
+            web::get().to(aws_inventory::get_security_group_pillar_reports),
+        )
+        .route(
+            "/natgateway/pillars",
+            web::get().to(aws_inventory::get_nat_gateway_pillar_reports),
+        )
+        .route(
+            "/internetgateway/pillars",
+            web::get().to(aws_inventory::get_internet_gateway_pillar_reports),
+        )
+        .route(
+            "/routetable/pillars",
+            web::get().to(aws_inventory::get_route_table_pillar_reports),
+        )
+        .route(
+            "/networkacl/pillars",
+            web::get().to(aws_inventory::get_network_acl_pillar_reports),
+        )
+        .route(
+            "/fargate/pillars",
+            web::get().to(aws_inventory::get_fargate_pillar_reports),
+        )
+        .route(
+            "/kms/pillars",
+            web::get().to(aws_inventory::get_kms_pillar_reports),
+        )
+        .route(
+            "/acm/pillars",
+            web::get().to(aws_inventory::get_acm_pillar_reports),
+        )
+        .route(
+            "/cloudtrail/pillars",
+            web::get().to(aws_inventory::get_cloudtrail_pillar_reports),
+        )
+        .route(
+            "/config/pillars",
+            web::get().to(aws_inventory::get_config_pillar_reports),
+        )
+        .route(
+            "/eventbridge/pillars",
+            web::get().to(aws_inventory::get_eventbridge_pillar_reports),
+        )
+        .route(
+            "/stepfunctions/pillars",
+            web::get().to(aws_inventory::get_stepfunctions_pillar_reports),
+        )
+        .route(
+            "/apprunner/pillars",
+            web::get().to(aws_inventory::get_apprunner_pillar_reports),
+        )
+        .route(
+            "/athena/pillars",
+            web::get().to(aws_inventory::get_athena_pillar_reports),
+        )
+        .route(
+            "/ssm/pillars",
+            web::get().to(aws_inventory::get_ssm_pillar_reports),
+        )
+        .route(
+            "/backup/pillars",
+            web::get().to(aws_inventory::get_backup_pillar_reports),
+        )
+        .route(
+            "/batch/pillars",
+            web::get().to(aws_inventory::get_batch_pillar_reports),
+        )
+        .route(
+            "/emr/pillars",
+            web::get().to(aws_inventory::get_emr_pillar_reports),
+        )
+        .route(
+            "/globalaccelerator/pillars",
+            web::get().to(aws_inventory::get_globalaccelerator_pillar_reports),
+        )
+        .route(
+            "/glue/pillars",
+            web::get().to(aws_inventory::get_glue_pillar_reports),
+        )
+        .route(
+            "/redshift/pillars",
+            web::get().to(aws_inventory::get_redshift_pillar_reports),
+        )
+        .route(
+            "/waf/pillars",
+            web::get().to(aws_inventory::get_waf_pillar_reports),
+        )
+        .route(
+            "/autoscaling/pillars",
+            web::get().to(aws_inventory::get_autoscaling_pillar_reports),
+        )
+        .route(
+            "/cloudwatchmetrics/pillars",
+            web::get().to(aws_inventory::get_cloudwatch_metric_pillar_reports),
+        )
+        .route(
+            "/cloudwatchlogs/pillars",
+            web::get().to(aws_inventory::get_cloudwatch_log_group_pillar_reports),
+        )
+        .route(
+            "/route53/pillars",
+            web::get().to(aws_inventory::get_route53_pillar_reports),
+        )
+        .route(
+            "/transitgateway/pillars",
+            web::get().to(aws_inventory::get_transitgateway_pillar_reports),
+        )
+        .route(
+            "/secretsmanager/pillars",
+            web::get().to(aws_inventory::get_secretsmanager_pillar_reports),
+        )
+        .route(
+            "/aurora/pillars",
+            web::get().to(aws_inventory::get_aurora_pillar_reports),
+        )
+        .route(
+            "/msk/pillars",
+            web::get().to(aws_inventory::get_msk_pillar_reports),
+        )
+        .route(
+            "/guardduty/pillars",
+            web::get().to(aws_inventory::get_guardduty_pillar_reports),
+        )
+        .route(
+            "/documentdb/pillars",
+            web::get().to(aws_inventory::get_documentdb_pillar_reports),
+        )
+        .route(
+            "/neptune/pillars",
+            web::get().to(aws_inventory::get_neptune_pillar_reports),
+        )
+        .route(
+            "/memorydb/pillars",
+            web::get().to(aws_inventory::get_memorydb_pillar_reports),
+        )
+        .route(
+            "/elasticbeanstalk/pillars",
+            web::get().to(aws_inventory::get_elasticbeanstalk_pillar_reports),
+        )
+        .route(
+            "/datasync/pillars",
+            web::get().to(aws_inventory::get_datasync_pillar_reports),
+        )
+        .route(
+            "/fsx/pillars",
+            web::get().to(aws_inventory::get_fsx_pillar_reports),
+        )
 }
