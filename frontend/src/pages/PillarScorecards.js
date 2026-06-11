@@ -32,6 +32,10 @@ const SERVICES = [
   { key: "elasticache", label: "ElastiCache" },
   { key: "opensearch", label: "OpenSearch" },
   { key: "vpc", label: "VPC" },
+  { key: "iam", label: "IAM" },
+  { key: "cloudfront", label: "CloudFront" },
+  { key: "elb", label: "ELB" },
+  { key: "apigateway", label: "API Gateway" },
 ];
 
 // Well-Architected pillar scorecards from deterministic inventory

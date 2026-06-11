@@ -36,4 +36,8 @@ pub fn configure(controller: Arc<AwsInventoryController>) -> Scope {
         .route("/elasticache/pillars", web::get().to(aws_inventory::get_elasticache_pillar_reports))
         .route("/opensearch/pillars", web::get().to(aws_inventory::get_opensearch_pillar_reports))
         .route("/vpc/pillars", web::get().to(aws_inventory::get_vpc_pillar_reports))
+        .route("/iam/pillars", web::get().to(aws_inventory::get_iam_pillar_reports))
+        .route("/cloudfront/pillars", web::get().to(aws_inventory::get_cloudfront_pillar_reports))
+        .route("/elb/pillars", web::get().to(aws_inventory::get_elb_pillar_reports))
+        .route("/apigateway/pillars", web::get().to(aws_inventory::get_api_gateway_pillar_reports))
 }

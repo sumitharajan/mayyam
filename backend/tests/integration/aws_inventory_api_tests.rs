@@ -146,6 +146,10 @@ async fn storage_and_database_pillar_reports_contract() {
         ("elasticache", "ElasticacheCluster"),
         ("opensearch", "OpenSearchDomain"),
         ("vpc", "Vpc"),
+        ("iam", "IamUserRolePolicyAndGroup"),
+        ("cloudfront", "CloudFrontDistribution"),
+        ("elb", "AlbNlbAndElb"),
+        ("apigateway", "ApiGatewayRestApiStageAndMethod"),
     ] {
         let resp = client
             .get(format!(

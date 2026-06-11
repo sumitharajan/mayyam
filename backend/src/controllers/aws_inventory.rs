@@ -26,6 +26,8 @@ use tracing::debug;
 use crate::errors::AppError;
 use crate::models::aws_resource::AwsResourceType;
 use crate::repositories::aws_resource::AwsResourceRepository;
+use crate::services::aws::inventory::api_gateway_pillar_evaluator::evaluate_api_gateway_fleet;
+use crate::services::aws::inventory::cloudfront_pillar_evaluator::evaluate_cloudfront_fleet;
 use crate::services::aws::inventory::dynamodb_pillar_evaluator::evaluate_dynamodb_fleet;
 use crate::services::aws::inventory::ebs_pillar_evaluator::evaluate_ebs_fleet;
 use crate::services::aws::inventory::ec2_pillar_evaluator::evaluate_ec2_fleet;
@@ -33,8 +35,10 @@ use crate::services::aws::inventory::ecs_pillar_evaluator::evaluate_ecs_fleet;
 use crate::services::aws::inventory::eks_pillar_evaluator::evaluate_eks_fleet;
 use crate::services::aws::inventory::efs_pillar_evaluator::evaluate_efs_fleet;
 use crate::services::aws::inventory::elasticache_pillar_evaluator::evaluate_elasticache_fleet;
+use crate::services::aws::inventory::iam_pillar_evaluator::evaluate_iam_fleet;
 use crate::services::aws::inventory::kinesis_pillar_evaluator::evaluate_kinesis_fleet;
 use crate::services::aws::inventory::lambda_pillar_evaluator::evaluate_lambda_fleet;
+use crate::services::aws::inventory::load_balancer_pillar_evaluator::evaluate_load_balancer_fleet;
 use crate::services::aws::inventory::opensearch_pillar_evaluator::evaluate_opensearch_fleet;
 use crate::services::aws::inventory::rds_pillar_evaluator::evaluate_rds_fleet;
 use crate::services::aws::inventory::s3_pillar_evaluator::evaluate_s3_fleet;
@@ -99,6 +103,50 @@ async fn pillar_reports(
     Ok(HttpResponse::Ok().json(json!({
         "account_id": query.account_id,
         "resource_type": resource_type.to_string(),
+        "evaluated_at": now,
+        "stale_after_hours": DEFAULT_STALE_AFTER_HOURS,
+        "resources_evaluated": resources.len(),
+        "oldest_refresh": oldest_refresh,
+        "reports": reports,
+    })))
+}
+
+/// Pillar reports that span several persisted resource types (e.g. IAM
+/// users/roles/policies/groups) load every type into one fleet slice and
+/// report under a combined resource_type label.
+async fn multi_type_pillar_reports(
+    controller: &AwsInventoryController,
+    query: Ec2PillarQuery,
+    resource_types: &[AwsResourceType],
+    combined_label: &str,
+    evaluate: impl Fn(
+        &[crate::models::aws_resource::Model],
+        Pillar,
+        chrono::DateTime<Utc>,
+    ) -> crate::services::aws::inventory::types::PillarReport,
+) -> Result<HttpResponse, AppError> {
+    let pillars = parse_pillars(&query.pillar)?;
+
+    let mut resources = Vec::new();
+    for resource_type in resource_types {
+        resources.extend(
+            controller
+                .aws_resource_repo
+                .find_by_account_and_type(&query.account_id, &resource_type.to_string())
+                .await?,
+        );
+    }
+
+    let now = Utc::now();
+    let reports: Vec<_> = pillars
+        .iter()
+        .map(|pillar| evaluate(&resources, *pillar, now))
+        .collect();
+    let oldest_refresh = resources.iter().map(|r| r.last_refreshed).min();
+
+    Ok(HttpResponse::Ok().json(json!({
+        "account_id": query.account_id,
+        "resource_type": combined_label,
         "evaluated_at": now,
         "stale_after_hours": DEFAULT_STALE_AFTER_HOURS,
         "resources_evaluated": resources.len(),
@@ -270,4 +318,76 @@ pub async fn get_eks_pillar_reports(
     let query = query.into_inner();
     debug!("EKS pillar report request: {:?}", query);
     pillar_reports(&controller, query, AwsResourceType::EksCluster, evaluate_eks_fleet).await
+}
+
+pub async fn get_iam_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("IAM pillar report request: {:?}", query);
+    multi_type_pillar_reports(
+        &controller,
+        query,
+        &[
+            AwsResourceType::IamUser,
+            AwsResourceType::IamRole,
+            AwsResourceType::IamPolicy,
+            AwsResourceType::IamGroup,
+        ],
+        "IamUserRolePolicyAndGroup",
+        evaluate_iam_fleet,
+    )
+    .await
+}
+
+pub async fn get_cloudfront_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("CloudFront pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::CloudFrontDistribution,
+        evaluate_cloudfront_fleet,
+    )
+    .await
+}
+
+pub async fn get_elb_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("ELB pillar report request: {:?}", query);
+    multi_type_pillar_reports(
+        &controller,
+        query,
+        &[AwsResourceType::Alb, AwsResourceType::Nlb, AwsResourceType::Elb],
+        "AlbNlbAndElb",
+        evaluate_load_balancer_fleet,
+    )
+    .await
+}
+
+pub async fn get_api_gateway_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("API Gateway pillar report request: {:?}", query);
+    multi_type_pillar_reports(
+        &controller,
+        query,
+        &[
+            AwsResourceType::ApiGatewayRestApi,
+            AwsResourceType::ApiGatewayStage,
+            AwsResourceType::ApiGatewayMethod,
+        ],
+        "ApiGatewayRestApiStageAndMethod",
+        evaluate_api_gateway_fleet,
+    )
+    .await
 }

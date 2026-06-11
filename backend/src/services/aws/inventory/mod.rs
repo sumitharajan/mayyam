@@ -15,6 +15,8 @@
 // Deterministic inventory pillar evaluators. These run without an LLM,
 // emit reason-coded findings, and preserve the raw evidence they used.
 
+pub mod api_gateway_pillar_evaluator;
+pub mod cloudfront_pillar_evaluator;
 pub mod dynamodb_pillar_evaluator;
 pub mod ebs_pillar_evaluator;
 pub mod ec2_pillar_evaluator;
@@ -22,8 +24,10 @@ pub mod ecs_pillar_evaluator;
 pub mod eks_pillar_evaluator;
 pub mod efs_pillar_evaluator;
 pub mod elasticache_pillar_evaluator;
+pub mod iam_pillar_evaluator;
 pub mod kinesis_pillar_evaluator;
 pub mod lambda_pillar_evaluator;
+pub mod load_balancer_pillar_evaluator;
 pub mod opensearch_pillar_evaluator;
 pub mod rds_pillar_evaluator;
 pub mod s3_pillar_evaluator;
