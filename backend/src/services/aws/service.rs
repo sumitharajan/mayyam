@@ -28,6 +28,7 @@ use aws_sdk_apigateway::Client as ApiGatewayClient;
 use aws_sdk_cloudfront::Client as CloudFrontClient;
 use aws_sdk_cloudwatch::Client as CloudWatchClient;
 use aws_sdk_cloudwatchlogs::Client as CloudWatchLogsClient;
+use aws_sdk_computeoptimizer::Client as ComputeOptimizerClient;
 use aws_sdk_controltower::Client as ControlTowerClient;
 use aws_sdk_costexplorer::Client as CostExplorerClient;
 use aws_sdk_dynamodb::Client as DynamoDbClient;
@@ -796,6 +797,14 @@ impl AwsClientFactory for AwsService {
     ) -> Result<TrustedAdvisorClient, AppError> {
         let config = self.get_aws_sdk_config(aws_account_dto).await?;
         Ok(TrustedAdvisorClient::new(&config))
+    }
+
+    async fn create_computeoptimizer_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<ComputeOptimizerClient, AppError> {
+        let config = self.get_aws_sdk_config(aws_account_dto).await?;
+        Ok(ComputeOptimizerClient::new(&config))
     }
 
     async fn create_memorydb_client(

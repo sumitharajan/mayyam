@@ -74,6 +74,7 @@ use crate::services::aws::aws_control_plane::waf_control_plane::WafControlPlane;
 use crate::services::aws::aws_control_plane::appsync_control_plane::AppSyncControlPlane;
 use crate::services::aws::aws_control_plane::aurora_control_plane::AuroraControlPlane;
 use crate::services::aws::aws_control_plane::autoscaling_control_plane::AutoScalingControlPlane;
+use crate::services::aws::aws_control_plane::computeoptimizer_control_plane::ComputeOptimizerControlPlane;
 use crate::services::aws::aws_control_plane::connect_control_plane::ConnectControlPlane;
 use crate::services::aws::aws_control_plane::datasync_control_plane::DataSyncControlPlane;
 use crate::services::aws::aws_control_plane::documentdb_control_plane::DocumentDbControlPlane;
@@ -803,6 +804,7 @@ impl AwsControlPlane {
                 AwsResourceType::ControlTowerLandingZone.to_string(),
                 AwsResourceType::ServiceCatalogPortfolio.to_string(),
                 AwsResourceType::TrustedAdvisorAccount.to_string(),
+                AwsResourceType::ComputeOptimizerAccount.to_string(),
                 // Batch 12: Document DB, Graph DB & In-Memory DB
                 AwsResourceType::DocumentDbCluster.to_string(),
                 AwsResourceType::NeptuneCluster.to_string(),
@@ -1105,6 +1107,10 @@ impl AwsControlPlane {
                 }
                 "TrustedAdvisorAccount" => {
                     let cp = TrustedAdvisorControlPlane::new(self.aws_service.clone());
+                    cp.sync_accounts(aws_account_dto, request.sync_id).await
+                }
+                "ComputeOptimizerAccount" => {
+                    let cp = ComputeOptimizerControlPlane::new(self.aws_service.clone());
                     cp.sync_accounts(aws_account_dto, request.sync_id).await
                 }
                 // Batch 12: Document DB, Graph DB & In-Memory DB

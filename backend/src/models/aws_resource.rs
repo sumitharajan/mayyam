@@ -150,6 +150,7 @@ pub enum AwsResourceType {
     ControlTowerLandingZone,
     ServiceCatalogPortfolio,
     TrustedAdvisorAccount,
+    ComputeOptimizerAccount,
     // Document Database Resources
     DocumentDbCluster,
     // Graph Database Resources
@@ -272,6 +273,7 @@ impl ToString for AwsResourceType {
             AwsResourceType::ControlTowerLandingZone => "ControlTowerLandingZone".to_string(),
             AwsResourceType::ServiceCatalogPortfolio => "ServiceCatalogPortfolio".to_string(),
             AwsResourceType::TrustedAdvisorAccount => "TrustedAdvisorAccount".to_string(),
+            AwsResourceType::ComputeOptimizerAccount => "ComputeOptimizerAccount".to_string(),
             // Document Database Resources
             AwsResourceType::DocumentDbCluster => "DocumentDbCluster".to_string(),
             // Graph Database Resources
@@ -398,6 +400,7 @@ impl From<&str> for AwsResourceType {
             "ControlTowerLandingZone" => AwsResourceType::ControlTowerLandingZone,
             "ServiceCatalogPortfolio" => AwsResourceType::ServiceCatalogPortfolio,
             "TrustedAdvisorAccount" => AwsResourceType::TrustedAdvisorAccount,
+            "ComputeOptimizerAccount" => AwsResourceType::ComputeOptimizerAccount,
             // Document Database Resources
             "DocumentDbCluster" => AwsResourceType::DocumentDbCluster,
             // Graph Database Resources

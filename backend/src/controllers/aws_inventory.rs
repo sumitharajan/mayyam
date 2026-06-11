@@ -41,6 +41,7 @@ use crate::services::aws::inventory::cloudtrail_pillar_evaluator::evaluate_cloud
 use crate::services::aws::inventory::cloudwatch_log_group_pillar_evaluator::evaluate_cloudwatch_log_group_fleet;
 use crate::services::aws::inventory::cloudwatch_metric_pillar_evaluator::evaluate_cloudwatch_metric_fleet;
 use crate::services::aws::inventory::cloudwatch_pillar_evaluator::evaluate_cloudwatch_fleet;
+use crate::services::aws::inventory::computeoptimizer_pillar_evaluator::evaluate_computeoptimizer_fleet;
 use crate::services::aws::inventory::config_pillar_evaluator::evaluate_config_fleet;
 use crate::services::aws::inventory::controltower_pillar_evaluator::evaluate_controltower_fleet;
 use crate::services::aws::inventory::datasync_pillar_evaluator::evaluate_datasync_fleet;
@@ -1254,6 +1255,21 @@ pub async fn get_trustedadvisor_pillar_reports(
         query,
         AwsResourceType::TrustedAdvisorAccount,
         evaluate_trustedadvisor_fleet,
+    )
+    .await
+}
+
+pub async fn get_computeoptimizer_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Compute Optimizer pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::ComputeOptimizerAccount,
+        evaluate_computeoptimizer_fleet,
     )
     .await
 }

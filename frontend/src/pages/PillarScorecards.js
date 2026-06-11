@@ -80,6 +80,7 @@ const SERVICES = [
   { key: "controltower", label: "Control Tower" },
   { key: "servicecatalog", label: "Service Catalog" },
   { key: "trustedadvisor", label: "Trusted Advisor" },
+  { key: "computeoptimizer", label: "Compute Optimizer" },
   { key: "documentdb", label: "DocumentDB" },
   { key: "neptune", label: "Neptune" },
   { key: "memorydb", label: "MemoryDB" },

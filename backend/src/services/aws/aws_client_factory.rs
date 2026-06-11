@@ -25,6 +25,7 @@ use aws_sdk_cloudfront::Client as CloudFrontClient;
 use aws_sdk_cloudtrail::Client as CloudTrailClient;
 use aws_sdk_cloudwatch::Client as CloudWatchClient;
 use aws_sdk_cloudwatchlogs::Client as CloudWatchLogsClient;
+use aws_sdk_computeoptimizer::Client as ComputeOptimizerClient;
 use aws_sdk_config::Client as ConfigServiceClient;
 use aws_sdk_connect::Client as ConnectClient;
 use aws_sdk_controltower::Client as ControlTowerClient;
@@ -309,6 +310,10 @@ pub trait AwsClientFactory {
         &self,
         aws_account_dto: &AwsAccountDto,
     ) -> Result<TrustedAdvisorClient, AppError>;
+    async fn create_computeoptimizer_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<ComputeOptimizerClient, AppError>;
     async fn create_memorydb_client(
         &self,
         aws_account_dto: &AwsAccountDto,

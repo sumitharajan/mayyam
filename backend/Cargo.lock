@@ -1282,6 +1282,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-sdk-computeoptimizer"
+version = "1.101.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "331db74ba4db2c767fc083a2019111af69570c32a9aca72d0570546b9b8ef981"
+dependencies = [
+ "aws-credential-types",
+ "aws-runtime",
+ "aws-smithy-async",
+ "aws-smithy-http 0.63.6",
+ "aws-smithy-json 0.62.5",
+ "aws-smithy-observability",
+ "aws-smithy-runtime",
+ "aws-smithy-runtime-api",
+ "aws-smithy-types",
+ "aws-types",
+ "bytes",
+ "fastrand 2.3.0",
+ "http 0.2.12",
+ "http 1.3.1",
+ "regex-lite",
+ "tracing",
+]
+
+[[package]]
 name = "aws-sdk-config"
 version = "1.103.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5719,6 +5743,7 @@ dependencies = [
  "aws-sdk-cloudtrail",
  "aws-sdk-cloudwatch",
  "aws-sdk-cloudwatchlogs",
+ "aws-sdk-computeoptimizer",
  "aws-sdk-config",
  "aws-sdk-connect",
  "aws-sdk-controltower",

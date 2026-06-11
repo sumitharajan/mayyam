@@ -229,6 +229,7 @@ mod aws_resource_model_tests {
             "AuroraCluster", "MskCluster", "GuardDutyDetector", "SecurityHubHub",
             "InspectorAccountCoverage", "MacieAccount", "OrganizationsOrganization",
             "ControlTowerLandingZone", "ServiceCatalogPortfolio", "TrustedAdvisorAccount",
+            "ComputeOptimizerAccount",
             // Document DB, Graph DB & In-Memory DB
             "DocumentDbCluster", "NeptuneCluster", "MemoryDbCluster",
             // Platform, Data Movement & File Systems
