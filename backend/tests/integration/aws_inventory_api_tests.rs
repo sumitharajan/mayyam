@@ -181,6 +181,9 @@ async fn storage_and_database_pillar_reports_contract() {
         ("autoscaling", "AutoScalingGroup", 3),
         ("cloudwatchmetrics", "CloudWatchMetric", 3),
         ("cloudwatchlogs", "CloudWatchLogGroup", 3),
+        ("route53", "Route53HostedZone", 3),
+        ("transitgateway", "TransitGateway", 3),
+        ("secretsmanager", "SecretsManagerSecret", 3),
     ] {
         let resp = client
             .get(format!(

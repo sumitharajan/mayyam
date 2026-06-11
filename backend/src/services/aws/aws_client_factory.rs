@@ -55,6 +55,8 @@ use aws_sdk_globalaccelerator::Client as GlobalAcceleratorClient;
 use aws_sdk_batch::Client as BatchClient;
 use aws_sdk_glacier::Client as GlacierClient;
 use aws_sdk_autoscaling::Client as AutoScalingClient;
+use aws_sdk_route53::Client as Route53Client;
+use aws_sdk_secretsmanager::Client as SecretsManagerClient;
 use aws_sdk_storagegateway::Client as StorageGatewayClient;
 use aws_sdk_connect::Client as ConnectClient;
 use aws_sdk_appsync::Client as AppSyncClient;
@@ -228,6 +230,14 @@ pub trait AwsClientFactory {
         &self,
         aws_account_dto: &AwsAccountDto,
     ) -> Result<AutoScalingClient, AppError>;
+    async fn create_route53_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<Route53Client, AppError>;
+    async fn create_secretsmanager_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<SecretsManagerClient, AppError>;
     async fn create_storagegateway_client(
         &self,
         aws_account_dto: &AwsAccountDto,

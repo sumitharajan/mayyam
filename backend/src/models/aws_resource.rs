@@ -130,6 +130,11 @@ pub enum AwsResourceType {
     // Observability Depth Resources
     CloudWatchMetric,
     CloudWatchLogGroup,
+    // Networking & DNS Depth Resources
+    Route53HostedZone,
+    TransitGateway,
+    // Secrets Resources
+    SecretsManagerSecret,
 }
 
 impl ToString for AwsResourceType {
@@ -213,6 +218,11 @@ impl ToString for AwsResourceType {
             AwsResourceType::AutoScalingGroup => "AutoScalingGroup".to_string(),
             AwsResourceType::CloudWatchMetric => "CloudWatchMetric".to_string(),
             AwsResourceType::CloudWatchLogGroup => "CloudWatchLogGroup".to_string(),
+            // Networking & DNS Depth Resources
+            AwsResourceType::Route53HostedZone => "Route53HostedZone".to_string(),
+            AwsResourceType::TransitGateway => "TransitGateway".to_string(),
+            // Secrets Resources
+            AwsResourceType::SecretsManagerSecret => "SecretsManagerSecret".to_string(),
         }
     }
 }
@@ -298,6 +308,11 @@ impl From<&str> for AwsResourceType {
             "AutoScalingGroup" => AwsResourceType::AutoScalingGroup,
             "CloudWatchMetric" => AwsResourceType::CloudWatchMetric,
             "CloudWatchLogGroup" => AwsResourceType::CloudWatchLogGroup,
+            // Networking & DNS Depth Resources
+            "Route53HostedZone" => AwsResourceType::Route53HostedZone,
+            "TransitGateway" => AwsResourceType::TransitGateway,
+            // Secrets Resources
+            "SecretsManagerSecret" => AwsResourceType::SecretsManagerSecret,
             _ => panic!("Unknown resource type: {}", s),
         }
     }

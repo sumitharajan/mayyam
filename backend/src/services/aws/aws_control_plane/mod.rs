@@ -63,3 +63,7 @@ pub mod connect_control_plane;
 pub mod appsync_control_plane;
 pub mod kinesisanalytics_control_plane;
 pub mod autoscaling_control_plane;
+// Batch 10: Networking, DNS & Secrets
+pub mod route53_control_plane;
+pub mod transitgateway_control_plane;
+pub mod secretsmanager_control_plane;

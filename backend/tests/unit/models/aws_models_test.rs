@@ -221,7 +221,9 @@ mod aws_resource_model_tests {
             // Edge & DR
             "WafWebAcl", "GlobalAccelerator", "BackupVault", "BackupPlan",
             // Compute Scaling
-            "AutoScalingGroup"
+            "AutoScalingGroup",
+            // Networking, DNS & Secrets
+            "Route53HostedZone", "TransitGateway", "SecretsManagerSecret"
         ];
 
         for resource_type in valid_types {

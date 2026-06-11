@@ -38,6 +38,9 @@ use crate::services::aws::inventory::emr_pillar_evaluator::evaluate_emr_fleet;
 use crate::services::aws::inventory::globalaccelerator_pillar_evaluator::evaluate_globalaccelerator_fleet;
 use crate::services::aws::inventory::glue_pillar_evaluator::evaluate_glue_fleet;
 use crate::services::aws::inventory::redshift_pillar_evaluator::evaluate_redshift_fleet;
+use crate::services::aws::inventory::route53_pillar_evaluator::evaluate_route53_fleet;
+use crate::services::aws::inventory::secretsmanager_pillar_evaluator::evaluate_secretsmanager_fleet;
+use crate::services::aws::inventory::transitgateway_pillar_evaluator::evaluate_transitgateway_fleet;
 use crate::services::aws::inventory::ssm_pillar_evaluator::evaluate_ssm_fleet;
 use crate::services::aws::inventory::waf_pillar_evaluator::evaluate_waf_fleet;
 use crate::services::aws::inventory::cloudfront_pillar_evaluator::evaluate_cloudfront_fleet;
@@ -866,6 +869,51 @@ pub async fn get_autoscaling_pillar_reports(
         query,
         AwsResourceType::AutoScalingGroup,
         evaluate_autoscaling_fleet,
+    )
+    .await
+}
+
+pub async fn get_route53_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Route 53 pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::Route53HostedZone,
+        evaluate_route53_fleet,
+    )
+    .await
+}
+
+pub async fn get_transitgateway_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Transit Gateway pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::TransitGateway,
+        evaluate_transitgateway_fleet,
+    )
+    .await
+}
+
+pub async fn get_secretsmanager_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Secrets Manager pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::SecretsManagerSecret,
+        evaluate_secretsmanager_fleet,
     )
     .await
 }

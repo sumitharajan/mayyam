@@ -72,6 +72,9 @@ use crate::services::aws::aws_control_plane::backup_control_plane::BackupControl
 // Final Review Additions
 use crate::services::aws::aws_control_plane::glacier_control_plane::GlacierControlPlane;
 use crate::services::aws::aws_control_plane::autoscaling_control_plane::AutoScalingControlPlane;
+use crate::services::aws::aws_control_plane::route53_control_plane::Route53ControlPlane;
+use crate::services::aws::aws_control_plane::transitgateway_control_plane::TransitGatewayControlPlane;
+use crate::services::aws::aws_control_plane::secretsmanager_control_plane::SecretsManagerControlPlane;
 use crate::services::aws::aws_control_plane::storagegateway_control_plane::StorageGatewayControlPlane;
 use crate::services::aws::aws_control_plane::connect_control_plane::ConnectControlPlane;
 use crate::services::aws::aws_control_plane::appsync_control_plane::AppSyncControlPlane;
@@ -753,6 +756,10 @@ impl AwsControlPlane {
                 // Batch 9: Observability Depth
                 AwsResourceType::CloudWatchMetric.to_string(),
                 AwsResourceType::CloudWatchLogGroup.to_string(),
+                // Batch 10: Networking, DNS & Secrets
+                AwsResourceType::Route53HostedZone.to_string(),
+                AwsResourceType::TransitGateway.to_string(),
+                AwsResourceType::SecretsManagerSecret.to_string(),
             ],
         };
 
@@ -965,6 +972,19 @@ impl AwsControlPlane {
                 "CloudWatchLogGroup" => {
                     let cp = CloudWatchControlPlane::new(self.aws_service.clone());
                     cp.sync_log_groups(aws_account_dto, request.sync_id).await
+                }
+                // Batch 10: Networking, DNS & Secrets
+                "Route53HostedZone" => {
+                    let cp = Route53ControlPlane::new(self.aws_service.clone());
+                    cp.sync_hosted_zones(aws_account_dto, request.sync_id).await
+                }
+                "TransitGateway" => {
+                    let cp = TransitGatewayControlPlane::new(self.aws_service.clone());
+                    cp.sync_transit_gateways(aws_account_dto, request.sync_id).await
+                }
+                "SecretsManagerSecret" => {
+                    let cp = SecretsManagerControlPlane::new(self.aws_service.clone());
+                    cp.sync_secrets(aws_account_dto, request.sync_id).await
                 }
                 _ => Ok(vec![]),
             };

@@ -67,6 +67,9 @@ const SERVICES = [
   { key: "autoscaling", label: "Auto Scaling" },
   { key: "cloudwatchmetrics", label: "CloudWatch Metrics" },
   { key: "cloudwatchlogs", label: "CloudWatch Logs" },
+  { key: "route53", label: "Route 53" },
+  { key: "transitgateway", label: "Transit Gateway" },
+  { key: "secretsmanager", label: "Secrets Manager" },
 ];
 
 // Well-Architected pillar scorecards from deterministic inventory

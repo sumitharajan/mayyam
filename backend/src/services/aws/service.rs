@@ -666,6 +666,22 @@ impl AwsClientFactory for AwsService {
         Ok(aws_sdk_autoscaling::Client::new(&config))
     }
 
+    async fn create_route53_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<aws_sdk_route53::Client, AppError> {
+        let config = self.get_aws_sdk_config(aws_account_dto).await?;
+        Ok(aws_sdk_route53::Client::new(&config))
+    }
+
+    async fn create_secretsmanager_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<aws_sdk_secretsmanager::Client, AppError> {
+        let config = self.get_aws_sdk_config(aws_account_dto).await?;
+        Ok(aws_sdk_secretsmanager::Client::new(&config))
+    }
+
     async fn create_storagegateway_client(
         &self,
         aws_account_dto: &AwsAccountDto,
