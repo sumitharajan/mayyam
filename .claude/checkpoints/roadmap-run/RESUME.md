@@ -2,14 +2,14 @@
 
 - Run ID: run-001
 - Roadmap hash: ab4059db94762a3e
-- Last batch commit: 93ed4572523f19cb72fa83ac73f6fdf890a683d7 (batch-052: AWS Auto Scaling telemetry evidence for cost, resilience, and security)
-- Current batch: batch-053 (Kubernetes Dashboard cluster inventory for cost, resilience, and security)
-- Current batch rows: 02-KUBERNETES-DASHBOARD-00001, 02-KUBERNETES-DASHBOARD-00008, 02-KUBERNETES-DASHBOARD-00029
-- Current batch status: claimed
-- Completed feature rows: 286 committed
+- Last batch commit: 7a9ecbe607efc64504c6f4d62279f4a4f485c655 (batch-053: Kubernetes Dashboard cluster inventory for cost, resilience, and security)
+- Current batch: none
+- Current batch rows: none
+- Current batch status: ready_to_select
+- Completed feature rows: 289 committed
 - Current blocker: none. A disk-full validation failure occurred during batch-050; approved removal of only `backend/target/debug/incremental/mayyam-1rxlgpsf1fmkx` recovered enough space for validation to complete.
-- Changed files in last batch: `backend/src/services/aws/inventory/autoscaling_pillar_evaluator.rs`, `backend/src/services/aws/aws_control_plane/autoscaling_control_plane.rs`.
-- Latest verification: `cargo test --lib autoscaling_pillar_evaluator --message-format short`, `cargo check --message-format short`, `cargo test --features integration-tests --test integration_tests storage_and_database_pillar_reports_contract --message-format short`, `cargo fmt -- --check`, and `git diff --check` passed.
-- Exact next action: write TDD guard for Kubernetes cluster inventory reports.
-- Verification before continuing: `runs.last_commit=93ed4572523f19cb72fa83ac73f6fdf890a683d7`, `runs.current_batch_id=batch-053`, `runs.next_action=write TDD guard for Kubernetes cluster inventory reports`, and batch-053 rows are claimed.
+- Changed files in last batch: `backend/src/services/kubernetes/inventory.rs`, `backend/src/services/kubernetes/mod.rs`, `backend/src/controllers/kubernetes.rs`, `backend/src/api/routes/kubernetes.rs`, `backend/tests/integration/kubernetes_smoke_tests.rs`, `backend/tests/integration_tests.rs`.
+- Latest verification: `cargo test --lib kubernetes::inventory --message-format short`, `cargo check --message-format short`, `cargo test --features integration-tests --test integration_tests kubernetes_cluster_inventory --message-format short`, `cargo fmt -- --check`, and `git diff --check` passed.
+- Exact next action: select and atomically claim batch-054 using the same P0 before P1/P2 and M1 before M2+ priority rules.
+- Verification before continuing: `runs.last_commit=7a9ecbe607efc64504c6f4d62279f4a4f485c655`, `runs.current_batch_id=NULL`, `runs.next_action=select-batch-054`, and batch-053 rows are committed.
 - Known pre-existing issue: `cargo test --test unit_tests` has failures in `aws_account_service_test`; do not chase unless scoped.
