@@ -66,6 +66,7 @@ use aws_sdk_organizations::Client as OrganizationsClient;
 use aws_sdk_quicksight::Client as QuickSightClient;
 use aws_sdk_rds::Client as RdsClient;
 use aws_sdk_redshift::Client as RedshiftClient;
+use aws_sdk_resiliencehub::Client as ResilienceHubClient;
 use aws_sdk_route53::Client as Route53Client;
 use aws_sdk_s3::Client as S3Client;
 use aws_sdk_secretsmanager::Client as SecretsManagerClient;
@@ -319,6 +320,10 @@ pub trait AwsClientFactory {
         &self,
         aws_account_dto: &AwsAccountDto,
     ) -> Result<HealthClient, AppError>;
+    async fn create_resiliencehub_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<ResilienceHubClient, AppError>;
     async fn create_memorydb_client(
         &self,
         aws_account_dto: &AwsAccountDto,

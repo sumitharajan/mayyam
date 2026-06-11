@@ -95,6 +95,7 @@ use crate::services::aws::aws_control_plane::neptune_control_plane::NeptuneContr
 use crate::services::aws::aws_control_plane::organizations_control_plane::OrganizationsControlPlane;
 use crate::services::aws::aws_control_plane::privatelink_control_plane::PrivateLinkControlPlane;
 use crate::services::aws::aws_control_plane::quicksight_control_plane::QuickSightControlPlane;
+use crate::services::aws::aws_control_plane::resiliencehub_control_plane::ResilienceHubControlPlane;
 use crate::services::aws::aws_control_plane::route53_control_plane::Route53ControlPlane;
 use crate::services::aws::aws_control_plane::secretsmanager_control_plane::SecretsManagerControlPlane;
 use crate::services::aws::aws_control_plane::securityhub_control_plane::SecurityHubControlPlane;
@@ -807,6 +808,7 @@ impl AwsControlPlane {
                 AwsResourceType::TrustedAdvisorAccount.to_string(),
                 AwsResourceType::ComputeOptimizerAccount.to_string(),
                 AwsResourceType::HealthAccount.to_string(),
+                AwsResourceType::ResilienceHubAccount.to_string(),
                 // Batch 12: Document DB, Graph DB & In-Memory DB
                 AwsResourceType::DocumentDbCluster.to_string(),
                 AwsResourceType::NeptuneCluster.to_string(),
@@ -1117,6 +1119,10 @@ impl AwsControlPlane {
                 }
                 "HealthAccount" => {
                     let cp = HealthControlPlane::new(self.aws_service.clone());
+                    cp.sync_accounts(aws_account_dto, request.sync_id).await
+                }
+                "ResilienceHubAccount" => {
+                    let cp = ResilienceHubControlPlane::new(self.aws_service.clone());
                     cp.sync_accounts(aws_account_dto, request.sync_id).await
                 }
                 // Batch 12: Document DB, Graph DB & In-Memory DB

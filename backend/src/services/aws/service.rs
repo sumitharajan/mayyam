@@ -51,6 +51,7 @@ use aws_sdk_opensearch::Client as OpenSearchClient;
 use aws_sdk_organizations::Client as OrganizationsClient;
 use aws_sdk_quicksight::Client as QuickSightClient;
 use aws_sdk_rds::Client as RdsClient;
+use aws_sdk_resiliencehub::Client as ResilienceHubClient;
 use aws_sdk_s3::Client as S3Client;
 use aws_sdk_servicecatalog::Client as ServiceCatalogClient;
 use aws_sdk_shield::Client as ShieldClient;
@@ -814,6 +815,14 @@ impl AwsClientFactory for AwsService {
     ) -> Result<HealthClient, AppError> {
         let config = self.get_aws_sdk_config(aws_account_dto).await?;
         Ok(HealthClient::new(&config))
+    }
+
+    async fn create_resiliencehub_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<ResilienceHubClient, AppError> {
+        let config = self.get_aws_sdk_config(aws_account_dto).await?;
+        Ok(ResilienceHubClient::new(&config))
     }
 
     async fn create_memorydb_client(

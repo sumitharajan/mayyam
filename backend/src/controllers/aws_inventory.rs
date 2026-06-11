@@ -86,6 +86,7 @@ use crate::services::aws::inventory::privatelink_pillar_evaluator::evaluate_priv
 use crate::services::aws::inventory::quicksight_pillar_evaluator::evaluate_quicksight_fleet;
 use crate::services::aws::inventory::rds_pillar_evaluator::evaluate_rds_fleet;
 use crate::services::aws::inventory::redshift_pillar_evaluator::evaluate_redshift_fleet;
+use crate::services::aws::inventory::resiliencehub_pillar_evaluator::evaluate_resiliencehub_fleet;
 use crate::services::aws::inventory::route53_pillar_evaluator::evaluate_route53_fleet;
 use crate::services::aws::inventory::route_table_pillar_evaluator::evaluate_route_table_fleet;
 use crate::services::aws::inventory::s3_pillar_evaluator::evaluate_s3_fleet;
@@ -1286,6 +1287,21 @@ pub async fn get_health_pillar_reports(
         query,
         AwsResourceType::HealthAccount,
         evaluate_health_fleet,
+    )
+    .await
+}
+
+pub async fn get_resiliencehub_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Resilience Hub pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::ResilienceHubAccount,
+        evaluate_resiliencehub_fleet,
     )
     .await
 }

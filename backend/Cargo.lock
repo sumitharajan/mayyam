@@ -2259,6 +2259,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-sdk-resiliencehub"
+version = "1.100.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0e46781a46fafa6a21c0d5d80414c0696a4a77ab332ac761861847264f7ee992"
+dependencies = [
+ "aws-credential-types",
+ "aws-runtime",
+ "aws-smithy-async",
+ "aws-smithy-http 0.63.6",
+ "aws-smithy-json 0.62.5",
+ "aws-smithy-observability",
+ "aws-smithy-runtime",
+ "aws-smithy-runtime-api",
+ "aws-smithy-types",
+ "aws-types",
+ "bytes",
+ "fastrand 2.3.0",
+ "http 0.2.12",
+ "http 1.3.1",
+ "regex-lite",
+ "tracing",
+]
+
+[[package]]
 name = "aws-sdk-route53"
 version = "1.109.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5808,6 +5832,7 @@ dependencies = [
  "aws-sdk-quicksight",
  "aws-sdk-rds",
  "aws-sdk-redshift",
+ "aws-sdk-resiliencehub",
  "aws-sdk-route53",
  "aws-sdk-s3",
  "aws-sdk-secretsmanager",

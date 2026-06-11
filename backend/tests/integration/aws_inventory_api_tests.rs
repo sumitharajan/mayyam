@@ -196,6 +196,7 @@ async fn storage_and_database_pillar_reports_contract() {
         ("trustedadvisor", "TrustedAdvisorAccount", 3),
         ("computeoptimizer", "ComputeOptimizerAccount", 3),
         ("health", "HealthAccount", 3),
+        ("resiliencehub", "ResilienceHubAccount", 3),
         ("documentdb", "DocumentDbCluster", 3),
         ("neptune", "NeptuneCluster", 3),
         ("memorydb", "MemoryDbCluster", 3),

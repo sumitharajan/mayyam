@@ -75,6 +75,7 @@ pub mod privatelink_pillar_evaluator;
 pub mod quicksight_pillar_evaluator;
 pub mod rds_pillar_evaluator;
 pub mod redshift_pillar_evaluator;
+pub mod resiliencehub_pillar_evaluator;
 pub mod route53_pillar_evaluator;
 pub mod route_table_pillar_evaluator;
 pub mod s3_pillar_evaluator;

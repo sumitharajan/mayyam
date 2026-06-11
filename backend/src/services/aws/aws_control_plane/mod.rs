@@ -80,6 +80,7 @@ pub mod inspector_control_plane;
 pub mod macie_control_plane;
 pub mod msk_control_plane;
 pub mod organizations_control_plane;
+pub mod resiliencehub_control_plane;
 pub mod securityhub_control_plane;
 pub mod servicecatalog_control_plane;
 pub mod trustedadvisor_control_plane;
