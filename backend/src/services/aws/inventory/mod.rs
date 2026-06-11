@@ -25,6 +25,8 @@ pub mod backup_pillar_evaluator;
 pub mod batch_pillar_evaluator;
 pub mod cloudfront_pillar_evaluator;
 pub mod cloudtrail_pillar_evaluator;
+pub mod cloudwatch_log_group_pillar_evaluator;
+pub mod cloudwatch_metric_pillar_evaluator;
 pub mod cloudwatch_pillar_evaluator;
 pub mod config_pillar_evaluator;
 pub mod dynamodb_pillar_evaluator;

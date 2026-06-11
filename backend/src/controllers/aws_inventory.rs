@@ -42,6 +42,8 @@ use crate::services::aws::inventory::ssm_pillar_evaluator::evaluate_ssm_fleet;
 use crate::services::aws::inventory::waf_pillar_evaluator::evaluate_waf_fleet;
 use crate::services::aws::inventory::cloudfront_pillar_evaluator::evaluate_cloudfront_fleet;
 use crate::services::aws::inventory::cloudtrail_pillar_evaluator::evaluate_cloudtrail_fleet;
+use crate::services::aws::inventory::cloudwatch_log_group_pillar_evaluator::evaluate_cloudwatch_log_group_fleet;
+use crate::services::aws::inventory::cloudwatch_metric_pillar_evaluator::evaluate_cloudwatch_metric_fleet;
 use crate::services::aws::inventory::cloudwatch_pillar_evaluator::evaluate_cloudwatch_fleet;
 use crate::services::aws::inventory::config_pillar_evaluator::evaluate_config_fleet;
 use crate::services::aws::inventory::eventbridge_pillar_evaluator::evaluate_eventbridge_fleet;
@@ -801,6 +803,36 @@ pub async fn get_autoscaling_pillar_reports(
         query,
         AwsResourceType::AutoScalingGroup,
         evaluate_autoscaling_fleet,
+    )
+    .await
+}
+
+pub async fn get_cloudwatch_metric_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("CloudWatch metric pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::CloudWatchMetric,
+        evaluate_cloudwatch_metric_fleet,
+    )
+    .await
+}
+
+pub async fn get_cloudwatch_log_group_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("CloudWatch log group pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::CloudWatchLogGroup,
+        evaluate_cloudwatch_log_group_fleet,
     )
     .await
 }

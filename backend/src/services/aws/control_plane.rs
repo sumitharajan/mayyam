@@ -750,6 +750,9 @@ impl AwsControlPlane {
                 AwsResourceType::KinesisAnalyticsApp.to_string(),
                 // Batch 8: Compute Scaling
                 AwsResourceType::AutoScalingGroup.to_string(),
+                // Batch 9: Observability Depth
+                AwsResourceType::CloudWatchMetric.to_string(),
+                AwsResourceType::CloudWatchLogGroup.to_string(),
             ],
         };
 
@@ -953,6 +956,15 @@ impl AwsControlPlane {
                 "AutoScalingGroup" => {
                     let cp = AutoScalingControlPlane::new(self.aws_service.clone());
                     cp.sync_auto_scaling_groups(aws_account_dto, request.sync_id).await
+                }
+                // Batch 9: Observability Depth
+                "CloudWatchMetric" => {
+                    let cp = CloudWatchControlPlane::new(self.aws_service.clone());
+                    cp.sync_metrics(aws_account_dto, request.sync_id).await
+                }
+                "CloudWatchLogGroup" => {
+                    let cp = CloudWatchControlPlane::new(self.aws_service.clone());
+                    cp.sync_log_groups(aws_account_dto, request.sync_id).await
                 }
                 _ => Ok(vec![]),
             };

@@ -69,4 +69,6 @@ pub fn configure(controller: Arc<AwsInventoryController>) -> Scope {
         .route("/redshift/pillars", web::get().to(aws_inventory::get_redshift_pillar_reports))
         .route("/waf/pillars", web::get().to(aws_inventory::get_waf_pillar_reports))
         .route("/autoscaling/pillars", web::get().to(aws_inventory::get_autoscaling_pillar_reports))
+        .route("/cloudwatchmetrics/pillars", web::get().to(aws_inventory::get_cloudwatch_metric_pillar_reports))
+        .route("/cloudwatchlogs/pillars", web::get().to(aws_inventory::get_cloudwatch_log_group_pillar_reports))
 }

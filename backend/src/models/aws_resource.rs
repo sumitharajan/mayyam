@@ -127,6 +127,9 @@ pub enum AwsResourceType {
     BackupPlan,
     // Compute Scaling Resources
     AutoScalingGroup,
+    // Observability Depth Resources
+    CloudWatchMetric,
+    CloudWatchLogGroup,
 }
 
 impl ToString for AwsResourceType {
@@ -208,6 +211,8 @@ impl ToString for AwsResourceType {
             AwsResourceType::BackupPlan => "BackupPlan".to_string(),
             // Compute Scaling Resources
             AwsResourceType::AutoScalingGroup => "AutoScalingGroup".to_string(),
+            AwsResourceType::CloudWatchMetric => "CloudWatchMetric".to_string(),
+            AwsResourceType::CloudWatchLogGroup => "CloudWatchLogGroup".to_string(),
         }
     }
 }
@@ -291,6 +296,8 @@ impl From<&str> for AwsResourceType {
             "BackupPlan" => AwsResourceType::BackupPlan,
             // Compute Scaling Resources
             "AutoScalingGroup" => AwsResourceType::AutoScalingGroup,
+            "CloudWatchMetric" => AwsResourceType::CloudWatchMetric,
+            "CloudWatchLogGroup" => AwsResourceType::CloudWatchLogGroup,
             _ => panic!("Unknown resource type: {}", s),
         }
     }

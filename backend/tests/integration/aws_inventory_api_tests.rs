@@ -179,6 +179,8 @@ async fn storage_and_database_pillar_reports_contract() {
         ("redshift", "RedshiftCluster"),
         ("waf", "WafWebAcl"),
         ("autoscaling", "AutoScalingGroup"),
+        ("cloudwatchmetrics", "CloudWatchMetric"),
+        ("cloudwatchlogs", "CloudWatchLogGroup"),
     ] {
         let resp = client
             .get(format!(

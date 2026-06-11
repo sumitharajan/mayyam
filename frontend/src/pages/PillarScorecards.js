@@ -65,6 +65,8 @@ const SERVICES = [
   { key: "redshift", label: "Redshift" },
   { key: "waf", label: "WAF" },
   { key: "autoscaling", label: "Auto Scaling" },
+  { key: "cloudwatchmetrics", label: "CloudWatch Metrics" },
+  { key: "cloudwatchlogs", label: "CloudWatch Logs" },
 ];
 
 // Well-Architected pillar scorecards from deterministic inventory
