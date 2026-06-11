@@ -77,6 +77,7 @@ use crate::services::aws::aws_control_plane::autoscaling_control_plane::AutoScal
 use crate::services::aws::aws_control_plane::computeoptimizer_control_plane::ComputeOptimizerControlPlane;
 use crate::services::aws::aws_control_plane::connect_control_plane::ConnectControlPlane;
 use crate::services::aws::aws_control_plane::datasync_control_plane::DataSyncControlPlane;
+use crate::services::aws::aws_control_plane::dms_control_plane::DmsControlPlane;
 use crate::services::aws::aws_control_plane::documentdb_control_plane::DocumentDbControlPlane;
 use crate::services::aws::aws_control_plane::elasticbeanstalk_control_plane::ElasticBeanstalkControlPlane;
 use crate::services::aws::aws_control_plane::firehose_control_plane::FirehoseControlPlane;
@@ -825,6 +826,8 @@ impl AwsControlPlane {
                 AwsResourceType::LightsailResource.to_string(),
                 // BI & Analytics Assets
                 AwsResourceType::QuickSightAsset.to_string(),
+                // Migration & DR
+                AwsResourceType::DmsResource.to_string(),
             ],
         };
 
@@ -1175,6 +1178,11 @@ impl AwsControlPlane {
                 "QuickSightAsset" => {
                     let cp = QuickSightControlPlane::new(self.aws_service.clone());
                     cp.sync_assets(aws_account_dto, request.sync_id).await
+                }
+                // Migration & DR
+                "DmsResource" => {
+                    let cp = DmsControlPlane::new(self.aws_service.clone());
+                    cp.sync_resources(aws_account_dto, request.sync_id).await
                 }
                 _ => Ok(vec![]),
             };

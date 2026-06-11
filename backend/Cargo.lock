@@ -1187,6 +1187,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-sdk-cloudcontrol"
+version = "1.97.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dbc13e40e63687e3f1a1e7cf946b0a64336010708a6487a33c887bcf071b0175"
+dependencies = [
+ "aws-credential-types",
+ "aws-runtime",
+ "aws-smithy-async",
+ "aws-smithy-http 0.63.6",
+ "aws-smithy-json 0.62.5",
+ "aws-smithy-observability",
+ "aws-smithy-runtime",
+ "aws-smithy-runtime-api",
+ "aws-smithy-types",
+ "aws-types",
+ "bytes",
+ "fastrand 2.3.0",
+ "http 0.2.12",
+ "http 1.3.1",
+ "regex-lite",
+ "tracing",
+]
+
+[[package]]
 name = "aws-sdk-cloudfront"
 version = "1.102.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5787,6 +5811,7 @@ dependencies = [
  "aws-sdk-autoscaling",
  "aws-sdk-backup",
  "aws-sdk-batch",
+ "aws-sdk-cloudcontrol",
  "aws-sdk-cloudfront",
  "aws-sdk-cloudtrail",
  "aws-sdk-cloudwatch",

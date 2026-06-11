@@ -25,6 +25,7 @@ use aws_config::BehaviorVersion;
 use aws_credential_types::provider::SharedCredentialsProvider;
 use aws_credential_types::Credentials as StaticCredentials;
 use aws_sdk_apigateway::Client as ApiGatewayClient;
+use aws_sdk_cloudcontrol::Client as CloudControlClient;
 use aws_sdk_cloudfront::Client as CloudFrontClient;
 use aws_sdk_cloudwatch::Client as CloudWatchClient;
 use aws_sdk_cloudwatchlogs::Client as CloudWatchLogsClient;
@@ -366,6 +367,14 @@ impl AwsClientFactory for AwsService {
     ) -> Result<CloudWatchLogsClient, AppError> {
         let config = self.get_aws_sdk_config(aws_account_dto).await?;
         Ok(CloudWatchLogsClient::new(&config))
+    }
+
+    async fn create_cloudcontrol_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<CloudControlClient, AppError> {
+        let config = self.get_aws_sdk_config(aws_account_dto).await?;
+        Ok(CloudControlClient::new(&config))
     }
 
     async fn create_cost_explorer_client(

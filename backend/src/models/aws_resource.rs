@@ -171,6 +171,8 @@ pub enum AwsResourceType {
     LightsailResource,
     // BI & Analytics Assets
     QuickSightAsset,
+    // Migration & DR Resources
+    DmsResource,
 }
 
 impl ToString for AwsResourceType {
@@ -298,6 +300,8 @@ impl ToString for AwsResourceType {
             AwsResourceType::LightsailResource => "LightsailResource".to_string(),
             // BI & Analytics Assets
             AwsResourceType::QuickSightAsset => "QuickSightAsset".to_string(),
+            // Migration & DR Resources
+            AwsResourceType::DmsResource => "DmsResource".to_string(),
         }
     }
 }
@@ -425,6 +429,8 @@ impl From<&str> for AwsResourceType {
             "LightsailResource" => AwsResourceType::LightsailResource,
             // BI & Analytics Assets
             "QuickSightAsset" => AwsResourceType::QuickSightAsset,
+            // Migration & DR Resources
+            "DmsResource" => AwsResourceType::DmsResource,
             _ => panic!("Unknown resource type: {}", s),
         }
     }

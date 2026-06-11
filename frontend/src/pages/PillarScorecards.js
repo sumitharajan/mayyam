@@ -94,6 +94,7 @@ const SERVICES = [
   { key: "lakeformation", label: "Lake Formation" },
   { key: "lightsail", label: "Lightsail" },
   { key: "quicksight", label: "QuickSight" },
+  { key: "dms", label: "DMS" },
   { key: "amazonmq", label: "Amazon MQ" },
   { key: "privatelink", label: "PrivateLink" },
   { key: "shield", label: "Shield" },

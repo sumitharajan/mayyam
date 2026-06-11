@@ -45,6 +45,7 @@ use crate::services::aws::inventory::computeoptimizer_pillar_evaluator::evaluate
 use crate::services::aws::inventory::config_pillar_evaluator::evaluate_config_fleet;
 use crate::services::aws::inventory::controltower_pillar_evaluator::evaluate_controltower_fleet;
 use crate::services::aws::inventory::datasync_pillar_evaluator::evaluate_datasync_fleet;
+use crate::services::aws::inventory::dms_pillar_evaluator::evaluate_dms_fleet;
 use crate::services::aws::inventory::documentdb_pillar_evaluator::evaluate_documentdb_fleet;
 use crate::services::aws::inventory::dynamodb_pillar_evaluator::evaluate_dynamodb_fleet;
 use crate::services::aws::inventory::ebs_pillar_evaluator::evaluate_ebs_fleet;
@@ -1467,6 +1468,21 @@ pub async fn get_quicksight_pillar_reports(
         query,
         AwsResourceType::QuickSightAsset,
         evaluate_quicksight_fleet,
+    )
+    .await
+}
+
+pub async fn get_dms_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("DMS pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::DmsResource,
+        evaluate_dms_fleet,
     )
     .await
 }

@@ -242,6 +242,8 @@ mod aws_resource_model_tests {
             "LightsailResource",
             // BI & Analytics Assets
             "QuickSightAsset",
+            // Migration & DR
+            "DmsResource",
         ];
 
         for resource_type in valid_types {
