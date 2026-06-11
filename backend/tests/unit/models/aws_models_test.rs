@@ -246,6 +246,7 @@ mod aws_resource_model_tests {
             "BedrockResource",
             "SageMakerResource",
             "TextractResource",
+            "ComprehendResource",
             // Migration & DR
             "DmsResource",
             "MgnResource",

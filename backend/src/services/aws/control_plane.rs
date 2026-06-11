@@ -75,6 +75,7 @@ use crate::services::aws::aws_control_plane::appsync_control_plane::AppSyncContr
 use crate::services::aws::aws_control_plane::aurora_control_plane::AuroraControlPlane;
 use crate::services::aws::aws_control_plane::autoscaling_control_plane::AutoScalingControlPlane;
 use crate::services::aws::aws_control_plane::bedrock_control_plane::BedrockControlPlane;
+use crate::services::aws::aws_control_plane::comprehend_control_plane::ComprehendControlPlane;
 use crate::services::aws::aws_control_plane::computeoptimizer_control_plane::ComputeOptimizerControlPlane;
 use crate::services::aws::aws_control_plane::connect_control_plane::ConnectControlPlane;
 use crate::services::aws::aws_control_plane::datasync_control_plane::DataSyncControlPlane;
@@ -835,6 +836,7 @@ impl AwsControlPlane {
                 AwsResourceType::BedrockResource.to_string(),
                 AwsResourceType::SageMakerResource.to_string(),
                 AwsResourceType::TextractResource.to_string(),
+                AwsResourceType::ComprehendResource.to_string(),
                 // Migration & DR
                 AwsResourceType::DmsResource.to_string(),
                 AwsResourceType::MgnResource.to_string(),
@@ -1213,6 +1215,10 @@ impl AwsControlPlane {
                 }
                 "TextractResource" => {
                     let cp = TextractControlPlane::new(self.aws_service.clone());
+                    cp.sync_resources(aws_account_dto, request.sync_id).await
+                }
+                "ComprehendResource" => {
+                    let cp = ComprehendControlPlane::new(self.aws_service.clone());
                     cp.sync_resources(aws_account_dto, request.sync_id).await
                 }
                 _ => Ok(vec![]),

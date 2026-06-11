@@ -214,6 +214,7 @@ async fn storage_and_database_pillar_reports_contract() {
         ("bedrock", "BedrockResource", 3),
         ("sagemaker", "SageMakerResource", 3),
         ("textract", "TextractResource", 3),
+        ("comprehend", "ComprehendResource", 3),
         ("amazonmq", "AmazonMqBroker", 3),
         ("privatelink", "VpcEndpoint", 3),
         ("shield", "ShieldProtection", 3),

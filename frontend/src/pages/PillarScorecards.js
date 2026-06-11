@@ -100,6 +100,7 @@ const SERVICES = [
   { key: "bedrock", label: "Bedrock" },
   { key: "sagemaker", label: "SageMaker AI" },
   { key: "textract", label: "Textract" },
+  { key: "comprehend", label: "Comprehend" },
   { key: "amazonmq", label: "Amazon MQ" },
   { key: "privatelink", label: "PrivateLink" },
   { key: "shield", label: "Shield" },
