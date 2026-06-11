@@ -97,6 +97,7 @@ const SERVICES = [
   { key: "dms", label: "DMS" },
   { key: "mgn", label: "Application Migration" },
   { key: "drs", label: "Elastic Disaster Recovery" },
+  { key: "bedrock", label: "Bedrock" },
   { key: "amazonmq", label: "Amazon MQ" },
   { key: "privatelink", label: "PrivateLink" },
   { key: "shield", label: "Shield" },

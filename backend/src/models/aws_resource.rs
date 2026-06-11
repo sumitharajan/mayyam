@@ -171,6 +171,8 @@ pub enum AwsResourceType {
     LightsailResource,
     // BI & Analytics Assets
     QuickSightAsset,
+    // AI & ML Resources
+    BedrockResource,
     // Migration & DR Resources
     DmsResource,
     MgnResource,
@@ -302,6 +304,8 @@ impl ToString for AwsResourceType {
             AwsResourceType::LightsailResource => "LightsailResource".to_string(),
             // BI & Analytics Assets
             AwsResourceType::QuickSightAsset => "QuickSightAsset".to_string(),
+            // AI & ML Resources
+            AwsResourceType::BedrockResource => "BedrockResource".to_string(),
             // Migration & DR Resources
             AwsResourceType::DmsResource => "DmsResource".to_string(),
             AwsResourceType::MgnResource => "MgnResource".to_string(),
@@ -433,6 +437,8 @@ impl From<&str> for AwsResourceType {
             "LightsailResource" => AwsResourceType::LightsailResource,
             // BI & Analytics Assets
             "QuickSightAsset" => AwsResourceType::QuickSightAsset,
+            // AI & ML Resources
+            "BedrockResource" => AwsResourceType::BedrockResource,
             // Migration & DR Resources
             "DmsResource" => AwsResourceType::DmsResource,
             "MgnResource" => AwsResourceType::MgnResource,

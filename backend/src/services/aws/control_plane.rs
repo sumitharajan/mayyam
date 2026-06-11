@@ -74,6 +74,7 @@ use crate::services::aws::aws_control_plane::waf_control_plane::WafControlPlane;
 use crate::services::aws::aws_control_plane::appsync_control_plane::AppSyncControlPlane;
 use crate::services::aws::aws_control_plane::aurora_control_plane::AuroraControlPlane;
 use crate::services::aws::aws_control_plane::autoscaling_control_plane::AutoScalingControlPlane;
+use crate::services::aws::aws_control_plane::bedrock_control_plane::BedrockControlPlane;
 use crate::services::aws::aws_control_plane::computeoptimizer_control_plane::ComputeOptimizerControlPlane;
 use crate::services::aws::aws_control_plane::connect_control_plane::ConnectControlPlane;
 use crate::services::aws::aws_control_plane::datasync_control_plane::DataSyncControlPlane;
@@ -828,6 +829,8 @@ impl AwsControlPlane {
                 AwsResourceType::LightsailResource.to_string(),
                 // BI & Analytics Assets
                 AwsResourceType::QuickSightAsset.to_string(),
+                // AI & ML
+                AwsResourceType::BedrockResource.to_string(),
                 // Migration & DR
                 AwsResourceType::DmsResource.to_string(),
                 AwsResourceType::MgnResource.to_string(),
@@ -1194,6 +1197,10 @@ impl AwsControlPlane {
                 }
                 "DrsResource" => {
                     let cp = DrsControlPlane::new(self.aws_service.clone());
+                    cp.sync_resources(aws_account_dto, request.sync_id).await
+                }
+                "BedrockResource" => {
+                    let cp = BedrockControlPlane::new(self.aws_service.clone());
                     cp.sync_resources(aws_account_dto, request.sync_id).await
                 }
                 _ => Ok(vec![]),

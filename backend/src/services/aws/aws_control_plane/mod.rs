@@ -14,6 +14,7 @@
 
 pub mod amazonmq_control_plane;
 pub mod api_gateway_control_plane;
+pub mod bedrock_control_plane;
 pub mod cloudfront_control_plane;
 pub mod dynamodb_control_plane;
 pub mod ebs_control_plane;

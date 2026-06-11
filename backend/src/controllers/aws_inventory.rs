@@ -36,6 +36,7 @@ use crate::services::aws::inventory::aurora_pillar_evaluator::evaluate_aurora_fl
 use crate::services::aws::inventory::autoscaling_pillar_evaluator::evaluate_autoscaling_fleet;
 use crate::services::aws::inventory::backup_pillar_evaluator::evaluate_backup_fleet;
 use crate::services::aws::inventory::batch_pillar_evaluator::evaluate_batch_fleet;
+use crate::services::aws::inventory::bedrock_pillar_evaluator::evaluate_bedrock_fleet;
 use crate::services::aws::inventory::cloudfront_pillar_evaluator::evaluate_cloudfront_fleet;
 use crate::services::aws::inventory::cloudtrail_pillar_evaluator::evaluate_cloudtrail_fleet;
 use crate::services::aws::inventory::cloudwatch_log_group_pillar_evaluator::evaluate_cloudwatch_log_group_fleet;
@@ -1521,6 +1522,21 @@ pub async fn get_drs_pillar_reports(
         query,
         AwsResourceType::DrsResource,
         evaluate_drs_fleet,
+    )
+    .await
+}
+
+pub async fn get_bedrock_pillar_reports(
+    controller: web::Data<Arc<AwsInventoryController>>,
+    query: web::Query<Ec2PillarQuery>,
+) -> Result<HttpResponse, AppError> {
+    let query = query.into_inner();
+    debug!("Bedrock pillar report request: {:?}", query);
+    pillar_reports(
+        &controller,
+        query,
+        AwsResourceType::BedrockResource,
+        evaluate_bedrock_fleet,
     )
     .await
 }

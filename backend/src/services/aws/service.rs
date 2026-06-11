@@ -25,6 +25,7 @@ use aws_config::BehaviorVersion;
 use aws_credential_types::provider::SharedCredentialsProvider;
 use aws_credential_types::Credentials as StaticCredentials;
 use aws_sdk_apigateway::Client as ApiGatewayClient;
+use aws_sdk_bedrock::Client as BedrockClient;
 use aws_sdk_cloudcontrol::Client as CloudControlClient;
 use aws_sdk_cloudfront::Client as CloudFrontClient;
 use aws_sdk_cloudwatch::Client as CloudWatchClient;
@@ -393,6 +394,14 @@ impl AwsClientFactory for AwsService {
     ) -> Result<DrsClient, AppError> {
         let config = self.get_aws_sdk_config(aws_account_dto).await?;
         Ok(DrsClient::new(&config))
+    }
+
+    async fn create_bedrock_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<BedrockClient, AppError> {
+        let config = self.get_aws_sdk_config(aws_account_dto).await?;
+        Ok(BedrockClient::new(&config))
     }
 
     async fn create_cost_explorer_client(

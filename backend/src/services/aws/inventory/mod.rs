@@ -25,6 +25,7 @@ pub mod aurora_pillar_evaluator;
 pub mod autoscaling_pillar_evaluator;
 pub mod backup_pillar_evaluator;
 pub mod batch_pillar_evaluator;
+pub mod bedrock_pillar_evaluator;
 pub mod cloudfront_pillar_evaluator;
 pub mod cloudtrail_pillar_evaluator;
 pub mod cloudwatch_log_group_pillar_evaluator;

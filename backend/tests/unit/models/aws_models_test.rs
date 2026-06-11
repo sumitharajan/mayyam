@@ -242,6 +242,8 @@ mod aws_resource_model_tests {
             "LightsailResource",
             // BI & Analytics Assets
             "QuickSightAsset",
+            // AI & ML
+            "BedrockResource",
             // Migration & DR
             "DmsResource",
             "MgnResource",

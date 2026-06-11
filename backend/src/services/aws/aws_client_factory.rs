@@ -21,6 +21,7 @@ use aws_sdk_athena::Client as AthenaClient;
 use aws_sdk_autoscaling::Client as AutoScalingClient;
 use aws_sdk_backup::Client as BackupClient;
 use aws_sdk_batch::Client as BatchClient;
+use aws_sdk_bedrock::Client as BedrockClient;
 use aws_sdk_cloudcontrol::Client as CloudControlClient;
 use aws_sdk_cloudfront::Client as CloudFrontClient;
 use aws_sdk_cloudtrail::Client as CloudTrailClient;
@@ -113,6 +114,10 @@ pub trait AwsClientFactory {
         &self,
         aws_account_dto: &AwsAccountDto,
     ) -> Result<DrsClient, AppError>;
+    async fn create_bedrock_client(
+        &self,
+        aws_account_dto: &AwsAccountDto,
+    ) -> Result<BedrockClient, AppError>;
     async fn create_cost_explorer_client(
         &self,
         aws_account_dto: &AwsAccountDto,
