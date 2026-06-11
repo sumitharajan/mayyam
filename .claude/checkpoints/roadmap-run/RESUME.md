@@ -1,14 +1,13 @@
 # Roadmap Run Resume
 
 - Run ID: run-001
-- Roadmap hash: ab4059db94762a3e (inputs unchanged per git; original hash command
-  unrecorded — verify via `git diff <last_commit>..HEAD -- docs/product-roadmap
-  scripts/generate-product-roadmap.js` being empty, not by recomputing)
-- Last commit: d9fd822 (batch-016: App Runner+Athena+SSM collectors + evaluators)
-- Completed batches: 16 · Committed features: 123 · Blocked: 9 · Pending (explicit rows): 12
-  (blocked: 3 Auto Scaling — no collector; 6 CloudWatch Metrics/Logs — collector only
-  persists alarms+dashboards. pending: 12 P1 pillar rows for Config/EventBridge/SFN —
-  P0-only batches per batch-014 precedent)
+- Roadmap hash: ab4059db94762a3e (verify via `git diff <last_commit>..HEAD --
+  docs/product-roadmap scripts/generate-product-roadmap.js` being empty, not by
+  recomputing)
+- Last commit: 8c2c023 (batch-021: performance/scalability/disaster-recovery/
+  operational-excellence pillars for EventBridge, Step Functions, AWS Config)
+- Completed batches: 21 · Committed features: 165 · Blocked: 0 · Pending: 0
+  — ALL tracked backlog rows (P0 + P1) are committed.
   - batch-001 EC2 (2ec71c0), 002 Lambda (4d6700f), 003 S3 (d446eb1),
     004 RDS+EBS+EFS (a2aede3), 005 scorecards UI (8453624), 006 ECS+EKS (e462907),
     007 DynamoDB (be759fb), 008 SQS+SNS+Kinesis (2609581),
@@ -16,45 +15,38 @@
     011 CloudWatch+AppSync+Glacier+StorageGW+KinesisAnalytics (af9da2b),
     012 Subnet+SG+NATGW+IGW+RouteTable+NACL (c30f03f), 013 Fargate (d13f57f),
     014 KMS+ACM+CloudTrail (0e37900), 015 Config+EventBridge+StepFunctions (009f030),
-    016 AppRunner+Athena+SSM (d9fd822)
-- batch-016 note: SES was planned but DROPPED — the backlog CSV has NO SES service
-  rows at all (verified against distinct service_or_domain values). App Runner was
-  substituted (first remaining stub with backlog rows). Claimed+committed:
-  00379/00388/00415 (App Runner), 01702/01711/01738 (Athena),
-  04600/04609/04636 (Systems Manager) — all P0 cost/resilience/security inventory.
-- Last validation (batch-016): cargo test --lib inventory → 344 passed, 0 failed;
-  cargo check → 0 errors; cargo check --features integration-tests --tests → 0
-  errors; npm run build → ok. Working tree clean except checkpoint files.
-- Current batch: batch-017 (recorded in runs, NOT started — no claims, no edits)
-- Next action: batch-017 — complete next stub collectors + evaluators for
-  AWS Backup (verify resource type + dispatch method in
-  services/aws/control_plane.rs), Batch (BatchComputeEnv → sync_compute_envs),
-  and EMR (EmrCluster → sync_clusters). Verify feature IDs + P0 pillar rows
-  (cost/resilience/security) in docs/product-roadmap/01-aws-cloud/feature-backlog.csv
-  first (service_or_domain values: "AWS Backup", "Batch", "EMR"); claim ONLY P0 rows.
-  Proven pattern, two files per service via 3 parallel agents (each owns its
-  collector + new evaluator, agents do NOT run cargo and do NOT touch shared files):
-  1) complete backend/src/services/aws/aws_control_plane/<svc>_control_plane.rs
-     stub (SDK crates already in Cargo.toml; verify SDK API against
-     ~/.cargo/registry/src crate source; keep dispatch method name;
-     reference: kms/glacier collectors)
-  2) new backend/src/services/aws/inventory/<svc>_pillar_evaluator.rs grounded
-     only in persisted fields, with data-gap codes + stale path + in-file tests
-     (reference: kms_pillar_evaluator.rs + types.rs)
-  3) coordinator wires inventory/mod.rs, controllers/aws_inventory.rs,
-     api/routes/aws_inventory.rs, integration test list (path,resource_type) in
-     backend/tests/integration/aws_inventory_api_tests.rs, frontend
-     src/pages/PillarScorecards.js SERVICES
-  4) cd backend && cargo test --lib inventory && cargo check && cargo check
-     --features integration-tests --tests; cd frontend && npm run build;
-     commit batch files only via explicit pathspec; update sqlite ledger.
-- Remaining stub collectors after batch-017 (63-line files): globalaccelerator,
-  glue, redshift, waf — all have backlog rows (Global Accelerator, Glue, Redshift,
-  WAF). ses_control_plane.rs stub remains but has NO backlog rows — leave it.
-  All SDK crates already in backend/Cargo.toml.
-- Services with NO collector file: Auto Scaling, CloudWatch Metrics/Logs, Aurora,
-  Bedrock, Route 53, Secrets Manager, etc. — need new collector + enum +
-  dispatch wiring (bigger slices).
+    016 AppRunner+Athena+SSM (d9fd822), 017 Backup+Batch+EMR (6937cb3),
+    018 GA+Glue+Redshift+WAF (392459b), 019 AutoScaling (dda26ae),
+    020 CloudWatchMetrics+LogGroups (202339d), 021 extended pillars (8c2c023)
+- batch-021 committed rows: 01-AWS-CLOUD-02476/02485/02503/02512 (EventBridge),
+  02539/02548/02566/02575 (Step Functions), 03862/03871/03889/03898 (Config).
+- batch-021 added: Pillar enum extended with Performance, Scalability,
+  DisasterRecovery ("disaster-recovery"), OperationalExcellence
+  ("operational-excellence"); all 47 other evaluators got a `_ => {}` dispatch
+  fallback (no findings for unextended pillars); controller gained
+  BASE_PILLARS/ALL_PILLARS + parse_pillars(raw, supported) which rejects
+  unsupported pillars per service, and extended_pillar_reports used by the
+  config/eventbridge/stepfunctions handlers (default = 7 reports there, 3
+  elsewhere); new reason codes EVENTBRIDGE_PERF_BROAD_EVENT_PATTERN/
+  PERF_PATTERN_UNPARSEABLE/SCALE_TARGET_QUOTA_REACHED/DR_SCHEDULED_NO_DLQ/
+  OPEX_NO_OWNER_TAG, SFN_PERF_TRACING_DISABLED/PERF_EXPRESS_ALL_LOGGING/
+  SCALE_FULL_EXECUTION_LOGGING/DR_LOGGING_OFF/OPEX_NO_OWNER_TAG/
+  DATA_GAP_MACHINE_TYPE, CONFIG_PERF_INTERMITTENT_EVALUATION_FAILURES/
+  SCALE_HOURLY_EVALUATION/DR_NEVER_EVALUATED/OPEX_NO_OWNER_TAG; integration
+  test now expects 7 reports for the three extended services. Frontend
+  unchanged (PillarScorecard renders reports generically).
+- ses_control_plane.rs remains a stub permanently — the backlog has NO SES rows
+  (verified batch-016); leave it.
+- Last validation (batch-021): cargo test --lib → 529 passed, 0 failed (35
+  new); cargo check → 0 errors; cargo check --features integration-tests
+  --tests → 0 errors. Frontend not rebuilt (no frontend change). KNOWN
+  PRE-EXISTING: cargo test --test unit_tests has 7 failures in
+  aws_account_service_test on HEAD from before roadmap batches — do not chase.
+- Current batch: none — run complete for the tracked backlog slice.
+- Next action: feature_progress has 165/165 committed, 0 pending/blocked. If a
+  future run finds the roadmap hash changed (new backlog rows), re-enumerate
+  and seed new feature_progress rows; otherwise there is no remaining roadmap
+  work in this run.
 - No React test infra (no @testing-library) — UI tests deferred.
 - Note: user works on CLAUDE.md/prompts in parallel; never commit those — use
   explicit pathspec on git commit.
