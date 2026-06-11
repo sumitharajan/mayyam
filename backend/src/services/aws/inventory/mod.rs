@@ -12,21 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Deterministic inventory pillar evaluators. These run without an LLM,
+// emit reason-coded findings, and preserve the raw evidence they used.
 
-// Root module for AWS services
-#[path = "aws_client_factory.rs"]
-pub(crate) mod client_factory;
-mod control_plane;
-mod data_plane;
-mod service;
-
-// Re-export service structs
-pub use aws_data_plane::cost_explorer::AwsCostService;
-pub use control_plane::{AwsControlPlane, AwsControlPlaneTrait};
-pub use data_plane::AwsDataPlane;
-pub use service::AwsService;
-mod aws_config_service;
-pub mod aws_control_plane;
-pub mod aws_data_plane;
-pub mod aws_types;
-pub mod inventory;
+pub mod ec2_pillar_evaluator;

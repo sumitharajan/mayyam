@@ -17,6 +17,7 @@ pub mod ai;
 pub mod auth;
 pub mod aws_account;
 pub mod aws_analytics;
+pub mod aws_inventory;
 pub mod budget;
 pub mod chaos;
 pub mod cloud;

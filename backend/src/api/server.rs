@@ -288,6 +288,9 @@ pub async fn run_server(host: String, port: u16, config: Config) -> Result<(), B
         crate::controllers::unified_llm::UnifiedLlmController::new(unified_llm_manager.clone()),
     );
     let sync_run_controller = Arc::new(SyncRunController::new(sync_run_repo.clone()));
+    let aws_inventory_controller = Arc::new(
+        crate::controllers::aws_inventory::AwsInventoryController::new(aws_resource_repo.clone()),
+    );
 
     let s3_data_plane = Arc::new(S3DataPlane::new(aws_service.clone()));
     let s3_control_plane = Arc::new(s3_control_plane::S3ControlPlane::new(aws_service.clone()));
@@ -445,6 +448,11 @@ pub async fn run_server(host: String, port: u16, config: Config) -> Result<(), B
                 // Sync runs API
                 cfg_param.service(crate::api::routes::sync_run::configure(
                     sync_run_controller.clone(),
+                ));
+
+                // Deterministic inventory pillar reports (EC2 cost/security/resilience)
+                cfg_param.service(crate::api::routes::aws_inventory::configure(
+                    aws_inventory_controller.clone(),
                 ));
 
                 info!("Registering AWS Cost Analytics routes");

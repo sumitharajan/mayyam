@@ -13,20 +13,13 @@
 // limitations under the License.
 
 
-// Root module for AWS services
-#[path = "aws_client_factory.rs"]
-pub(crate) mod client_factory;
-mod control_plane;
-mod data_plane;
-mod service;
+use actix_web::{web, Scope};
+use std::sync::Arc;
 
-// Re-export service structs
-pub use aws_data_plane::cost_explorer::AwsCostService;
-pub use control_plane::{AwsControlPlane, AwsControlPlaneTrait};
-pub use data_plane::AwsDataPlane;
-pub use service::AwsService;
-mod aws_config_service;
-pub mod aws_control_plane;
-pub mod aws_data_plane;
-pub mod aws_types;
-pub mod inventory;
+use crate::controllers::aws_inventory::{self, AwsInventoryController};
+
+pub fn configure(controller: Arc<AwsInventoryController>) -> Scope {
+    web::scope("/api/aws/inventory")
+        .app_data(web::Data::new(controller))
+        .route("/ec2/pillars", web::get().to(aws_inventory::get_ec2_pillar_reports))
+}

@@ -1,0 +1,97 @@
+// Copyright (c) 2025 Rajan Panneer Selvam
+//
+// Licensed under the Business Source License 1.1 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     https://www.mariadb.com/bsl11
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// API contract tests for /api/aws/inventory/ec2/pillars.
+
+use reqwest::Client;
+use serde_json::Value;
+
+use crate::integration::helpers::server::base_url;
+
+fn aws_tests_enabled() -> bool {
+    std::env::var("ENABLE_AWS_TESTS").unwrap_or_else(|_| "false".to_string()) == "true"
+}
+
+#[tokio::test]
+async fn ec2_pillar_reports_contract() {
+    if !aws_tests_enabled() {
+        println!("Skipping ec2_pillar_reports_contract because ENABLE_AWS_TESTS is not true");
+        return;
+    }
+
+    let base = base_url().await;
+    let client = Client::new();
+    let account_id = "123456789012";
+
+    // Happy path: all three pillar reports with freshness metadata.
+    let resp = client
+        .get(format!(
+            "{}/api/aws/inventory/ec2/pillars?account_id={}",
+            base, account_id
+        ))
+        .send()
+        .await
+        .expect("pillar report request failed");
+    assert_eq!(resp.status(), 200);
+    let body: Value = resp.json().await.expect("invalid JSON body");
+    assert_eq!(body["account_id"], account_id);
+    assert_eq!(body["resource_type"], "EC2Instance");
+    assert!(body["evaluated_at"].is_string());
+    assert!(body["stale_after_hours"].is_number());
+    assert!(body["resources_evaluated"].is_number());
+    let reports = body["reports"].as_array().expect("reports array");
+    assert_eq!(reports.len(), 3);
+    for report in reports {
+        assert!(report["pillar"].is_string());
+        assert!(report["score"].is_number());
+        assert!(report["findings"].is_array());
+    }
+
+    // Single pillar selection.
+    let resp = client
+        .get(format!(
+            "{}/api/aws/inventory/ec2/pillars?account_id={}&pillar=cost",
+            base, account_id
+        ))
+        .send()
+        .await
+        .expect("cost pillar request failed");
+    assert_eq!(resp.status(), 200);
+    let body: Value = resp.json().await.expect("invalid JSON body");
+    let reports = body["reports"].as_array().expect("reports array");
+    assert_eq!(reports.len(), 1);
+    assert_eq!(reports[0]["pillar"], "cost");
+}
+
+#[tokio::test]
+async fn ec2_pillar_reports_rejects_unknown_pillar() {
+    if !aws_tests_enabled() {
+        println!(
+            "Skipping ec2_pillar_reports_rejects_unknown_pillar because ENABLE_AWS_TESTS is not true"
+        );
+        return;
+    }
+
+    let base = base_url().await;
+    let client = Client::new();
+    let resp = client
+        .get(format!(
+            "{}/api/aws/inventory/ec2/pillars?account_id=123456789012&pillar=bogus",
+            base
+        ))
+        .send()
+        .await
+        .expect("bad pillar request failed");
+    assert_eq!(resp.status(), 400);
+}
