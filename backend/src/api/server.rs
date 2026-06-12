@@ -77,6 +77,7 @@ use crate::services::kubernetes::jobs_service::JobsService;
 use crate::services::kubernetes::limit_ranges_service::LimitRangesService;
 use crate::services::kubernetes::metrics_service::MetricsService;
 use crate::services::kubernetes::network_policies_service::NetworkPoliciesService;
+use crate::services::kubernetes::node_taints_service::NodeTaintsService;
 use crate::services::kubernetes::nodes_ops_service::NodeOpsService;
 use crate::services::kubernetes::pdb_service::PodDisruptionBudgetsService;
 use crate::services::kubernetes::pod_security_standards_service::PodSecurityStandardsService;
@@ -247,6 +248,7 @@ pub async fn run_server(host: String, port: u16, config: Config) -> Result<(), B
     let pod_service = Arc::new(PodService::new());
     let k8s_services_service = Arc::new(K8sServicesService::new());
     let nodes_service = Arc::new(NodesService::new());
+    let node_taints_service = Arc::new(NodeTaintsService::new());
     let namespaces_service = Arc::new(NamespacesService::new());
     let persistent_volume_claims_service = Arc::new(PersistentVolumeClaimsService::new());
     let persistent_volumes_service = Arc::new(PersistentVolumesService::new());
@@ -384,6 +386,7 @@ pub async fn run_server(host: String, port: u16, config: Config) -> Result<(), B
             .app_data(web::Data::new(pod_service.clone()))
             .app_data(web::Data::new(k8s_services_service.clone()))
             .app_data(web::Data::new(nodes_service.clone()))
+            .app_data(web::Data::new(node_taints_service.clone()))
             .app_data(web::Data::new(namespaces_service.clone()))
             .app_data(web::Data::new(persistent_volume_claims_service.clone()))
             .app_data(web::Data::new(persistent_volumes_service.clone()))
