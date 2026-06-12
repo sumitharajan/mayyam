@@ -15,11 +15,17 @@
 use crate::errors::AppError;
 use crate::models::cluster::KubernetesClusterConfig;
 use crate::services::kubernetes::client::ClientFactory;
+use crate::services::kubernetes::role_binding_inventory::{
+    RoleBindingInventoryItem, RoleBindingOwnerReferenceInventoryItem,
+    RoleBindingRoleRefInventoryItem, RoleBindingSubjectInventoryItem,
+};
 use crate::services::kubernetes::role_inventory::{
     RoleInventoryItem, RoleOwnerReferenceInventoryItem, RoleRuleInventoryItem,
 };
 use chrono::{DateTime, Utc};
-use k8s_openapi::api::rbac::v1::{ClusterRole, ClusterRoleBinding, PolicyRule, Role, RoleBinding};
+use k8s_openapi::api::rbac::v1::{
+    ClusterRole, ClusterRoleBinding, PolicyRule, Role, RoleBinding, RoleRef, Subject,
+};
 use kube::api::{DeleteParams, ListParams, Patch, PatchParams};
 use kube::{Api, ResourceExt};
 
@@ -90,6 +96,93 @@ fn convert_kube_role_to_inventory(
         rules,
         owner_references,
         created_at: role
+            .metadata
+            .creation_timestamp
+            .as_ref()
+            .map(|timestamp| timestamp.0),
+        collected_at,
+    }
+}
+
+fn convert_role_ref_to_inventory(role_ref: &RoleRef) -> RoleBindingRoleRefInventoryItem {
+    RoleBindingRoleRefInventoryItem {
+        api_group: role_ref.api_group.clone(),
+        kind: role_ref.kind.clone(),
+        name: role_ref.name.clone(),
+    }
+}
+
+fn convert_subject_to_inventory(subject: &Subject) -> RoleBindingSubjectInventoryItem {
+    RoleBindingSubjectInventoryItem {
+        api_group: subject.api_group.clone(),
+        kind: subject.kind.clone(),
+        namespace: subject.namespace.clone(),
+        name: subject.name.clone(),
+    }
+}
+
+fn convert_kube_role_binding_to_inventory(
+    role_binding: &RoleBinding,
+    cluster_id: &str,
+    current_namespace: &str,
+    collected_at: DateTime<Utc>,
+) -> RoleBindingInventoryItem {
+    let namespace = role_binding
+        .namespace()
+        .unwrap_or_else(|| current_namespace.to_string());
+    let mut subjects = role_binding
+        .subjects
+        .as_ref()
+        .map(|subjects| {
+            subjects
+                .iter()
+                .map(convert_subject_to_inventory)
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+    subjects.sort_by(|left, right| {
+        (
+            left.kind.as_str(),
+            left.namespace.as_deref().unwrap_or(""),
+            left.name.as_str(),
+        )
+            .cmp(&(
+                right.kind.as_str(),
+                right.namespace.as_deref().unwrap_or(""),
+                right.name.as_str(),
+            ))
+    });
+
+    let owner_references = role_binding
+        .metadata
+        .owner_references
+        .as_ref()
+        .map(|owners| {
+            owners
+                .iter()
+                .map(|owner| RoleBindingOwnerReferenceInventoryItem {
+                    kind: Some(owner.kind.clone()),
+                    name: owner.name.clone(),
+                    controller: owner.controller,
+                })
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+
+    RoleBindingInventoryItem {
+        cluster_id: cluster_id.to_string(),
+        namespace,
+        name: role_binding.name_any(),
+        labels: role_binding.metadata.labels.clone().unwrap_or_default(),
+        annotations: role_binding
+            .metadata
+            .annotations
+            .clone()
+            .unwrap_or_default(),
+        role_ref: convert_role_ref_to_inventory(&role_binding.role_ref),
+        subjects,
+        owner_references,
+        created_at: role_binding
             .metadata
             .creation_timestamp
             .as_ref()
@@ -226,6 +319,44 @@ impl RbacService {
             .await
             .map_err(|e| AppError::Kubernetes(e.to_string()))?
             .items)
+    }
+    pub async fn list_role_binding_inventory(
+        &self,
+        cluster: &KubernetesClusterConfig,
+        cluster_id: &str,
+        namespace: Option<&str>,
+    ) -> Result<Vec<RoleBindingInventoryItem>, AppError> {
+        let namespace = namespace
+            .map(str::trim)
+            .filter(|namespace| !namespace.is_empty());
+        let namespace_arg = namespace.unwrap_or("");
+        let fallback_namespace = namespace
+            .filter(|namespace| *namespace != "all")
+            .unwrap_or("");
+        let collected_at = Utc::now();
+
+        let api = Self::role_bindings_api(cluster, namespace_arg).await?;
+        let list = api
+            .list(&ListParams::default())
+            .await
+            .map_err(|e| AppError::Kubernetes(e.to_string()))?;
+        let mut inventory = list
+            .items
+            .iter()
+            .map(|role_binding| {
+                convert_kube_role_binding_to_inventory(
+                    role_binding,
+                    cluster_id,
+                    fallback_namespace,
+                    collected_at,
+                )
+            })
+            .collect::<Vec<_>>();
+        inventory.sort_by(|left, right| {
+            (left.namespace.as_str(), left.name.as_str())
+                .cmp(&(right.namespace.as_str(), right.name.as_str()))
+        });
+        Ok(inventory)
     }
     pub async fn get_role_binding(
         &self,
@@ -386,5 +517,126 @@ impl RbacService {
             .await
             .map_err(|e| AppError::Kubernetes(e.to_string()))?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::TimeZone;
+    use k8s_openapi::apimachinery::pkg::apis::meta::v1::{ObjectMeta, Time};
+    use std::collections::BTreeMap;
+
+    fn map(values: &[(&str, &str)]) -> BTreeMap<String, String> {
+        values
+            .iter()
+            .map(|(key, value)| ((*key).to_string(), (*value).to_string()))
+            .collect()
+    }
+
+    fn subject(kind: &str, namespace: Option<&str>, name: &str) -> Subject {
+        Subject {
+            api_group: if kind == "ServiceAccount" {
+                None
+            } else {
+                Some("rbac.authorization.k8s.io".to_string())
+            },
+            kind: kind.to_string(),
+            namespace: namespace.map(str::to_string),
+            name: name.to_string(),
+        }
+    }
+
+    #[test]
+    fn role_binding_inventory_conversion_preserves_metadata_and_sorts_subjects() {
+        let created_at = Utc.with_ymd_and_hms(2026, 6, 1, 12, 0, 0).unwrap();
+        let collected_at = Utc.with_ymd_and_hms(2026, 6, 10, 0, 0, 0).unwrap();
+        let role_binding = RoleBinding {
+            metadata: ObjectMeta {
+                name: Some("checkout-admin".to_string()),
+                namespace: Some("apps".to_string()),
+                labels: Some(map(&[("team", "payments")])),
+                annotations: Some(map(&[("cost-center", "cc-42")])),
+                creation_timestamp: Some(Time(created_at)),
+                ..Default::default()
+            },
+            role_ref: RoleRef {
+                api_group: "rbac.authorization.k8s.io".to_string(),
+                kind: "ClusterRole".to_string(),
+                name: "edit".to_string(),
+            },
+            subjects: Some(vec![
+                subject("User", None, "alice"),
+                subject("ServiceAccount", Some("apps"), "default"),
+                subject("Group", None, "ops"),
+                subject("ServiceAccount", Some("apps"), "checkout"),
+            ]),
+        };
+
+        let item = convert_kube_role_binding_to_inventory(
+            &role_binding,
+            "cluster-a",
+            "fallback",
+            collected_at,
+        );
+
+        assert_eq!(item.cluster_id, "cluster-a");
+        assert_eq!(item.namespace, "apps");
+        assert_eq!(item.name, "checkout-admin");
+        assert_eq!(item.labels["team"], "payments");
+        assert_eq!(item.annotations["cost-center"], "cc-42");
+        assert_eq!(item.created_at, Some(created_at));
+        assert_eq!(item.collected_at, collected_at);
+        assert_eq!(item.role_ref.kind, "ClusterRole");
+        assert_eq!(item.role_ref.name, "edit");
+
+        let subject_keys = item
+            .subjects
+            .iter()
+            .map(|subject| {
+                format!(
+                    "{}/{}/{}",
+                    subject.kind,
+                    subject.namespace.as_deref().unwrap_or(""),
+                    subject.name
+                )
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(
+            subject_keys,
+            vec![
+                "Group//ops",
+                "ServiceAccount/apps/checkout",
+                "ServiceAccount/apps/default",
+                "User//alice"
+            ]
+        );
+    }
+
+    #[test]
+    fn role_binding_inventory_conversion_uses_fallback_namespace_when_missing() {
+        let collected_at = Utc.with_ymd_and_hms(2026, 6, 10, 0, 0, 0).unwrap();
+        let role_binding = RoleBinding {
+            metadata: ObjectMeta {
+                name: Some("fallback-reader".to_string()),
+                ..Default::default()
+            },
+            role_ref: RoleRef {
+                api_group: "rbac.authorization.k8s.io".to_string(),
+                kind: "Role".to_string(),
+                name: "reader".to_string(),
+            },
+            subjects: None,
+        };
+
+        let item = convert_kube_role_binding_to_inventory(
+            &role_binding,
+            "cluster-a",
+            "requested-namespace",
+            collected_at,
+        );
+
+        assert_eq!(item.namespace, "requested-namespace");
+        assert!(item.subjects.is_empty());
     }
 }
