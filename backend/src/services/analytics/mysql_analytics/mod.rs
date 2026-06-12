@@ -15,5 +15,6 @@
 pub mod mysql_analytics_service;
 pub mod mysql_signals;
 pub mod mysql_telemetry;
+pub mod performance_schema_inventory;
 pub use mysql_analytics_service::MySqlAnalyticsService;
 pub use mysql_telemetry::{MySqlTelemetryCollector, MySqlTelemetrySnapshot};

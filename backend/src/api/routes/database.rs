@@ -65,6 +65,9 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
                 web::resource("/{id}/mysql/telemetry/signals")
                     .route(web::get().to(database::get_mysql_telemetry_signals)),
             )
+            .service(web::resource("/mysql/performance-schema/pillars").route(
+                web::get().to(database::get_mysql_performance_schema_inventory_pillar_reports),
+            ))
             .service(
                 web::resource("/{id}/table/{table_name}/details")
                     .route(web::get().to(get_table_details)),

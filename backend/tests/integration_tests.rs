@@ -26,6 +26,7 @@ mod integration {
     pub mod kafka;
     pub mod kubernetes_smoke_tests;
     pub mod llm;
+    pub mod mysql_inventory_api_tests;
 }
 
 // Re-export integration tests
@@ -39,3 +40,4 @@ pub use integration::iam_api_tests::*;
 pub use integration::kafka::*;
 pub use integration::kubernetes_smoke_tests::*;
 pub use integration::llm::*;
+pub use integration::mysql_inventory_api_tests::*;
