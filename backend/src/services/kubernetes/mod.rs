@@ -32,6 +32,7 @@ pub mod nodes_service;
 pub mod persistent_volume_claims_service;
 pub mod persistent_volumes_service;
 pub mod pod; // Changed from pod_service
+pub mod pod_exec_inventory;
 pub mod pod_inventory;
 pub mod pod_log_inventory;
 pub mod replica_set_inventory;
