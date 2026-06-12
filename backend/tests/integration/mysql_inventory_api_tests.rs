@@ -16,7 +16,10 @@
 
 use actix_web::{dev::Service as _, http::StatusCode, test, web, App, HttpMessage};
 use mayyam::config::Config;
-use mayyam::controllers::database::get_mysql_performance_schema_inventory_pillar_reports;
+use mayyam::controllers::database::{
+    get_mysql_performance_schema_inventory_pillar_reports,
+    get_mysql_sys_schema_inventory_pillar_reports,
+};
 use mayyam::middleware::auth::Claims;
 use sea_orm::DatabaseConnection;
 use serde_json::Value;
@@ -44,6 +47,10 @@ async fn mysql_performance_schema_inventory_pillar_reports_contract() {
             .route(
                 "/api/databases/mysql/performance-schema/pillars",
                 web::get().to(get_mysql_performance_schema_inventory_pillar_reports),
+            )
+            .route(
+                "/api/databases/mysql/sys-schema/pillars",
+                web::get().to(get_mysql_sys_schema_inventory_pillar_reports),
             ),
     )
     .await;
@@ -82,4 +89,25 @@ async fn mysql_performance_schema_inventory_pillar_reports_contract() {
         .to_request();
     let response = test::call_service(&app, request).await;
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+    let request = test::TestRequest::get()
+        .uri("/api/databases/mysql/sys-schema/pillars")
+        .to_request();
+    let response = test::call_service(&app, request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body: Value = test::read_body_json(response).await;
+    assert_eq!(body["resource_type"], "MySqlSysSchema");
+    let reports = body["reports"].as_array().expect("reports array");
+    assert_eq!(reports.len(), 3);
+
+    let request = test::TestRequest::get()
+        .uri("/api/databases/mysql/sys-schema/pillars?pillar=security")
+        .to_request();
+    let response = test::call_service(&app, request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let body: Value = test::read_body_json(response).await;
+    let reports = body["reports"].as_array().expect("reports array");
+    assert_eq!(reports.len(), 1);
+    assert_eq!(reports[0]["pillar"], "security");
 }
