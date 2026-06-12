@@ -41,6 +41,7 @@ pub mod crds_service;
 pub mod cronjobs_service;
 pub mod endpoints_service;
 pub mod hpa_service;
+pub mod ingress_inventory;
 pub mod ingress_service;
 pub mod inventory;
 pub mod job_inventory;
