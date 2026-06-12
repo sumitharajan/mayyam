@@ -40,6 +40,8 @@ pub mod authz_service;
 pub mod crds_service;
 pub mod cronjobs_service;
 pub mod endpoints_service;
+pub mod gateway_api_inventory;
+pub mod gateway_api_service;
 pub mod hpa_service;
 pub mod ingress_inventory;
 pub mod ingress_service;
@@ -62,6 +64,7 @@ pub mod prelude {
     pub use super::daemon_sets::DaemonSetsService;
     pub use super::deployments_service::DeploymentsService;
     pub use super::endpoints_service::EndpointsService;
+    pub use super::gateway_api_service::GatewayApiService;
     pub use super::hpa_service::HorizontalPodAutoscalerService;
     pub use super::ingress_service::IngressService;
     pub use super::jobs_service::JobsService;

@@ -69,6 +69,7 @@ use crate::services::kubernetes::authz_service::AuthorizationService;
 use crate::services::kubernetes::crds_service::CrdsService;
 use crate::services::kubernetes::cronjobs_service::CronJobsService;
 use crate::services::kubernetes::endpoints_service::EndpointsService;
+use crate::services::kubernetes::gateway_api_service::GatewayApiService;
 use crate::services::kubernetes::hpa_service::HorizontalPodAutoscalerService;
 use crate::services::kubernetes::ingress_service::IngressService;
 use crate::services::kubernetes::jobs_service::JobsService;
@@ -255,6 +256,7 @@ pub async fn run_server(host: String, port: u16, config: Config) -> Result<(), B
     let jobs_service = Arc::new(JobsService::new());
     let cronjobs_service = Arc::new(CronJobsService::new());
     let ingress_service = Arc::new(IngressService::new());
+    let gateway_api_service = Arc::new(GatewayApiService::new());
     let endpoints_service = Arc::new(EndpointsService::new());
     let network_policies_service = Arc::new(NetworkPoliciesService::new());
     let hpa_service = Arc::new(HorizontalPodAutoscalerService::new());
@@ -387,6 +389,7 @@ pub async fn run_server(host: String, port: u16, config: Config) -> Result<(), B
             .app_data(web::Data::new(jobs_service.clone()))
             .app_data(web::Data::new(cronjobs_service.clone()))
             .app_data(web::Data::new(ingress_service.clone()))
+            .app_data(web::Data::new(gateway_api_service.clone()))
             .app_data(web::Data::new(endpoints_service.clone()))
             .app_data(web::Data::new(network_policies_service.clone()))
             .app_data(web::Data::new(hpa_service.clone()))
