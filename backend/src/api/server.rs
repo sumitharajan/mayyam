@@ -65,6 +65,7 @@ use crate::services::{
 };
 
 // Import Kubernetes Services
+use crate::services::kubernetes::admission_webhooks_service::AdmissionWebhooksService;
 use crate::services::kubernetes::authz_service::AuthorizationService;
 use crate::services::kubernetes::crds_service::CrdsService;
 use crate::services::kubernetes::cronjobs_service::CronJobsService;
@@ -270,6 +271,7 @@ pub async fn run_server(host: String, port: u16, config: Config) -> Result<(), B
     let replica_sets_service = Arc::new(ReplicaSetsService);
     let storage_classes_service = Arc::new(StorageClassesService);
     let crds_service = Arc::new(CrdsService);
+    let admission_webhooks_service = Arc::new(AdmissionWebhooksService::new());
 
     // Initialize controllers
     let auth_controller = Arc::new(AuthController::new(user_service.clone(), config.clone()));
@@ -424,6 +426,7 @@ pub async fn run_server(host: String, port: u16, config: Config) -> Result<(), B
             .app_data(web::Data::new(replica_sets_service.clone()))
             .app_data(web::Data::new(storage_classes_service.clone()))
             .app_data(web::Data::new(crds_service.clone()))
+            .app_data(web::Data::new(admission_webhooks_service.clone()))
             // Middleware
             // Routes configuration - specify the order: analytics first, then general routes
             .configure(|cfg_param: &mut web::ServiceConfig| {

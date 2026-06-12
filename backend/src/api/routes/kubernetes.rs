@@ -233,6 +233,16 @@ pub fn configure(cfg: &mut web::ServiceConfig, db: Arc<DatabaseConnection>) {
                 .to(kube_controller::get_custom_resource_definition_inventory_pillar_reports_controller),
         )
         .route(
+            "/inventory/admissionwebhooks/pillars",
+            web::get()
+                .to(kube_controller::get_admission_webhook_inventory_pillar_reports_controller),
+        )
+        .route(
+            "/inventory/admission-webhooks/pillars",
+            web::get()
+                .to(kube_controller::get_admission_webhook_inventory_pillar_reports_controller),
+        )
+        .route(
             "/inventory/customresources/pillars",
             web::get().to(kube_controller::get_custom_resource_inventory_pillar_reports_controller),
         )

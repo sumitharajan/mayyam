@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+pub mod admission_webhook_inventory;
+pub mod admission_webhooks_service;
 pub mod client;
 pub mod cluster_role_binding_inventory;
 pub mod cluster_role_inventory;

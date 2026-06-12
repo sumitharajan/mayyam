@@ -16,6 +16,11 @@ use crate::errors::AppError;
 use crate::middleware::auth::Claims; // Assuming you have auth middleware
 use crate::models::cluster::{CreateKubernetesClusterRequest, KubernetesClusterConfig};
 use crate::services::aws::inventory::types::{Pillar, DEFAULT_STALE_AFTER_HOURS};
+use crate::services::kubernetes::admission_webhook_inventory::{
+    evaluate_kubernetes_admission_webhook_inventory,
+    RESOURCE_TYPE as ADMISSION_WEBHOOK_RESOURCE_TYPE,
+};
+use crate::services::kubernetes::admission_webhooks_service::AdmissionWebhooksService;
 use crate::services::kubernetes::cluster_role_binding_inventory::{
     evaluate_kubernetes_cluster_role_binding_inventory,
     RESOURCE_TYPE as CLUSTER_ROLE_BINDING_RESOURCE_TYPE,
@@ -2141,6 +2146,56 @@ pub async fn get_custom_resource_definition_inventory_pillar_reports_controller(
         "stale_after_hours": DEFAULT_STALE_AFTER_HOURS,
         "cluster_id": query.cluster_id,
         "resources_evaluated": crd_items.len(),
+        "oldest_refresh": oldest_refresh,
+        "reports": reports,
+    })))
+}
+
+pub async fn get_admission_webhook_inventory_pillar_reports_controller(
+    claims: web::ReqData<Claims>,
+    db: web::Data<Arc<DatabaseConnection>>,
+    query: web::Query<KubernetesInventoryQuery>,
+    admission_webhooks_service: web::Data<Arc<AdmissionWebhooksService>>,
+) -> Result<impl Responder, AppError> {
+    let query = query.into_inner();
+    debug!(
+        target: "mayyam::controllers::kubernetes",
+        user_id = %claims.username,
+        ?query,
+        "Kubernetes Admission Webhook inventory pillar report request"
+    );
+
+    let pillars = parse_kubernetes_inventory_pillars(&query.pillar)?;
+    let cluster_id = query
+        .cluster_id
+        .as_deref()
+        .map(str::trim)
+        .filter(|cluster_id| !cluster_id.is_empty());
+    let webhook_items = if let Some(cluster_id) = cluster_id {
+        let cluster_config = get_cluster_config_by_id(db.get_ref().as_ref(), cluster_id).await?;
+        admission_webhooks_service
+            .list_inventory(&cluster_config, cluster_id)
+            .await?
+    } else {
+        Vec::new()
+    };
+
+    let now = Utc::now();
+    let reports = pillars
+        .iter()
+        .map(|pillar| evaluate_kubernetes_admission_webhook_inventory(&webhook_items, *pillar, now))
+        .collect::<Vec<_>>();
+    let oldest_refresh = webhook_items
+        .iter()
+        .map(|resource| resource.collected_at)
+        .min();
+
+    Ok(HttpResponse::Ok().json(json!({
+        "resource_type": ADMISSION_WEBHOOK_RESOURCE_TYPE,
+        "evaluated_at": now,
+        "stale_after_hours": DEFAULT_STALE_AFTER_HOURS,
+        "cluster_id": query.cluster_id,
+        "resources_evaluated": webhook_items.len(),
         "oldest_refresh": oldest_refresh,
         "reports": reports,
     })))
