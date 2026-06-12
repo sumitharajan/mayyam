@@ -15,11 +15,88 @@
 use crate::errors::AppError;
 use crate::models::cluster::KubernetesClusterConfig;
 use crate::services::kubernetes::client::ClientFactory;
-use k8s_openapi::api::rbac::v1::{ClusterRole, ClusterRoleBinding, Role, RoleBinding};
+use crate::services::kubernetes::role_inventory::{
+    RoleInventoryItem, RoleOwnerReferenceInventoryItem, RoleRuleInventoryItem,
+};
+use chrono::{DateTime, Utc};
+use k8s_openapi::api::rbac::v1::{ClusterRole, ClusterRoleBinding, PolicyRule, Role, RoleBinding};
 use kube::api::{DeleteParams, ListParams, Patch, PatchParams};
-use kube::Api;
+use kube::{Api, ResourceExt};
 
 pub struct RbacService;
+
+fn convert_policy_rule_to_inventory(rule: &PolicyRule) -> RoleRuleInventoryItem {
+    let mut api_groups = rule.api_groups.clone().unwrap_or_default();
+    let mut resources = rule.resources.clone().unwrap_or_default();
+    let mut verbs = rule.verbs.clone();
+    let mut resource_names = rule.resource_names.clone().unwrap_or_default();
+    let mut non_resource_urls = rule.non_resource_urls.clone().unwrap_or_default();
+    api_groups.sort();
+    resources.sort();
+    verbs.sort();
+    resource_names.sort();
+    non_resource_urls.sort();
+
+    RoleRuleInventoryItem {
+        api_groups,
+        resources,
+        verbs,
+        resource_names,
+        non_resource_urls,
+    }
+}
+
+fn convert_kube_role_to_inventory(
+    role: &Role,
+    cluster_id: &str,
+    current_namespace: &str,
+    collected_at: DateTime<Utc>,
+) -> RoleInventoryItem {
+    let namespace = role
+        .namespace()
+        .unwrap_or_else(|| current_namespace.to_string());
+    let rules = role
+        .rules
+        .as_ref()
+        .map(|rules| {
+            rules
+                .iter()
+                .map(convert_policy_rule_to_inventory)
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+    let owner_references = role
+        .metadata
+        .owner_references
+        .as_ref()
+        .map(|owners| {
+            owners
+                .iter()
+                .map(|owner| RoleOwnerReferenceInventoryItem {
+                    kind: Some(owner.kind.clone()),
+                    name: owner.name.clone(),
+                    controller: owner.controller,
+                })
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+
+    RoleInventoryItem {
+        cluster_id: cluster_id.to_string(),
+        namespace,
+        name: role.name_any(),
+        labels: role.metadata.labels.clone().unwrap_or_default(),
+        annotations: role.metadata.annotations.clone().unwrap_or_default(),
+        rules,
+        owner_references,
+        created_at: role
+            .metadata
+            .creation_timestamp
+            .as_ref()
+            .map(|timestamp| timestamp.0),
+        collected_at,
+    }
+}
 
 impl RbacService {
     pub fn new() -> Self {
@@ -49,6 +126,39 @@ impl RbacService {
             .await
             .map_err(|e| AppError::Kubernetes(e.to_string()))?
             .items)
+    }
+    pub async fn list_role_inventory(
+        &self,
+        cluster: &KubernetesClusterConfig,
+        cluster_id: &str,
+        namespace: Option<&str>,
+    ) -> Result<Vec<RoleInventoryItem>, AppError> {
+        let namespace = namespace
+            .map(str::trim)
+            .filter(|namespace| !namespace.is_empty());
+        let namespace_arg = namespace.unwrap_or("");
+        let fallback_namespace = namespace
+            .filter(|namespace| *namespace != "all")
+            .unwrap_or("");
+        let collected_at = Utc::now();
+
+        let api = Self::roles_api(cluster, namespace_arg).await?;
+        let list = api
+            .list(&ListParams::default())
+            .await
+            .map_err(|e| AppError::Kubernetes(e.to_string()))?;
+        let mut inventory = list
+            .items
+            .iter()
+            .map(|role| {
+                convert_kube_role_to_inventory(role, cluster_id, fallback_namespace, collected_at)
+            })
+            .collect::<Vec<_>>();
+        inventory.sort_by(|left, right| {
+            (left.namespace.as_str(), left.name.as_str())
+                .cmp(&(right.namespace.as_str(), right.name.as_str()))
+        });
+        Ok(inventory)
     }
     pub async fn get_role(
         &self,

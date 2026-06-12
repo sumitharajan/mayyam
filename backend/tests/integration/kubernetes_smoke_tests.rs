@@ -25,7 +25,7 @@ use mayyam::controllers::kubernetes::{
     get_ingress_inventory_pillar_reports_controller, get_job_inventory_pillar_reports_controller,
     get_node_inventory_pillar_reports_controller, get_pod_inventory_pillar_reports_controller,
     get_replicaset_inventory_pillar_reports_controller,
-    get_secret_inventory_pillar_reports_controller,
+    get_role_inventory_pillar_reports_controller, get_secret_inventory_pillar_reports_controller,
     get_service_account_inventory_pillar_reports_controller,
     get_service_inventory_pillar_reports_controller,
     get_statefulset_inventory_pillar_reports_controller,
@@ -41,6 +41,7 @@ use mayyam::services::kubernetes::ingress_service::IngressService;
 use mayyam::services::kubernetes::jobs_service::JobsService;
 use mayyam::services::kubernetes::nodes_service::NodesService;
 use mayyam::services::kubernetes::pod::PodService;
+use mayyam::services::kubernetes::rbac_service::RbacService;
 use mayyam::services::kubernetes::replica_sets_service::ReplicaSetsService;
 use mayyam::services::kubernetes::secrets_service::SecretsService;
 use mayyam::services::kubernetes::service_accounts_service::ServiceAccountsService;
@@ -1157,6 +1158,69 @@ async fn kubernetes_service_account_inventory_pillar_reports_contract() {
 
     let request = test::TestRequest::get()
         .uri("/api/kubernetes/inventory/serviceaccounts/pillars?pillar=bogus")
+        .to_request();
+    let response = test::call_service(&app, request).await;
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+}
+
+#[tokio::test]
+async fn kubernetes_role_inventory_pillar_reports_contract() {
+    let claims = Claims {
+        sub: "test-user".to_string(),
+        username: "test-user".to_string(),
+        email: None,
+        roles: vec!["admin".to_string()],
+        exp: i64::MAX,
+        iat: 0,
+    };
+    let db = Arc::new(DatabaseConnection::default());
+    let rbac_service = Arc::new(RbacService::new());
+    let app = test::init_service(
+        App::new()
+            .wrap_fn(move |req, srv| {
+                req.extensions_mut().insert(claims.clone());
+                srv.call(req)
+            })
+            .app_data(web::Data::new(db))
+            .app_data(web::Data::new(rbac_service))
+            .route(
+                "/api/kubernetes/inventory/roles/pillars",
+                web::get().to(get_role_inventory_pillar_reports_controller),
+            ),
+    )
+    .await;
+
+    let request = test::TestRequest::get()
+        .uri("/api/kubernetes/inventory/roles/pillars")
+        .to_request();
+    let response = test::call_service(&app, request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body: Value = test::read_body_json(response).await;
+    assert_eq!(body["resource_type"], "KubernetesRole");
+    assert!(body["evaluated_at"].is_string());
+    assert!(body["stale_after_hours"].is_number());
+    assert!(body["resources_evaluated"].is_number());
+    let reports = body["reports"].as_array().expect("reports array");
+    assert_eq!(reports.len(), 3);
+    for report in reports {
+        assert!(report["pillar"].is_string());
+        assert!(report["score"].is_number());
+        assert!(report["findings"].is_array());
+    }
+
+    let request = test::TestRequest::get()
+        .uri("/api/kubernetes/inventory/roles/pillars?pillar=security")
+        .to_request();
+    let response = test::call_service(&app, request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let body: Value = test::read_body_json(response).await;
+    let reports = body["reports"].as_array().expect("reports array");
+    assert_eq!(reports.len(), 1);
+    assert_eq!(reports[0]["pillar"], "security");
+
+    let request = test::TestRequest::get()
+        .uri("/api/kubernetes/inventory/roles/pillars?pillar=bogus")
         .to_request();
     let response = test::call_service(&app, request).await;
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
