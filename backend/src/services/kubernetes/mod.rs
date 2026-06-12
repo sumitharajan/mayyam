@@ -39,6 +39,7 @@ pub mod stateful_sets_service;
 pub mod authz_service;
 pub mod crds_service;
 pub mod cronjobs_service;
+pub mod endpoints_inventory;
 pub mod endpoints_service;
 pub mod gateway_api_inventory;
 pub mod gateway_api_service;
