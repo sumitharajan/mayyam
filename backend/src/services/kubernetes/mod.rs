@@ -30,6 +30,7 @@ pub mod persistent_volumes_service;
 pub mod pod; // Changed from pod_service
 pub mod pod_inventory;
 pub mod replica_set_inventory;
+pub mod secret_inventory;
 pub mod secrets_service;
 pub mod service_inventory;
 pub mod services_service;
