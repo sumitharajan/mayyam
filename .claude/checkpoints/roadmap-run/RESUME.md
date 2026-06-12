@@ -2,14 +2,14 @@
 
 - Run ID: run-001
 - Roadmap hash: ab4059db94762a3e
-- Last batch commit: 933abbe3ad5f67fb5da38d7e1e0071c9ae1bb685 (batch-069: Kubernetes Dashboard Secrets inventory for cost, resilience, and security)
-- Current batch: batch-070 (Kubernetes Dashboard ServiceAccounts inventory for cost, resilience, and security)
-- Current batch rows: 02-KUBERNETES-DASHBOARD-00834, 02-KUBERNETES-DASHBOARD-00841, 02-KUBERNETES-DASHBOARD-00862
-- Current batch status: claimed
-- Completed feature rows: 337 committed
+- Last batch commit: 9f385974a860e64fba8d84f91e4f115d20ba4b8b (batch-070: Kubernetes Dashboard ServiceAccounts inventory for cost, resilience, and security)
+- Current batch: none
+- Current batch rows: none
+- Current batch status: none
+- Completed feature rows: 340 committed
 - Current blocker: none. A disk-full validation failure occurred during batch-050; approved `cargo clean` cleared `backend/target`, leaving an empty undeletable target directory due ACL.
 - Changed files in current batch: none.
-- Latest verification: batch-070 claimed after roadmap inputs counted 38 modules and 59311 backlog rows under stored legacy hash `ab4059db94762a3e`.
-- Exact next action: write TDD guard for Kubernetes ServiceAccounts inventory reports.
-- Verification before continuing: `runs.last_commit=933abbe3ad5f67fb5da38d7e1e0071c9ae1bb685`, `runs.current_batch_id=batch-070`, `runs.next_action=write TDD guard for Kubernetes ServiceAccounts inventory reports`, and batch-070 rows are claimed.
+- Latest verification: batch-070 committed after `cargo test --lib service_account_inventory --message-format short`, `cargo test --features integration-tests --test integration_tests kubernetes_service_account_inventory --message-format short`, `cargo fmt`, `cargo fmt -- --check`, `git diff --check`, and `cargo check --message-format short` passed.
+- Exact next action: select-batch-071.
+- Verification before continuing: `runs.last_commit=9f385974a860e64fba8d84f91e4f115d20ba4b8b`, `runs.current_batch_id` is null, `runs.next_action=select-batch-071`, and batch-070 rows are committed.
 - Known pre-existing issue: `cargo test --test unit_tests` has failures in `aws_account_service_test`; do not chase unless scoped.
