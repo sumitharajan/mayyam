@@ -111,6 +111,9 @@ use crate::services::kubernetes::service_inventory::{
 use crate::services::kubernetes::stateful_set_inventory::{
     evaluate_kubernetes_statefulset_inventory, RESOURCE_TYPE as STATEFULSET_RESOURCE_TYPE,
 };
+use crate::services::kubernetes::storage_class_inventory::{
+    evaluate_kubernetes_storage_class_inventory, RESOURCE_TYPE as STORAGE_CLASS_RESOURCE_TYPE,
+};
 use crate::services::kubernetes::vpa_inventory::{
     evaluate_kubernetes_vpa_inventory, RESOURCE_TYPE as VPA_RESOURCE_TYPE,
 };
@@ -1850,6 +1853,58 @@ pub async fn get_persistent_volume_claim_inventory_pillar_reports_controller(
         "cluster_id": query.cluster_id,
         "namespace": query.namespace,
         "resources_evaluated": pvc_items.len(),
+        "oldest_refresh": oldest_refresh,
+        "reports": reports,
+    })))
+}
+
+pub async fn get_storage_class_inventory_pillar_reports_controller(
+    claims: web::ReqData<Claims>,
+    db: web::Data<Arc<DatabaseConnection>>,
+    query: web::Query<KubernetesInventoryQuery>,
+    storage_classes_service: web::Data<Arc<StorageClassesService>>,
+) -> Result<impl Responder, AppError> {
+    let query = query.into_inner();
+    debug!(
+        target: "mayyam::controllers::kubernetes",
+        user_id = %claims.username,
+        ?query,
+        "Kubernetes StorageClass inventory pillar report request"
+    );
+
+    let pillars = parse_kubernetes_inventory_pillars(&query.pillar)?;
+    let cluster_id = query
+        .cluster_id
+        .as_deref()
+        .map(str::trim)
+        .filter(|cluster_id| !cluster_id.is_empty());
+    let storage_class_items = if let Some(cluster_id) = cluster_id {
+        let cluster_config = get_cluster_config_by_id(db.get_ref().as_ref(), cluster_id).await?;
+        storage_classes_service
+            .list_inventory(&cluster_config, cluster_id)
+            .await?
+    } else {
+        Vec::new()
+    };
+
+    let now = Utc::now();
+    let reports = pillars
+        .iter()
+        .map(|pillar| {
+            evaluate_kubernetes_storage_class_inventory(&storage_class_items, *pillar, now)
+        })
+        .collect::<Vec<_>>();
+    let oldest_refresh = storage_class_items
+        .iter()
+        .map(|resource| resource.collected_at)
+        .min();
+
+    Ok(HttpResponse::Ok().json(json!({
+        "resource_type": STORAGE_CLASS_RESOURCE_TYPE,
+        "evaluated_at": now,
+        "stale_after_hours": DEFAULT_STALE_AFTER_HOURS,
+        "cluster_id": query.cluster_id,
+        "resources_evaluated": storage_class_items.len(),
         "oldest_refresh": oldest_refresh,
         "reports": reports,
     })))

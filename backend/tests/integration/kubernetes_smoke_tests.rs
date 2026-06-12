@@ -39,6 +39,7 @@ use mayyam::controllers::kubernetes::{
     get_service_account_inventory_pillar_reports_controller,
     get_service_inventory_pillar_reports_controller,
     get_statefulset_inventory_pillar_reports_controller,
+    get_storage_class_inventory_pillar_reports_controller,
     get_vpa_inventory_pillar_reports_controller,
 };
 use mayyam::middleware::auth::Claims;
@@ -65,6 +66,7 @@ use mayyam::services::kubernetes::secrets_service::SecretsService;
 use mayyam::services::kubernetes::service_accounts_service::ServiceAccountsService;
 use mayyam::services::kubernetes::services_service::ServicesService;
 use mayyam::services::kubernetes::stateful_sets_service::StatefulSetsService;
+use mayyam::services::kubernetes::storage_classes_service::StorageClassesService;
 use mayyam::services::kubernetes::vpa_service::VerticalPodAutoscalerService;
 use sea_orm::DatabaseConnection;
 use serde_json::Value;
@@ -1933,6 +1935,69 @@ async fn kubernetes_persistent_volume_claim_inventory_pillar_reports_contract() 
 
     let request = test::TestRequest::get()
         .uri("/api/kubernetes/inventory/persistentvolumeclaims/pillars?pillar=bogus")
+        .to_request();
+    let response = test::call_service(&app, request).await;
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+}
+
+#[tokio::test]
+async fn kubernetes_storage_class_inventory_pillar_reports_contract() {
+    let claims = Claims {
+        sub: "test-user".to_string(),
+        username: "test-user".to_string(),
+        email: None,
+        roles: vec!["admin".to_string()],
+        exp: i64::MAX,
+        iat: 0,
+    };
+    let db = Arc::new(DatabaseConnection::default());
+    let storage_classes_service = Arc::new(StorageClassesService::new());
+    let app = test::init_service(
+        App::new()
+            .wrap_fn(move |req, srv| {
+                req.extensions_mut().insert(claims.clone());
+                srv.call(req)
+            })
+            .app_data(web::Data::new(db))
+            .app_data(web::Data::new(storage_classes_service))
+            .route(
+                "/api/kubernetes/inventory/storageclasses/pillars",
+                web::get().to(get_storage_class_inventory_pillar_reports_controller),
+            ),
+    )
+    .await;
+
+    let request = test::TestRequest::get()
+        .uri("/api/kubernetes/inventory/storageclasses/pillars")
+        .to_request();
+    let response = test::call_service(&app, request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body: Value = test::read_body_json(response).await;
+    assert_eq!(body["resource_type"], "KubernetesStorageClass");
+    assert!(body["evaluated_at"].is_string());
+    assert!(body["stale_after_hours"].is_number());
+    assert!(body["resources_evaluated"].is_number());
+    let reports = body["reports"].as_array().expect("reports array");
+    assert_eq!(reports.len(), 3);
+    for report in reports {
+        assert!(report["pillar"].is_string());
+        assert!(report["score"].is_number());
+        assert!(report["findings"].is_array());
+    }
+
+    let request = test::TestRequest::get()
+        .uri("/api/kubernetes/inventory/storageclasses/pillars?pillar=resilience")
+        .to_request();
+    let response = test::call_service(&app, request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let body: Value = test::read_body_json(response).await;
+    let reports = body["reports"].as_array().expect("reports array");
+    assert_eq!(reports.len(), 1);
+    assert_eq!(reports[0]["pillar"], "resilience");
+
+    let request = test::TestRequest::get()
+        .uri("/api/kubernetes/inventory/storageclasses/pillars?pillar=bogus")
         .to_request();
     let response = test::call_service(&app, request).await;
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);

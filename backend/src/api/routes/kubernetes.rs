@@ -191,6 +191,14 @@ pub fn configure(cfg: &mut web::ServiceConfig, db: Arc<DatabaseConnection>) {
             ),
         )
         .route(
+            "/inventory/storageclasses/pillars",
+            web::get().to(kube_controller::get_storage_class_inventory_pillar_reports_controller),
+        )
+        .route(
+            "/inventory/storage-classes/pillars",
+            web::get().to(kube_controller::get_storage_class_inventory_pillar_reports_controller),
+        )
+        .route(
             "/clusters/{cluster_id}",
             web::get().to(kube_controller::get_cluster_controller),
         )

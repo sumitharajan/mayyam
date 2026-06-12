@@ -72,6 +72,7 @@ pub mod replica_sets_service;
 pub mod resource_quota_inventory;
 pub mod resource_quotas_service;
 pub mod service_accounts_service;
+pub mod storage_class_inventory;
 pub mod storage_classes_service;
 pub mod vpa_inventory;
 pub mod vpa_service;
@@ -101,5 +102,6 @@ pub mod prelude {
     pub use super::service_accounts_service::ServiceAccountsService;
     pub use super::services_service::ServicesService;
     pub use super::stateful_sets_service::StatefulSetsService;
+    pub use super::storage_classes_service::StorageClassesService;
     pub use super::vpa_service::VerticalPodAutoscalerService;
 }
