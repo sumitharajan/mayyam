@@ -161,6 +161,14 @@ pub fn configure(cfg: &mut web::ServiceConfig, db: Arc<DatabaseConnection>) {
             web::get().to(kube_controller::get_resource_quota_inventory_pillar_reports_controller),
         )
         .route(
+            "/inventory/limitranges/pillars",
+            web::get().to(kube_controller::get_limit_range_inventory_pillar_reports_controller),
+        )
+        .route(
+            "/inventory/limit-ranges/pillars",
+            web::get().to(kube_controller::get_limit_range_inventory_pillar_reports_controller),
+        )
+        .route(
             "/clusters/{cluster_id}",
             web::get().to(kube_controller::get_cluster_controller),
         )

@@ -58,6 +58,7 @@ pub mod ingress_service;
 pub mod inventory;
 pub mod job_inventory;
 pub mod jobs_service;
+pub mod limit_range_inventory;
 pub mod limit_ranges_service;
 pub mod network_policies_service;
 pub mod network_policy_inventory;
