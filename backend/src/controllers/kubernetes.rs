@@ -72,6 +72,10 @@ use crate::services::kubernetes::node_inventory::{
 use crate::services::kubernetes::pdb_inventory::{
     evaluate_kubernetes_pdb_inventory, RESOURCE_TYPE as PDB_RESOURCE_TYPE,
 };
+use crate::services::kubernetes::persistent_volume_inventory::{
+    evaluate_kubernetes_persistent_volume_inventory,
+    RESOURCE_TYPE as PERSISTENT_VOLUME_RESOURCE_TYPE,
+};
 use crate::services::kubernetes::pod_inventory::{
     evaluate_kubernetes_pod_inventory, RESOURCE_TYPE as POD_RESOURCE_TYPE,
 };
@@ -1740,6 +1744,53 @@ pub async fn get_limit_range_inventory_pillar_reports_controller(
         "cluster_id": query.cluster_id,
         "namespace": query.namespace,
         "resources_evaluated": limit_range_items.len(),
+        "oldest_refresh": oldest_refresh,
+        "reports": reports,
+    })))
+}
+
+pub async fn get_persistent_volume_inventory_pillar_reports_controller(
+    claims: web::ReqData<Claims>,
+    db: web::Data<Arc<DatabaseConnection>>,
+    query: web::Query<KubernetesInventoryQuery>,
+    pv_service: web::Data<Arc<PersistentVolumesService>>,
+) -> Result<impl Responder, AppError> {
+    let query = query.into_inner();
+    debug!(
+        target: "mayyam::controllers::kubernetes",
+        user_id = %claims.username,
+        ?query,
+        "Kubernetes PersistentVolume inventory pillar report request"
+    );
+
+    let pillars = parse_kubernetes_inventory_pillars(&query.pillar)?;
+    let cluster_id = query
+        .cluster_id
+        .as_deref()
+        .map(str::trim)
+        .filter(|cluster_id| !cluster_id.is_empty());
+    let pv_items = if let Some(cluster_id) = cluster_id {
+        let cluster_config = get_cluster_config_by_id(db.get_ref().as_ref(), cluster_id).await?;
+        pv_service
+            .list_inventory(&cluster_config, cluster_id)
+            .await?
+    } else {
+        Vec::new()
+    };
+
+    let now = Utc::now();
+    let reports = pillars
+        .iter()
+        .map(|pillar| evaluate_kubernetes_persistent_volume_inventory(&pv_items, *pillar, now))
+        .collect::<Vec<_>>();
+    let oldest_refresh = pv_items.iter().map(|resource| resource.collected_at).min();
+
+    Ok(HttpResponse::Ok().json(json!({
+        "resource_type": PERSISTENT_VOLUME_RESOURCE_TYPE,
+        "evaluated_at": now,
+        "stale_after_hours": DEFAULT_STALE_AFTER_HOURS,
+        "cluster_id": query.cluster_id,
+        "resources_evaluated": pv_items.len(),
         "oldest_refresh": oldest_refresh,
         "reports": reports,
     })))
