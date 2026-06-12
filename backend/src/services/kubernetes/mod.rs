@@ -51,6 +51,7 @@ pub mod endpoints_inventory;
 pub mod endpoints_service;
 pub mod gateway_api_inventory;
 pub mod gateway_api_service;
+pub mod hpa_inventory;
 pub mod hpa_service;
 pub mod ingress_inventory;
 pub mod ingress_service;
