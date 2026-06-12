@@ -32,6 +32,7 @@ pub mod pod_inventory;
 pub mod replica_set_inventory;
 pub mod secret_inventory;
 pub mod secrets_service;
+pub mod service_account_inventory;
 pub mod service_inventory;
 pub mod services_service;
 pub mod stateful_set_inventory;
