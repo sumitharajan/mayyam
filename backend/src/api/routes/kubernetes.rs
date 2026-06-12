@@ -217,6 +217,14 @@ pub fn configure(cfg: &mut web::ServiceConfig, db: Arc<DatabaseConnection>) {
                 .to(kube_controller::get_custom_resource_definition_inventory_pillar_reports_controller),
         )
         .route(
+            "/inventory/customresources/pillars",
+            web::get().to(kube_controller::get_custom_resource_inventory_pillar_reports_controller),
+        )
+        .route(
+            "/inventory/custom-resources/pillars",
+            web::get().to(kube_controller::get_custom_resource_inventory_pillar_reports_controller),
+        )
+        .route(
             "/clusters/{cluster_id}",
             web::get().to(kube_controller::get_cluster_controller),
         )
