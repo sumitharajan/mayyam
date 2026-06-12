@@ -94,6 +94,9 @@ use crate::services::kubernetes::service_inventory::{
 use crate::services::kubernetes::stateful_set_inventory::{
     evaluate_kubernetes_statefulset_inventory, RESOURCE_TYPE as STATEFULSET_RESOURCE_TYPE,
 };
+use crate::services::kubernetes::vpa_inventory::{
+    evaluate_kubernetes_vpa_inventory, RESOURCE_TYPE as VPA_RESOURCE_TYPE,
+};
 use actix_web::{web, HttpResponse, Responder};
 use actix_web_lab::sse;
 use chrono::Utc;
@@ -1510,6 +1513,59 @@ pub async fn get_hpa_inventory_pillar_reports_controller(
         "cluster_id": query.cluster_id,
         "namespace": query.namespace,
         "resources_evaluated": hpa_items.len(),
+        "oldest_refresh": oldest_refresh,
+        "reports": reports,
+    })))
+}
+
+pub async fn get_vpa_inventory_pillar_reports_controller(
+    claims: web::ReqData<Claims>,
+    db: web::Data<Arc<DatabaseConnection>>,
+    query: web::Query<KubernetesInventoryQuery>,
+    vpa_service: web::Data<Arc<VerticalPodAutoscalerService>>,
+) -> Result<impl Responder, AppError> {
+    let query = query.into_inner();
+    debug!(
+        target: "mayyam::controllers::kubernetes",
+        user_id = %claims.username,
+        ?query,
+        "Kubernetes VerticalPodAutoscaler inventory pillar report request"
+    );
+
+    let pillars = parse_kubernetes_inventory_pillars(&query.pillar)?;
+    let cluster_id = query
+        .cluster_id
+        .as_deref()
+        .map(str::trim)
+        .filter(|cluster_id| !cluster_id.is_empty());
+    let namespace = query
+        .namespace
+        .as_deref()
+        .map(str::trim)
+        .filter(|namespace| !namespace.is_empty());
+    let vpa_items = if let Some(cluster_id) = cluster_id {
+        let cluster_config = get_cluster_config_by_id(db.get_ref().as_ref(), cluster_id).await?;
+        vpa_service
+            .list_inventory(&cluster_config, cluster_id, namespace)
+            .await?
+    } else {
+        Vec::new()
+    };
+
+    let now = Utc::now();
+    let reports = pillars
+        .iter()
+        .map(|pillar| evaluate_kubernetes_vpa_inventory(&vpa_items, *pillar, now))
+        .collect::<Vec<_>>();
+    let oldest_refresh = vpa_items.iter().map(|resource| resource.collected_at).min();
+
+    Ok(HttpResponse::Ok().json(json!({
+        "resource_type": VPA_RESOURCE_TYPE,
+        "evaluated_at": now,
+        "stale_after_hours": DEFAULT_STALE_AFTER_HOURS,
+        "cluster_id": query.cluster_id,
+        "namespace": query.namespace,
+        "resources_evaluated": vpa_items.len(),
         "oldest_refresh": oldest_refresh,
         "reports": reports,
     })))
