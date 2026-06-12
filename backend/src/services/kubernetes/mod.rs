@@ -29,6 +29,8 @@ pub mod deployments_service;
 pub mod metrics_service;
 pub mod namespace_inventory;
 pub mod namespaces_service;
+pub mod node_drains_inventory;
+pub mod node_drains_service;
 pub mod node_inventory;
 pub mod node_taints_service;
 pub mod nodes_service;

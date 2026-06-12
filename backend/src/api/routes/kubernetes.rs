@@ -56,6 +56,14 @@ pub fn configure(cfg: &mut web::ServiceConfig, db: Arc<DatabaseConnection>) {
             web::get().to(kube_controller::get_node_taint_inventory_pillar_reports_controller),
         )
         .route(
+            "/inventory/nodedrains/pillars",
+            web::get().to(kube_controller::get_node_drain_inventory_pillar_reports_controller),
+        )
+        .route(
+            "/inventory/node-drains/pillars",
+            web::get().to(kube_controller::get_node_drain_inventory_pillar_reports_controller),
+        )
+        .route(
             "/inventory/pods/pillars",
             web::get().to(kube_controller::get_pod_inventory_pillar_reports_controller),
         )
