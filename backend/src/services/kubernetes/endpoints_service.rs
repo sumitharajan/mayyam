@@ -15,6 +15,7 @@
 use crate::errors::AppError;
 use crate::models::cluster::KubernetesClusterConfig;
 use crate::services::kubernetes::client::ClientFactory;
+use crate::services::kubernetes::endpoint_slice_inventory::EndpointSliceInventoryItem;
 use crate::services::kubernetes::endpoints_inventory::{
     EndpointAddressInventoryItem, EndpointPortInventoryItem, EndpointsInventoryItem,
 };
@@ -214,6 +215,35 @@ fn convert_kube_endpoint_slice_to_inventory(
     }
 }
 
+fn convert_kube_endpoint_slice_to_endpoint_slice_inventory(
+    slice: &EndpointSlice,
+    cluster_id: &str,
+    current_namespace: &str,
+    collected_at: chrono::DateTime<chrono::Utc>,
+) -> EndpointSliceInventoryItem {
+    let item = convert_kube_endpoint_slice_to_inventory(
+        slice,
+        cluster_id,
+        current_namespace,
+        collected_at,
+    );
+
+    EndpointSliceInventoryItem {
+        cluster_id: item.cluster_id,
+        namespace: item.namespace,
+        name: item.name,
+        service_name: item.service_name,
+        address_type: item.address_type.unwrap_or_else(|| "Unknown".to_string()),
+        labels: item.labels,
+        annotations: item.annotations,
+        ports: item.ports,
+        ready_addresses: item.ready_addresses,
+        not_ready_addresses: item.not_ready_addresses,
+        created_at: item.created_at,
+        collected_at: item.collected_at,
+    }
+}
+
 impl EndpointsService {
     pub fn new() -> Self {
         Self
@@ -326,6 +356,54 @@ impl EndpointsService {
                     right.namespace.as_str(),
                     right.service_name.as_deref().unwrap_or(""),
                     right.source.as_str(),
+                    right.name.as_str(),
+                ))
+        });
+        Ok(inventory)
+    }
+
+    pub async fn list_endpoint_slice_inventory(
+        &self,
+        cluster: &KubernetesClusterConfig,
+        cluster_id: &str,
+        namespace: Option<&str>,
+    ) -> Result<Vec<EndpointSliceInventoryItem>, AppError> {
+        let namespace = namespace
+            .map(str::trim)
+            .filter(|namespace| !namespace.is_empty());
+        let namespace_arg = namespace.unwrap_or("");
+        let collected_at = chrono::Utc::now();
+        let fallback_namespace = namespace
+            .filter(|namespace| *namespace != "all")
+            .unwrap_or("");
+
+        let endpoint_slice_api = Self::endpoint_slice_api(cluster, namespace_arg).await?;
+        let endpoint_slices = endpoint_slice_api
+            .list(&ListParams::default())
+            .await
+            .map_err(|e| AppError::Kubernetes(e.to_string()))?;
+
+        let mut inventory = endpoint_slices
+            .items
+            .iter()
+            .map(|slice| {
+                convert_kube_endpoint_slice_to_endpoint_slice_inventory(
+                    slice,
+                    cluster_id,
+                    fallback_namespace,
+                    collected_at,
+                )
+            })
+            .collect::<Vec<_>>();
+        inventory.sort_by(|left, right| {
+            (
+                left.namespace.as_str(),
+                left.service_name.as_deref().unwrap_or(""),
+                left.name.as_str(),
+            )
+                .cmp(&(
+                    right.namespace.as_str(),
+                    right.service_name.as_deref().unwrap_or(""),
                     right.name.as_str(),
                 ))
         });
