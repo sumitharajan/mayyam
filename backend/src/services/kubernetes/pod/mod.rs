@@ -25,6 +25,7 @@ use tracing::{debug, error, info};
 use crate::services::kubernetes::client::ClientFactory;
 use crate::services::kubernetes::event_inventory::EventInventoryItem;
 use crate::services::kubernetes::pod_inventory::{PodContainerInventoryItem, PodInventoryItem};
+use crate::services::kubernetes::pod_log_inventory::PodLogInventoryItem;
 use crate::{errors::AppError, models::cluster::KubernetesClusterConfig};
 use kube::api::AttachParams;
 use tokio::io::AsyncReadExt;
@@ -284,6 +285,75 @@ fn convert_kube_event_to_event_inventory(
     }
 }
 
+fn convert_kube_pod_to_pod_log_inventory(
+    pod: &Pod,
+    cluster_id: &str,
+    current_namespace: &str,
+    collected_at: DateTime<Utc>,
+) -> Vec<PodLogInventoryItem> {
+    let pod_name = pod.name_any();
+    let pod_namespace = pod
+        .namespace()
+        .unwrap_or_else(|| current_namespace.to_string());
+    let status = pod.status.as_ref();
+    let spec = pod.spec.as_ref();
+    let container_statuses = status.and_then(|status| status.container_statuses.as_ref());
+    let (controlled_by, controller_kind) = pod
+        .metadata
+        .owner_references
+        .as_ref()
+        .and_then(|owners| owners.first())
+        .map_or((None, None), |owner_ref| {
+            (Some(owner_ref.name.clone()), Some(owner_ref.kind.clone()))
+        });
+
+    spec.map(|spec| {
+        spec.containers
+            .iter()
+            .map(|container_spec| {
+                let status_opt = container_statuses.and_then(|statuses| {
+                    statuses
+                        .iter()
+                        .find(|container_status| container_status.name == container_spec.name)
+                });
+                let restart_count = status_opt.map_or(0, |status| status.restart_count);
+                let runtime_image = status_opt
+                    .map(|status| status.image.clone())
+                    .filter(|image| !image.is_empty());
+                PodLogInventoryItem {
+                    cluster_id: cluster_id.to_string(),
+                    namespace: pod_namespace.clone(),
+                    pod_name: pod_name.clone(),
+                    container_name: container_spec.name.clone(),
+                    image: container_spec.image.clone().or(runtime_image),
+                    phase: status.and_then(|status| status.phase.clone()),
+                    ready: status_opt.map(|status| status.ready),
+                    restart_count,
+                    previous_logs_available: restart_count > 0,
+                    labels: pod.metadata.labels.clone().unwrap_or_default(),
+                    annotations: pod.metadata.annotations.clone().unwrap_or_default(),
+                    node_name: spec.node_name.clone(),
+                    controlled_by: controlled_by.clone(),
+                    controller_kind: controller_kind.clone(),
+                    service_account_name: spec.service_account_name.clone(),
+                    privileged: container_spec
+                        .security_context
+                        .as_ref()
+                        .and_then(|security_context| security_context.privileged),
+                    host_network: spec.host_network.unwrap_or(false),
+                    created_at: pod
+                        .metadata
+                        .creation_timestamp
+                        .as_ref()
+                        .map(|timestamp| timestamp.0),
+                    collected_at,
+                }
+            })
+            .collect::<Vec<_>>()
+    })
+    .unwrap_or_default()
+}
+
 #[derive(Clone)]
 pub struct PodService;
 
@@ -451,6 +521,73 @@ impl PodService {
                     namespace = namespace.unwrap_or("all"),
                     error = %e,
                     "Failed to list Event inventory"
+                );
+                Err(AppError::Kubernetes(e.to_string()))
+            }
+        }
+    }
+
+    pub async fn list_pod_log_inventory(
+        &self,
+        cluster_config: &KubernetesClusterConfig,
+        cluster_id: &str,
+        namespace: Option<&str>,
+    ) -> Result<Vec<PodLogInventoryItem>, AppError> {
+        let namespace = namespace
+            .map(str::trim)
+            .filter(|namespace| !namespace.is_empty());
+        debug!(
+            target: "mayyam::services::kubernetes::pod",
+            cluster_name = cluster_config.api_server_url.as_deref().unwrap_or("unknown"),
+            namespace = namespace.unwrap_or("all"),
+            "Listing Pod Logs inventory"
+        );
+        let client = Self::get_kube_client(cluster_config).await?;
+
+        let api: Api<Pod> = match namespace {
+            Some(namespace) if namespace != "all" => Api::namespaced(client, namespace),
+            _ => Api::all(client),
+        };
+        let lp = ListParams::default();
+        let collected_at = Utc::now();
+        match api.list(&lp).await {
+            Ok(pod_list) => {
+                info!(
+                    target: "mayyam::services::kubernetes::pod",
+                    cluster_name = cluster_config.api_server_url.as_deref().unwrap_or("unknown"),
+                    namespace = namespace.unwrap_or("all"),
+                    count = pod_list.items.len(),
+                    "Successfully listed Pod Logs inventory"
+                );
+                let fallback_namespace = namespace
+                    .filter(|namespace| *namespace != "all")
+                    .unwrap_or("");
+                let mut log_targets = pod_list
+                    .iter()
+                    .flat_map(|pod| {
+                        convert_kube_pod_to_pod_log_inventory(
+                            pod,
+                            cluster_id,
+                            fallback_namespace,
+                            collected_at,
+                        )
+                    })
+                    .collect::<Vec<_>>();
+                log_targets.sort_by(|left, right| {
+                    left.namespace
+                        .cmp(&right.namespace)
+                        .then_with(|| left.pod_name.cmp(&right.pod_name))
+                        .then_with(|| left.container_name.cmp(&right.container_name))
+                });
+                Ok(log_targets)
+            }
+            Err(e) => {
+                error!(
+                    target: "mayyam::services::kubernetes::pod",
+                    cluster_name = cluster_config.api_server_url.as_deref().unwrap_or("unknown"),
+                    namespace = namespace.unwrap_or("all"),
+                    error = %e,
+                    "Failed to list Pod Logs inventory"
                 );
                 Err(AppError::Kubernetes(e.to_string()))
             }
@@ -696,8 +833,11 @@ impl PodService {
 mod tests {
     use super::*;
     use chrono::TimeZone;
-    use k8s_openapi::api::core::v1::ObjectReference;
-    use k8s_openapi::apimachinery::pkg::apis::meta::v1::{MicroTime, Time};
+    use k8s_openapi::api::core::v1::{
+        Container, ContainerStatus, ObjectReference, SecurityContext,
+    };
+    use k8s_openapi::apimachinery::pkg::apis::meta::v1::{MicroTime, OwnerReference, Time};
+    use std::collections::BTreeMap;
 
     #[test]
     fn event_inventory_conversion_preserves_metadata_involved_related_and_timestamps() {
@@ -797,6 +937,150 @@ mod tests {
         assert_eq!(inventory.last_timestamp, None);
         assert_eq!(inventory.event_time, None);
         assert_eq!(inventory.created_at, None);
+    }
+
+    #[test]
+    fn pod_log_inventory_conversion_creates_log_target_per_container() {
+        let collected_at = Utc.with_ymd_and_hms(2026, 6, 10, 0, 0, 0).unwrap();
+        let created_at = Utc.with_ymd_and_hms(2026, 6, 9, 23, 0, 0).unwrap();
+        let labels = BTreeMap::from([
+            ("owner".to_string(), "platform".to_string()),
+            ("cost-center".to_string(), "cc-42".to_string()),
+        ]);
+        let annotations =
+            BTreeMap::from([("logs.mayyam.io/export".to_string(), "true".to_string())]);
+        let pod = Pod {
+            metadata: ObjectMeta {
+                name: Some("pod-a".to_string()),
+                namespace: Some("apps".to_string()),
+                labels: Some(labels),
+                annotations: Some(annotations),
+                creation_timestamp: Some(Time(created_at)),
+                owner_references: Some(vec![OwnerReference {
+                    api_version: "apps/v1".to_string(),
+                    kind: "ReplicaSet".to_string(),
+                    name: "pod-a-rs".to_string(),
+                    uid: "owner-uid".to_string(),
+                    ..Default::default()
+                }]),
+                ..Default::default()
+            },
+            spec: Some(PodSpec {
+                containers: vec![
+                    Container {
+                        name: "app".to_string(),
+                        image: Some("registry.local/app:1.0.0".to_string()),
+                        security_context: Some(SecurityContext {
+                            privileged: Some(true),
+                            ..Default::default()
+                        }),
+                        ..Default::default()
+                    },
+                    Container {
+                        name: "sidecar".to_string(),
+                        image: Some("registry.local/sidecar:1.0.0".to_string()),
+                        ..Default::default()
+                    },
+                ],
+                host_network: Some(true),
+                node_name: Some("node-a".to_string()),
+                service_account_name: Some("app-sa".to_string()),
+                ..Default::default()
+            }),
+            status: Some(PodStatus {
+                phase: Some("Running".to_string()),
+                container_statuses: Some(vec![
+                    ContainerStatus {
+                        name: "app".to_string(),
+                        image: "runtime.local/app:1.0.0".to_string(),
+                        image_id: "sha256:app".to_string(),
+                        ready: false,
+                        restart_count: 3,
+                        ..Default::default()
+                    },
+                    ContainerStatus {
+                        name: "sidecar".to_string(),
+                        image: "runtime.local/sidecar:1.0.0".to_string(),
+                        image_id: "sha256:sidecar".to_string(),
+                        ready: true,
+                        restart_count: 0,
+                        ..Default::default()
+                    },
+                ]),
+                ..Default::default()
+            }),
+        };
+
+        let inventory =
+            convert_kube_pod_to_pod_log_inventory(&pod, "cluster-a", "fallback", collected_at);
+
+        assert_eq!(inventory.len(), 2);
+        let app = inventory
+            .iter()
+            .find(|target| target.container_name == "app")
+            .expect("app log target");
+        assert_eq!(app.cluster_id, "cluster-a");
+        assert_eq!(app.namespace, "apps");
+        assert_eq!(app.pod_name, "pod-a");
+        assert_eq!(app.image.as_deref(), Some("registry.local/app:1.0.0"));
+        assert_eq!(app.phase.as_deref(), Some("Running"));
+        assert_eq!(app.ready, Some(false));
+        assert_eq!(app.restart_count, 3);
+        assert!(app.previous_logs_available);
+        assert_eq!(app.node_name.as_deref(), Some("node-a"));
+        assert_eq!(app.controlled_by.as_deref(), Some("pod-a-rs"));
+        assert_eq!(app.controller_kind.as_deref(), Some("ReplicaSet"));
+        assert_eq!(app.service_account_name.as_deref(), Some("app-sa"));
+        assert_eq!(app.privileged, Some(true));
+        assert!(app.host_network);
+        assert_eq!(app.created_at, Some(created_at));
+        assert_eq!(app.collected_at, collected_at);
+
+        let sidecar = inventory
+            .iter()
+            .find(|target| target.container_name == "sidecar")
+            .expect("sidecar log target");
+        assert_eq!(sidecar.ready, Some(true));
+        assert_eq!(sidecar.restart_count, 0);
+        assert!(!sidecar.previous_logs_available);
+        assert_eq!(sidecar.privileged, None);
+    }
+
+    #[test]
+    fn pod_log_inventory_conversion_handles_missing_optional_state() {
+        let collected_at = Utc.with_ymd_and_hms(2026, 6, 10, 0, 0, 0).unwrap();
+        let pod = Pod {
+            metadata: ObjectMeta {
+                name: Some("pod-a".to_string()),
+                ..Default::default()
+            },
+            spec: Some(PodSpec {
+                containers: vec![Container {
+                    name: "app".to_string(),
+                    ..Default::default()
+                }],
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+
+        let inventory =
+            convert_kube_pod_to_pod_log_inventory(&pod, "cluster-a", "fallback", collected_at);
+
+        assert_eq!(inventory.len(), 1);
+        let target = &inventory[0];
+        assert_eq!(target.namespace, "fallback");
+        assert_eq!(target.pod_name, "pod-a");
+        assert_eq!(target.container_name, "app");
+        assert_eq!(target.image, None);
+        assert_eq!(target.phase, None);
+        assert_eq!(target.ready, None);
+        assert_eq!(target.restart_count, 0);
+        assert!(!target.previous_logs_available);
+        assert!(target.labels.is_empty());
+        assert!(target.annotations.is_empty());
+        assert_eq!(target.host_network, false);
+        assert_eq!(target.created_at, None);
     }
 }
 

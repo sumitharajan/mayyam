@@ -93,6 +93,9 @@ use crate::services::kubernetes::persistent_volume_inventory::{
 use crate::services::kubernetes::pod_inventory::{
     evaluate_kubernetes_pod_inventory, RESOURCE_TYPE as POD_RESOURCE_TYPE,
 };
+use crate::services::kubernetes::pod_log_inventory::{
+    evaluate_kubernetes_pod_log_inventory, RESOURCE_TYPE as POD_LOG_RESOURCE_TYPE,
+};
 use crate::services::kubernetes::prelude::*;
 use crate::services::kubernetes::replica_set_inventory::{
     evaluate_kubernetes_replicaset_inventory, RESOURCE_TYPE as REPLICASET_RESOURCE_TYPE,
@@ -432,6 +435,62 @@ pub async fn get_pod_inventory_pillar_reports_controller(
         "cluster_id": query.cluster_id,
         "namespace": query.namespace,
         "resources_evaluated": pod_items.len(),
+        "oldest_refresh": oldest_refresh,
+        "reports": reports,
+    })))
+}
+
+pub async fn get_pod_log_inventory_pillar_reports_controller(
+    claims: web::ReqData<Claims>,
+    db: web::Data<Arc<DatabaseConnection>>,
+    query: web::Query<KubernetesInventoryQuery>,
+    pod_service: web::Data<Arc<PodService>>,
+) -> Result<impl Responder, AppError> {
+    let query = query.into_inner();
+    debug!(
+        target: "mayyam::controllers::kubernetes",
+        user_id = %claims.username,
+        ?query,
+        "Kubernetes Pod Logs inventory pillar report request"
+    );
+
+    let pillars = parse_kubernetes_inventory_pillars(&query.pillar)?;
+    let cluster_id = query
+        .cluster_id
+        .as_deref()
+        .map(str::trim)
+        .filter(|cluster_id| !cluster_id.is_empty());
+    let namespace = query
+        .namespace
+        .as_deref()
+        .map(str::trim)
+        .filter(|namespace| !namespace.is_empty());
+    let log_targets = if let Some(cluster_id) = cluster_id {
+        let cluster_config = get_cluster_config_by_id(db.get_ref().as_ref(), cluster_id).await?;
+        pod_service
+            .list_pod_log_inventory(&cluster_config, cluster_id, namespace)
+            .await?
+    } else {
+        Vec::new()
+    };
+
+    let now = Utc::now();
+    let reports = pillars
+        .iter()
+        .map(|pillar| evaluate_kubernetes_pod_log_inventory(&log_targets, *pillar, now))
+        .collect::<Vec<_>>();
+    let oldest_refresh = log_targets
+        .iter()
+        .map(|resource| resource.collected_at)
+        .min();
+
+    Ok(HttpResponse::Ok().json(json!({
+        "resource_type": POD_LOG_RESOURCE_TYPE,
+        "evaluated_at": now,
+        "stale_after_hours": DEFAULT_STALE_AFTER_HOURS,
+        "cluster_id": query.cluster_id,
+        "namespace": query.namespace,
+        "resources_evaluated": log_targets.len(),
         "oldest_refresh": oldest_refresh,
         "reports": reports,
     })))
