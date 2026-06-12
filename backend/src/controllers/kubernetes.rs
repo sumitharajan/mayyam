@@ -77,6 +77,9 @@ use crate::services::kubernetes::replica_set_inventory::{
     evaluate_kubernetes_replicaset_inventory, RESOURCE_TYPE as REPLICASET_RESOURCE_TYPE,
 };
 use crate::services::kubernetes::replica_sets_service::ReplicaSetsService;
+use crate::services::kubernetes::resource_quota_inventory::{
+    evaluate_kubernetes_resource_quota_inventory, RESOURCE_TYPE as RESOURCE_QUOTA_RESOURCE_TYPE,
+};
 use crate::services::kubernetes::role_binding_inventory::{
     evaluate_kubernetes_role_binding_inventory, RESOURCE_TYPE as ROLE_BINDING_RESOURCE_TYPE,
 };
@@ -1622,6 +1625,62 @@ pub async fn get_pdb_inventory_pillar_reports_controller(
         "cluster_id": query.cluster_id,
         "namespace": query.namespace,
         "resources_evaluated": pdb_items.len(),
+        "oldest_refresh": oldest_refresh,
+        "reports": reports,
+    })))
+}
+
+pub async fn get_resource_quota_inventory_pillar_reports_controller(
+    claims: web::ReqData<Claims>,
+    db: web::Data<Arc<DatabaseConnection>>,
+    query: web::Query<KubernetesInventoryQuery>,
+    resource_quota_service: web::Data<Arc<ResourceQuotasService>>,
+) -> Result<impl Responder, AppError> {
+    let query = query.into_inner();
+    debug!(
+        target: "mayyam::controllers::kubernetes",
+        user_id = %claims.username,
+        ?query,
+        "Kubernetes ResourceQuota inventory pillar report request"
+    );
+
+    let pillars = parse_kubernetes_inventory_pillars(&query.pillar)?;
+    let cluster_id = query
+        .cluster_id
+        .as_deref()
+        .map(str::trim)
+        .filter(|cluster_id| !cluster_id.is_empty());
+    let namespace = query
+        .namespace
+        .as_deref()
+        .map(str::trim)
+        .filter(|namespace| !namespace.is_empty());
+    let quota_items = if let Some(cluster_id) = cluster_id {
+        let cluster_config = get_cluster_config_by_id(db.get_ref().as_ref(), cluster_id).await?;
+        resource_quota_service
+            .list_inventory(&cluster_config, cluster_id, namespace)
+            .await?
+    } else {
+        Vec::new()
+    };
+
+    let now = Utc::now();
+    let reports = pillars
+        .iter()
+        .map(|pillar| evaluate_kubernetes_resource_quota_inventory(&quota_items, *pillar, now))
+        .collect::<Vec<_>>();
+    let oldest_refresh = quota_items
+        .iter()
+        .map(|resource| resource.collected_at)
+        .min();
+
+    Ok(HttpResponse::Ok().json(json!({
+        "resource_type": RESOURCE_QUOTA_RESOURCE_TYPE,
+        "evaluated_at": now,
+        "stale_after_hours": DEFAULT_STALE_AFTER_HOURS,
+        "cluster_id": query.cluster_id,
+        "namespace": query.namespace,
+        "resources_evaluated": quota_items.len(),
         "oldest_refresh": oldest_refresh,
         "reports": reports,
     })))

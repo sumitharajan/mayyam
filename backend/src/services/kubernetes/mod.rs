@@ -66,6 +66,7 @@ pub mod pdb_inventory;
 pub mod pdb_service;
 pub mod rbac_service;
 pub mod replica_sets_service;
+pub mod resource_quota_inventory;
 pub mod resource_quotas_service;
 pub mod service_accounts_service;
 pub mod storage_classes_service;
