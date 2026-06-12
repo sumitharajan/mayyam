@@ -13,6 +13,7 @@
 // limitations under the License.
 
 pub mod digest_statistics_inventory;
+pub mod innodb_buffer_pool_inventory;
 pub mod mysql_analytics_service;
 pub mod mysql_signals;
 pub mod mysql_telemetry;
