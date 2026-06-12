@@ -37,6 +37,8 @@ pub mod pod; // Changed from pod_service
 pub mod pod_exec_inventory;
 pub mod pod_inventory;
 pub mod pod_log_inventory;
+pub mod pod_security_standards_inventory;
+pub mod pod_security_standards_service;
 pub mod replica_set_inventory;
 pub mod role_binding_inventory;
 pub mod role_inventory;

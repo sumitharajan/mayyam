@@ -104,6 +104,11 @@ use crate::services::kubernetes::pod_inventory::{
 use crate::services::kubernetes::pod_log_inventory::{
     evaluate_kubernetes_pod_log_inventory, RESOURCE_TYPE as POD_LOG_RESOURCE_TYPE,
 };
+use crate::services::kubernetes::pod_security_standards_inventory::{
+    evaluate_kubernetes_pod_security_standards_inventory,
+    RESOURCE_TYPE as POD_SECURITY_STANDARDS_RESOURCE_TYPE,
+};
+use crate::services::kubernetes::pod_security_standards_service::PodSecurityStandardsService;
 use crate::services::kubernetes::prelude::*;
 use crate::services::kubernetes::replica_set_inventory::{
     evaluate_kubernetes_replicaset_inventory, RESOURCE_TYPE as REPLICASET_RESOURCE_TYPE,
@@ -2196,6 +2201,58 @@ pub async fn get_admission_webhook_inventory_pillar_reports_controller(
         "stale_after_hours": DEFAULT_STALE_AFTER_HOURS,
         "cluster_id": query.cluster_id,
         "resources_evaluated": webhook_items.len(),
+        "oldest_refresh": oldest_refresh,
+        "reports": reports,
+    })))
+}
+
+pub async fn get_pod_security_standards_inventory_pillar_reports_controller(
+    claims: web::ReqData<Claims>,
+    db: web::Data<Arc<DatabaseConnection>>,
+    query: web::Query<KubernetesInventoryQuery>,
+    pod_security_standards_service: web::Data<Arc<PodSecurityStandardsService>>,
+) -> Result<impl Responder, AppError> {
+    let query = query.into_inner();
+    debug!(
+        target: "mayyam::controllers::kubernetes",
+        user_id = %claims.username,
+        ?query,
+        "Kubernetes Pod Security Standards inventory pillar report request"
+    );
+
+    let pillars = parse_kubernetes_inventory_pillars(&query.pillar)?;
+    let cluster_id = query
+        .cluster_id
+        .as_deref()
+        .map(str::trim)
+        .filter(|cluster_id| !cluster_id.is_empty());
+    let standard_items = if let Some(cluster_id) = cluster_id {
+        let cluster_config = get_cluster_config_by_id(db.get_ref().as_ref(), cluster_id).await?;
+        pod_security_standards_service
+            .list_inventory(&cluster_config, cluster_id)
+            .await?
+    } else {
+        Vec::new()
+    };
+
+    let now = Utc::now();
+    let reports = pillars
+        .iter()
+        .map(|pillar| {
+            evaluate_kubernetes_pod_security_standards_inventory(&standard_items, *pillar, now)
+        })
+        .collect::<Vec<_>>();
+    let oldest_refresh = standard_items
+        .iter()
+        .map(|resource| resource.collected_at)
+        .min();
+
+    Ok(HttpResponse::Ok().json(json!({
+        "resource_type": POD_SECURITY_STANDARDS_RESOURCE_TYPE,
+        "evaluated_at": now,
+        "stale_after_hours": DEFAULT_STALE_AFTER_HOURS,
+        "cluster_id": query.cluster_id,
+        "resources_evaluated": standard_items.len(),
         "oldest_refresh": oldest_refresh,
         "reports": reports,
     })))

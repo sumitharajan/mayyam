@@ -37,6 +37,7 @@ use mayyam::controllers::kubernetes::{
     get_persistent_volume_inventory_pillar_reports_controller,
     get_pod_exec_inventory_pillar_reports_controller, get_pod_inventory_pillar_reports_controller,
     get_pod_log_inventory_pillar_reports_controller,
+    get_pod_security_standards_inventory_pillar_reports_controller,
     get_replicaset_inventory_pillar_reports_controller,
     get_resource_quota_inventory_pillar_reports_controller,
     get_role_binding_inventory_pillar_reports_controller,
@@ -67,6 +68,7 @@ use mayyam::services::kubernetes::pdb_service::PodDisruptionBudgetsService;
 use mayyam::services::kubernetes::persistent_volume_claims_service::PersistentVolumeClaimsService;
 use mayyam::services::kubernetes::persistent_volumes_service::PersistentVolumesService;
 use mayyam::services::kubernetes::pod::PodService;
+use mayyam::services::kubernetes::pod_security_standards_service::PodSecurityStandardsService;
 use mayyam::services::kubernetes::rbac_service::RbacService;
 use mayyam::services::kubernetes::replica_sets_service::ReplicaSetsService;
 use mayyam::services::kubernetes::resource_quotas_service::ResourceQuotasService;
@@ -2322,6 +2324,69 @@ async fn kubernetes_admission_webhook_inventory_pillar_reports_contract() {
 
     let request = test::TestRequest::get()
         .uri("/api/kubernetes/inventory/admission-webhooks/pillars?pillar=bogus")
+        .to_request();
+    let response = test::call_service(&app, request).await;
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+}
+
+#[tokio::test]
+async fn kubernetes_pod_security_standards_inventory_pillar_reports_contract() {
+    let claims = Claims {
+        sub: "test-user".to_string(),
+        username: "test-user".to_string(),
+        email: None,
+        roles: vec!["admin".to_string()],
+        exp: i64::MAX,
+        iat: 0,
+    };
+    let db = Arc::new(DatabaseConnection::default());
+    let pod_security_standards_service = Arc::new(PodSecurityStandardsService::new());
+    let app = test::init_service(
+        App::new()
+            .wrap_fn(move |req, srv| {
+                req.extensions_mut().insert(claims.clone());
+                srv.call(req)
+            })
+            .app_data(web::Data::new(db))
+            .app_data(web::Data::new(pod_security_standards_service))
+            .route(
+                "/api/kubernetes/inventory/pod-security-standards/pillars",
+                web::get().to(get_pod_security_standards_inventory_pillar_reports_controller),
+            ),
+    )
+    .await;
+
+    let request = test::TestRequest::get()
+        .uri("/api/kubernetes/inventory/pod-security-standards/pillars")
+        .to_request();
+    let response = test::call_service(&app, request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body: Value = test::read_body_json(response).await;
+    assert_eq!(body["resource_type"], "KubernetesPodSecurityStandard");
+    assert!(body["evaluated_at"].is_string());
+    assert!(body["stale_after_hours"].is_number());
+    assert!(body["resources_evaluated"].is_number());
+    let reports = body["reports"].as_array().expect("reports array");
+    assert_eq!(reports.len(), 3);
+    for report in reports {
+        assert!(report["pillar"].is_string());
+        assert!(report["score"].is_number());
+        assert!(report["findings"].is_array());
+    }
+
+    let request = test::TestRequest::get()
+        .uri("/api/kubernetes/inventory/pod-security-standards/pillars?pillar=security")
+        .to_request();
+    let response = test::call_service(&app, request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let body: Value = test::read_body_json(response).await;
+    let reports = body["reports"].as_array().expect("reports array");
+    assert_eq!(reports.len(), 1);
+    assert_eq!(reports[0]["pillar"], "security");
+
+    let request = test::TestRequest::get()
+        .uri("/api/kubernetes/inventory/pod-security-standards/pillars?pillar=bogus")
         .to_request();
     let response = test::call_service(&app, request).await;
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
