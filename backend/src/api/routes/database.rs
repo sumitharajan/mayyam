@@ -77,6 +77,9 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
                     web::get().to(database::get_mysql_slow_query_log_inventory_pillar_reports),
                 ),
             )
+            .service(web::resource("/mysql/digest-statistics/pillars").route(
+                web::get().to(database::get_mysql_digest_statistics_inventory_pillar_reports),
+            ))
             .service(
                 web::resource("/{id}/table/{table_name}/details")
                     .route(web::get().to(get_table_details)),
