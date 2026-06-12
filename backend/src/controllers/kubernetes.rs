@@ -16,6 +16,10 @@ use crate::errors::AppError;
 use crate::middleware::auth::Claims; // Assuming you have auth middleware
 use crate::models::cluster::{CreateKubernetesClusterRequest, KubernetesClusterConfig};
 use crate::services::aws::inventory::types::{Pillar, DEFAULT_STALE_AFTER_HOURS};
+use crate::services::kubernetes::configmap_inventory::{
+    evaluate_kubernetes_configmap_inventory, RESOURCE_TYPE as CONFIGMAP_RESOURCE_TYPE,
+};
+use crate::services::kubernetes::configmaps_service::ConfigMapsService;
 use crate::services::kubernetes::cronjob_inventory::{
     evaluate_kubernetes_cronjob_inventory, RESOURCE_TYPE as CRONJOB_RESOURCE_TYPE,
 };
@@ -980,6 +984,62 @@ pub async fn get_endpoint_slice_inventory_pillar_reports_controller(
         "cluster_id": query.cluster_id,
         "namespace": query.namespace,
         "resources_evaluated": endpoint_slice_items.len(),
+        "oldest_refresh": oldest_refresh,
+        "reports": reports,
+    })))
+}
+
+pub async fn get_configmap_inventory_pillar_reports_controller(
+    claims: web::ReqData<Claims>,
+    db: web::Data<Arc<DatabaseConnection>>,
+    query: web::Query<KubernetesInventoryQuery>,
+    configmaps_service: web::Data<Arc<ConfigMapsService>>,
+) -> Result<impl Responder, AppError> {
+    let query = query.into_inner();
+    debug!(
+        target: "mayyam::controllers::kubernetes",
+        user_id = %claims.username,
+        ?query,
+        "Kubernetes ConfigMap inventory pillar report request"
+    );
+
+    let pillars = parse_kubernetes_inventory_pillars(&query.pillar)?;
+    let cluster_id = query
+        .cluster_id
+        .as_deref()
+        .map(str::trim)
+        .filter(|cluster_id| !cluster_id.is_empty());
+    let namespace = query
+        .namespace
+        .as_deref()
+        .map(str::trim)
+        .filter(|namespace| !namespace.is_empty());
+    let configmap_items = if let Some(cluster_id) = cluster_id {
+        let cluster_config = get_cluster_config_by_id(db.get_ref().as_ref(), cluster_id).await?;
+        configmaps_service
+            .list_configmap_inventory(&cluster_config, cluster_id, namespace)
+            .await?
+    } else {
+        Vec::new()
+    };
+
+    let now = Utc::now();
+    let reports = pillars
+        .iter()
+        .map(|pillar| evaluate_kubernetes_configmap_inventory(&configmap_items, *pillar, now))
+        .collect::<Vec<_>>();
+    let oldest_refresh = configmap_items
+        .iter()
+        .map(|resource| resource.collected_at)
+        .min();
+
+    Ok(HttpResponse::Ok().json(json!({
+        "resource_type": CONFIGMAP_RESOURCE_TYPE,
+        "evaluated_at": now,
+        "stale_after_hours": DEFAULT_STALE_AFTER_HOURS,
+        "cluster_id": query.cluster_id,
+        "namespace": query.namespace,
+        "resources_evaluated": configmap_items.len(),
         "oldest_refresh": oldest_refresh,
         "reports": reports,
     })))
