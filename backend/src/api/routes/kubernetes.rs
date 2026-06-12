@@ -179,6 +179,18 @@ pub fn configure(cfg: &mut web::ServiceConfig, db: Arc<DatabaseConnection>) {
                 .to(kube_controller::get_persistent_volume_inventory_pillar_reports_controller),
         )
         .route(
+            "/inventory/persistentvolumeclaims/pillars",
+            web::get().to(
+                kube_controller::get_persistent_volume_claim_inventory_pillar_reports_controller,
+            ),
+        )
+        .route(
+            "/inventory/persistent-volume-claims/pillars",
+            web::get().to(
+                kube_controller::get_persistent_volume_claim_inventory_pillar_reports_controller,
+            ),
+        )
+        .route(
             "/clusters/{cluster_id}",
             web::get().to(kube_controller::get_cluster_controller),
         )

@@ -65,6 +65,7 @@ pub mod network_policy_inventory;
 pub mod nodes_ops_service;
 pub mod pdb_inventory;
 pub mod pdb_service;
+pub mod persistent_volume_claim_inventory;
 pub mod persistent_volume_inventory;
 pub mod rbac_service;
 pub mod replica_sets_service;
