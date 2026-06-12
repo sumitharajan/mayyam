@@ -13,6 +13,7 @@
 // limitations under the License.
 
 pub mod client;
+pub mod cluster_role_inventory;
 pub mod configmap_inventory;
 pub mod configmaps_service;
 pub mod cronjob_inventory;

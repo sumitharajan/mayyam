@@ -15,6 +15,9 @@
 use crate::errors::AppError;
 use crate::models::cluster::KubernetesClusterConfig;
 use crate::services::kubernetes::client::ClientFactory;
+use crate::services::kubernetes::cluster_role_inventory::{
+    ClusterRoleInventoryItem, ClusterRoleOwnerReferenceInventoryItem, ClusterRoleRuleInventoryItem,
+};
 use crate::services::kubernetes::role_binding_inventory::{
     RoleBindingInventoryItem, RoleBindingOwnerReferenceInventoryItem,
     RoleBindingRoleRefInventoryItem, RoleBindingSubjectInventoryItem,
@@ -96,6 +99,80 @@ fn convert_kube_role_to_inventory(
         rules,
         owner_references,
         created_at: role
+            .metadata
+            .creation_timestamp
+            .as_ref()
+            .map(|timestamp| timestamp.0),
+        collected_at,
+    }
+}
+
+fn convert_policy_rule_to_cluster_role_inventory(
+    rule: &PolicyRule,
+) -> ClusterRoleRuleInventoryItem {
+    let mut api_groups = rule.api_groups.clone().unwrap_or_default();
+    let mut resources = rule.resources.clone().unwrap_or_default();
+    let mut verbs = rule.verbs.clone();
+    let mut resource_names = rule.resource_names.clone().unwrap_or_default();
+    let mut non_resource_urls = rule.non_resource_urls.clone().unwrap_or_default();
+    api_groups.sort();
+    resources.sort();
+    verbs.sort();
+    resource_names.sort();
+    non_resource_urls.sort();
+
+    ClusterRoleRuleInventoryItem {
+        api_groups,
+        resources,
+        verbs,
+        resource_names,
+        non_resource_urls,
+    }
+}
+
+fn convert_kube_cluster_role_to_inventory(
+    cluster_role: &ClusterRole,
+    cluster_id: &str,
+    collected_at: DateTime<Utc>,
+) -> ClusterRoleInventoryItem {
+    let rules = cluster_role
+        .rules
+        .as_ref()
+        .map(|rules| {
+            rules
+                .iter()
+                .map(convert_policy_rule_to_cluster_role_inventory)
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+    let owner_references = cluster_role
+        .metadata
+        .owner_references
+        .as_ref()
+        .map(|owners| {
+            owners
+                .iter()
+                .map(|owner| ClusterRoleOwnerReferenceInventoryItem {
+                    kind: Some(owner.kind.clone()),
+                    name: owner.name.clone(),
+                    controller: owner.controller,
+                })
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+
+    ClusterRoleInventoryItem {
+        cluster_id: cluster_id.to_string(),
+        name: cluster_role.name_any(),
+        labels: cluster_role.metadata.labels.clone().unwrap_or_default(),
+        annotations: cluster_role
+            .metadata
+            .annotations
+            .clone()
+            .unwrap_or_default(),
+        rules,
+        owner_references,
+        created_at: cluster_role
             .metadata
             .creation_timestamp
             .as_ref()
@@ -422,6 +499,27 @@ impl RbacService {
             .map_err(|e| AppError::Kubernetes(e.to_string()))?
             .items)
     }
+    pub async fn list_cluster_role_inventory(
+        &self,
+        cluster: &KubernetesClusterConfig,
+        cluster_id: &str,
+    ) -> Result<Vec<ClusterRoleInventoryItem>, AppError> {
+        let collected_at = Utc::now();
+        let api = Self::cluster_roles_api(cluster).await?;
+        let list = api
+            .list(&ListParams::default())
+            .await
+            .map_err(|e| AppError::Kubernetes(e.to_string()))?;
+        let mut inventory = list
+            .items
+            .iter()
+            .map(|cluster_role| {
+                convert_kube_cluster_role_to_inventory(cluster_role, cluster_id, collected_at)
+            })
+            .collect::<Vec<_>>();
+        inventory.sort_by(|left, right| left.name.cmp(&right.name));
+        Ok(inventory)
+    }
     pub async fn get_cluster_role(
         &self,
         cluster: &KubernetesClusterConfig,
@@ -545,6 +643,47 @@ mod tests {
             namespace: namespace.map(str::to_string),
             name: name.to_string(),
         }
+    }
+
+    #[test]
+    fn cluster_role_inventory_conversion_preserves_metadata_and_sorts_rules() {
+        let created_at = Utc.with_ymd_and_hms(2026, 6, 1, 12, 0, 0).unwrap();
+        let collected_at = Utc.with_ymd_and_hms(2026, 6, 10, 0, 0, 0).unwrap();
+        let cluster_role = ClusterRole {
+            metadata: ObjectMeta {
+                name: Some("cluster-reader".to_string()),
+                labels: Some(map(&[("team", "platform")])),
+                annotations: Some(map(&[("cost-center", "cc-21")])),
+                creation_timestamp: Some(Time(created_at)),
+                ..Default::default()
+            },
+            rules: Some(vec![PolicyRule {
+                api_groups: Some(vec!["apps".to_string(), "".to_string()]),
+                resources: Some(vec!["secrets".to_string(), "configmaps".to_string()]),
+                verbs: vec!["list".to_string(), "get".to_string()],
+                resource_names: Some(vec!["z".to_string(), "a".to_string()]),
+                non_resource_urls: Some(vec!["/healthz".to_string(), "/metrics".to_string()]),
+            }]),
+            aggregation_rule: None,
+        };
+
+        let item = convert_kube_cluster_role_to_inventory(&cluster_role, "cluster-a", collected_at);
+
+        assert_eq!(item.cluster_id, "cluster-a");
+        assert_eq!(item.name, "cluster-reader");
+        assert_eq!(item.labels["team"], "platform");
+        assert_eq!(item.annotations["cost-center"], "cc-21");
+        assert_eq!(item.created_at, Some(created_at));
+        assert_eq!(item.collected_at, collected_at);
+        assert_eq!(item.rules.len(), 1);
+        assert_eq!(item.rules[0].api_groups, vec!["", "apps"]);
+        assert_eq!(item.rules[0].resources, vec!["configmaps", "secrets"]);
+        assert_eq!(item.rules[0].verbs, vec!["get", "list"]);
+        assert_eq!(item.rules[0].resource_names, vec!["a", "z"]);
+        assert_eq!(
+            item.rules[0].non_resource_urls,
+            vec!["/healthz", "/metrics"]
+        );
     }
 
     #[test]

@@ -16,6 +16,9 @@ use crate::errors::AppError;
 use crate::middleware::auth::Claims; // Assuming you have auth middleware
 use crate::models::cluster::{CreateKubernetesClusterRequest, KubernetesClusterConfig};
 use crate::services::aws::inventory::types::{Pillar, DEFAULT_STALE_AFTER_HOURS};
+use crate::services::kubernetes::cluster_role_inventory::{
+    evaluate_kubernetes_cluster_role_inventory, RESOURCE_TYPE as CLUSTER_ROLE_RESOURCE_TYPE,
+};
 use crate::services::kubernetes::configmap_inventory::{
     evaluate_kubernetes_configmap_inventory, RESOURCE_TYPE as CONFIGMAP_RESOURCE_TYPE,
 };
@@ -1280,6 +1283,56 @@ pub async fn get_role_binding_inventory_pillar_reports_controller(
         "cluster_id": query.cluster_id,
         "namespace": query.namespace,
         "resources_evaluated": role_binding_items.len(),
+        "oldest_refresh": oldest_refresh,
+        "reports": reports,
+    })))
+}
+
+pub async fn get_cluster_role_inventory_pillar_reports_controller(
+    claims: web::ReqData<Claims>,
+    db: web::Data<Arc<DatabaseConnection>>,
+    query: web::Query<KubernetesInventoryQuery>,
+    rbac_service: web::Data<Arc<RbacService>>,
+) -> Result<impl Responder, AppError> {
+    let query = query.into_inner();
+    debug!(
+        target: "mayyam::controllers::kubernetes",
+        user_id = %claims.username,
+        ?query,
+        "Kubernetes ClusterRole inventory pillar report request"
+    );
+
+    let pillars = parse_kubernetes_inventory_pillars(&query.pillar)?;
+    let cluster_id = query
+        .cluster_id
+        .as_deref()
+        .map(str::trim)
+        .filter(|cluster_id| !cluster_id.is_empty());
+    let cluster_role_items = if let Some(cluster_id) = cluster_id {
+        let cluster_config = get_cluster_config_by_id(db.get_ref().as_ref(), cluster_id).await?;
+        rbac_service
+            .list_cluster_role_inventory(&cluster_config, cluster_id)
+            .await?
+    } else {
+        Vec::new()
+    };
+
+    let now = Utc::now();
+    let reports = pillars
+        .iter()
+        .map(|pillar| evaluate_kubernetes_cluster_role_inventory(&cluster_role_items, *pillar, now))
+        .collect::<Vec<_>>();
+    let oldest_refresh = cluster_role_items
+        .iter()
+        .map(|resource| resource.collected_at)
+        .min();
+
+    Ok(HttpResponse::Ok().json(json!({
+        "resource_type": CLUSTER_ROLE_RESOURCE_TYPE,
+        "evaluated_at": now,
+        "stale_after_hours": DEFAULT_STALE_AFTER_HOURS,
+        "cluster_id": query.cluster_id,
+        "resources_evaluated": cluster_role_items.len(),
         "oldest_refresh": oldest_refresh,
         "reports": reports,
     })))
