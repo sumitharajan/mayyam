@@ -16,6 +16,9 @@ use crate::errors::AppError;
 use crate::middleware::auth::Claims; // Assuming you have auth middleware
 use crate::models::cluster::{CreateKubernetesClusterRequest, KubernetesClusterConfig};
 use crate::services::aws::inventory::types::{Pillar, DEFAULT_STALE_AFTER_HOURS};
+use crate::services::kubernetes::daemon_set_inventory::{
+    evaluate_kubernetes_daemonset_inventory, RESOURCE_TYPE as DAEMONSET_RESOURCE_TYPE,
+};
 use crate::services::kubernetes::deployment_inventory::{
     evaluate_kubernetes_deployment_inventory, RESOURCE_TYPE as DEPLOYMENT_RESOURCE_TYPE,
 };
@@ -509,6 +512,62 @@ pub async fn get_statefulset_inventory_pillar_reports_controller(
         "cluster_id": query.cluster_id,
         "namespace": query.namespace,
         "resources_evaluated": statefulset_items.len(),
+        "oldest_refresh": oldest_refresh,
+        "reports": reports,
+    })))
+}
+
+pub async fn get_daemonset_inventory_pillar_reports_controller(
+    claims: web::ReqData<Claims>,
+    db: web::Data<Arc<DatabaseConnection>>,
+    query: web::Query<KubernetesInventoryQuery>,
+    daemon_sets_service: web::Data<Arc<DaemonSetsService>>,
+) -> Result<impl Responder, AppError> {
+    let query = query.into_inner();
+    debug!(
+        target: "mayyam::controllers::kubernetes",
+        user_id = %claims.username,
+        ?query,
+        "Kubernetes DaemonSet inventory pillar report request"
+    );
+
+    let pillars = parse_kubernetes_inventory_pillars(&query.pillar)?;
+    let cluster_id = query
+        .cluster_id
+        .as_deref()
+        .map(str::trim)
+        .filter(|cluster_id| !cluster_id.is_empty());
+    let namespace = query
+        .namespace
+        .as_deref()
+        .map(str::trim)
+        .filter(|namespace| !namespace.is_empty());
+    let daemonset_items = if let Some(cluster_id) = cluster_id {
+        let cluster_config = get_cluster_config_by_id(db.get_ref().as_ref(), cluster_id).await?;
+        daemon_sets_service
+            .list_daemonset_inventory(&cluster_config, cluster_id, namespace)
+            .await?
+    } else {
+        Vec::new()
+    };
+
+    let now = Utc::now();
+    let reports = pillars
+        .iter()
+        .map(|pillar| evaluate_kubernetes_daemonset_inventory(&daemonset_items, *pillar, now))
+        .collect::<Vec<_>>();
+    let oldest_refresh = daemonset_items
+        .iter()
+        .map(|daemonset| daemonset.collected_at)
+        .min();
+
+    Ok(HttpResponse::Ok().json(json!({
+        "resource_type": DAEMONSET_RESOURCE_TYPE,
+        "evaluated_at": now,
+        "stale_after_hours": DEFAULT_STALE_AFTER_HOURS,
+        "cluster_id": query.cluster_id,
+        "namespace": query.namespace,
+        "resources_evaluated": daemonset_items.len(),
         "oldest_refresh": oldest_refresh,
         "reports": reports,
     })))
