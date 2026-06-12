@@ -76,6 +76,10 @@ pub fn configure(cfg: &mut web::ServiceConfig, db: Arc<DatabaseConnection>) {
             web::get().to(kube_controller::get_cronjob_inventory_pillar_reports_controller),
         )
         .route(
+            "/inventory/services/pillars",
+            web::get().to(kube_controller::get_service_inventory_pillar_reports_controller),
+        )
+        .route(
             "/clusters/{cluster_id}",
             web::get().to(kube_controller::get_cluster_controller),
         )

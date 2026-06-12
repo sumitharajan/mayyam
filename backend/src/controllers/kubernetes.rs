@@ -45,6 +45,9 @@ use crate::services::kubernetes::replica_set_inventory::{
     evaluate_kubernetes_replicaset_inventory, RESOURCE_TYPE as REPLICASET_RESOURCE_TYPE,
 };
 use crate::services::kubernetes::replica_sets_service::ReplicaSetsService;
+use crate::services::kubernetes::service_inventory::{
+    evaluate_kubernetes_service_inventory, RESOURCE_TYPE as SERVICE_RESOURCE_TYPE,
+};
 use crate::services::kubernetes::stateful_set_inventory::{
     evaluate_kubernetes_statefulset_inventory, RESOURCE_TYPE as STATEFULSET_RESOURCE_TYPE,
 };
@@ -683,6 +686,62 @@ pub async fn get_cronjob_inventory_pillar_reports_controller(
         "cluster_id": query.cluster_id,
         "namespace": query.namespace,
         "resources_evaluated": cronjob_items.len(),
+        "oldest_refresh": oldest_refresh,
+        "reports": reports,
+    })))
+}
+
+pub async fn get_service_inventory_pillar_reports_controller(
+    claims: web::ReqData<Claims>,
+    db: web::Data<Arc<DatabaseConnection>>,
+    query: web::Query<KubernetesInventoryQuery>,
+    services_service: web::Data<Arc<ServicesService>>,
+) -> Result<impl Responder, AppError> {
+    let query = query.into_inner();
+    debug!(
+        target: "mayyam::controllers::kubernetes",
+        user_id = %claims.username,
+        ?query,
+        "Kubernetes Service inventory pillar report request"
+    );
+
+    let pillars = parse_kubernetes_inventory_pillars(&query.pillar)?;
+    let cluster_id = query
+        .cluster_id
+        .as_deref()
+        .map(str::trim)
+        .filter(|cluster_id| !cluster_id.is_empty());
+    let namespace = query
+        .namespace
+        .as_deref()
+        .map(str::trim)
+        .filter(|namespace| !namespace.is_empty());
+    let service_items = if let Some(cluster_id) = cluster_id {
+        let cluster_config = get_cluster_config_by_id(db.get_ref().as_ref(), cluster_id).await?;
+        services_service
+            .list_service_inventory(&cluster_config, cluster_id, namespace)
+            .await?
+    } else {
+        Vec::new()
+    };
+
+    let now = Utc::now();
+    let reports = pillars
+        .iter()
+        .map(|pillar| evaluate_kubernetes_service_inventory(&service_items, *pillar, now))
+        .collect::<Vec<_>>();
+    let oldest_refresh = service_items
+        .iter()
+        .map(|service| service.collected_at)
+        .min();
+
+    Ok(HttpResponse::Ok().json(json!({
+        "resource_type": SERVICE_RESOURCE_TYPE,
+        "evaluated_at": now,
+        "stale_after_hours": DEFAULT_STALE_AFTER_HOURS,
+        "cluster_id": query.cluster_id,
+        "namespace": query.namespace,
+        "resources_evaluated": service_items.len(),
         "oldest_refresh": oldest_refresh,
         "reports": reports,
     })))
