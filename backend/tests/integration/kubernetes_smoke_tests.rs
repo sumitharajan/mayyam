@@ -19,6 +19,7 @@ use mayyam::controllers::kubernetes::{
     get_cluster_role_inventory_pillar_reports_controller,
     get_configmap_inventory_pillar_reports_controller,
     get_cronjob_inventory_pillar_reports_controller,
+    get_custom_resource_definition_inventory_pillar_reports_controller,
     get_daemonset_inventory_pillar_reports_controller,
     get_deployment_inventory_pillar_reports_controller,
     get_endpoint_slice_inventory_pillar_reports_controller,
@@ -45,6 +46,7 @@ use mayyam::controllers::kubernetes::{
 };
 use mayyam::middleware::auth::Claims;
 use mayyam::services::kubernetes::configmaps_service::ConfigMapsService;
+use mayyam::services::kubernetes::crds_service::CrdsService;
 use mayyam::services::kubernetes::cronjobs_service::CronJobsService;
 use mayyam::services::kubernetes::daemon_sets::DaemonSetsService;
 use mayyam::services::kubernetes::deployments_service::DeploymentsService;
@@ -2063,6 +2065,69 @@ async fn kubernetes_volume_snapshot_inventory_pillar_reports_contract() {
 
     let request = test::TestRequest::get()
         .uri("/api/kubernetes/inventory/volumesnapshots/pillars?pillar=bogus")
+        .to_request();
+    let response = test::call_service(&app, request).await;
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+}
+
+#[tokio::test]
+async fn kubernetes_custom_resource_definition_inventory_pillar_reports_contract() {
+    let claims = Claims {
+        sub: "test-user".to_string(),
+        username: "test-user".to_string(),
+        email: None,
+        roles: vec!["admin".to_string()],
+        exp: i64::MAX,
+        iat: 0,
+    };
+    let db = Arc::new(DatabaseConnection::default());
+    let crds_service = Arc::new(CrdsService::new());
+    let app = test::init_service(
+        App::new()
+            .wrap_fn(move |req, srv| {
+                req.extensions_mut().insert(claims.clone());
+                srv.call(req)
+            })
+            .app_data(web::Data::new(db))
+            .app_data(web::Data::new(crds_service))
+            .route(
+                "/api/kubernetes/inventory/customresourcedefinitions/pillars",
+                web::get().to(get_custom_resource_definition_inventory_pillar_reports_controller),
+            ),
+    )
+    .await;
+
+    let request = test::TestRequest::get()
+        .uri("/api/kubernetes/inventory/customresourcedefinitions/pillars")
+        .to_request();
+    let response = test::call_service(&app, request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body: Value = test::read_body_json(response).await;
+    assert_eq!(body["resource_type"], "KubernetesCustomResourceDefinition");
+    assert!(body["evaluated_at"].is_string());
+    assert!(body["stale_after_hours"].is_number());
+    assert!(body["resources_evaluated"].is_number());
+    let reports = body["reports"].as_array().expect("reports array");
+    assert_eq!(reports.len(), 3);
+    for report in reports {
+        assert!(report["pillar"].is_string());
+        assert!(report["score"].is_number());
+        assert!(report["findings"].is_array());
+    }
+
+    let request = test::TestRequest::get()
+        .uri("/api/kubernetes/inventory/customresourcedefinitions/pillars?pillar=resilience")
+        .to_request();
+    let response = test::call_service(&app, request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let body: Value = test::read_body_json(response).await;
+    let reports = body["reports"].as_array().expect("reports array");
+    assert_eq!(reports.len(), 1);
+    assert_eq!(reports[0]["pillar"], "resilience");
+
+    let request = test::TestRequest::get()
+        .uri("/api/kubernetes/inventory/customresourcedefinitions/pillars?pillar=bogus")
         .to_request();
     let response = test::call_service(&app, request).await;
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);

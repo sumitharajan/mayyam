@@ -30,6 +30,10 @@ use crate::services::kubernetes::configmaps_service::ConfigMapsService;
 use crate::services::kubernetes::cronjob_inventory::{
     evaluate_kubernetes_cronjob_inventory, RESOURCE_TYPE as CRONJOB_RESOURCE_TYPE,
 };
+use crate::services::kubernetes::custom_resource_definition_inventory::{
+    evaluate_kubernetes_custom_resource_definition_inventory,
+    RESOURCE_TYPE as CUSTOM_RESOURCE_DEFINITION_RESOURCE_TYPE,
+};
 use crate::services::kubernetes::daemon_set_inventory::{
     evaluate_kubernetes_daemonset_inventory, RESOURCE_TYPE as DAEMONSET_RESOURCE_TYPE,
 };
@@ -1964,6 +1968,55 @@ pub async fn get_volume_snapshot_inventory_pillar_reports_controller(
         "cluster_id": query.cluster_id,
         "namespace": query.namespace,
         "resources_evaluated": snapshot_items.len(),
+        "oldest_refresh": oldest_refresh,
+        "reports": reports,
+    })))
+}
+
+pub async fn get_custom_resource_definition_inventory_pillar_reports_controller(
+    claims: web::ReqData<Claims>,
+    db: web::Data<Arc<DatabaseConnection>>,
+    query: web::Query<KubernetesInventoryQuery>,
+    crds_service: web::Data<Arc<CrdsService>>,
+) -> Result<impl Responder, AppError> {
+    let query = query.into_inner();
+    debug!(
+        target: "mayyam::controllers::kubernetes",
+        user_id = %claims.username,
+        ?query,
+        "Kubernetes CustomResourceDefinition inventory pillar report request"
+    );
+
+    let pillars = parse_kubernetes_inventory_pillars(&query.pillar)?;
+    let cluster_id = query
+        .cluster_id
+        .as_deref()
+        .map(str::trim)
+        .filter(|cluster_id| !cluster_id.is_empty());
+    let crd_items = if let Some(cluster_id) = cluster_id {
+        let cluster_config = get_cluster_config_by_id(db.get_ref().as_ref(), cluster_id).await?;
+        crds_service
+            .list_inventory(&cluster_config, cluster_id)
+            .await?
+    } else {
+        Vec::new()
+    };
+
+    let now = Utc::now();
+    let reports = pillars
+        .iter()
+        .map(|pillar| {
+            evaluate_kubernetes_custom_resource_definition_inventory(&crd_items, *pillar, now)
+        })
+        .collect::<Vec<_>>();
+    let oldest_refresh = crd_items.iter().map(|resource| resource.collected_at).min();
+
+    Ok(HttpResponse::Ok().json(json!({
+        "resource_type": CUSTOM_RESOURCE_DEFINITION_RESOURCE_TYPE,
+        "evaluated_at": now,
+        "stale_after_hours": DEFAULT_STALE_AFTER_HOURS,
+        "cluster_id": query.cluster_id,
+        "resources_evaluated": crd_items.len(),
         "oldest_refresh": oldest_refresh,
         "reports": reports,
     })))

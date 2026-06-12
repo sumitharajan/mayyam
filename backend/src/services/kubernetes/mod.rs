@@ -18,6 +18,7 @@ pub mod cluster_role_inventory;
 pub mod configmap_inventory;
 pub mod configmaps_service;
 pub mod cronjob_inventory;
+pub mod custom_resource_definition_inventory;
 pub mod daemon_set_inventory;
 pub mod daemon_sets;
 pub mod deployment_inventory;
@@ -81,6 +82,7 @@ pub mod vpa_service;
 
 pub mod prelude {
     pub use super::authz_service::AuthorizationService;
+    pub use super::crds_service::CrdsService;
     pub use super::cronjobs_service::CronJobsService;
     pub use super::daemon_sets::DaemonSetsService;
     pub use super::deployments_service::DeploymentsService;
