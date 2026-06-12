@@ -59,6 +59,7 @@ pub mod job_inventory;
 pub mod jobs_service;
 pub mod limit_ranges_service;
 pub mod network_policies_service;
+pub mod network_policy_inventory;
 pub mod nodes_ops_service;
 pub mod pdb_service;
 pub mod rbac_service;
