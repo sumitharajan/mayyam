@@ -145,6 +145,14 @@ pub fn configure(cfg: &mut web::ServiceConfig, db: Arc<DatabaseConnection>) {
             web::get().to(kube_controller::get_vpa_inventory_pillar_reports_controller),
         )
         .route(
+            "/inventory/pdb/pillars",
+            web::get().to(kube_controller::get_pdb_inventory_pillar_reports_controller),
+        )
+        .route(
+            "/inventory/poddisruptionbudgets/pillars",
+            web::get().to(kube_controller::get_pdb_inventory_pillar_reports_controller),
+        )
+        .route(
             "/clusters/{cluster_id}",
             web::get().to(kube_controller::get_cluster_controller),
         )

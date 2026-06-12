@@ -62,6 +62,7 @@ pub mod limit_ranges_service;
 pub mod network_policies_service;
 pub mod network_policy_inventory;
 pub mod nodes_ops_service;
+pub mod pdb_inventory;
 pub mod pdb_service;
 pub mod rbac_service;
 pub mod replica_sets_service;
