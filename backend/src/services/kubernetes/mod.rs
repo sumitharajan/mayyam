@@ -51,6 +51,7 @@ pub mod cronjobs_service;
 pub mod endpoint_slice_inventory;
 pub mod endpoints_inventory;
 pub mod endpoints_service;
+pub mod event_inventory;
 pub mod gateway_api_inventory;
 pub mod gateway_api_service;
 pub mod hpa_inventory;

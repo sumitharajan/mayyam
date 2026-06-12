@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use k8s_openapi::api::core::v1::{Event, Pod, PodSpec, PodStatus};
 use kube::{
     api::{DeleteParams, ListParams, LogParams, ObjectMeta},
@@ -23,6 +23,7 @@ use std::collections::BTreeMap;
 use tracing::{debug, error, info};
 
 use crate::services::kubernetes::client::ClientFactory;
+use crate::services::kubernetes::event_inventory::EventInventoryItem;
 use crate::services::kubernetes::pod_inventory::{PodContainerInventoryItem, PodInventoryItem};
 use crate::{errors::AppError, models::cluster::KubernetesClusterConfig};
 use kube::api::AttachParams;
@@ -242,6 +243,47 @@ fn convert_kube_pod_to_pod_inventory(
     }
 }
 
+fn convert_kube_event_to_event_inventory(
+    event: &Event,
+    cluster_id: &str,
+    fallback_namespace: &str,
+    collected_at: DateTime<Utc>,
+) -> EventInventoryItem {
+    let involved_object = &event.involved_object;
+    let related_object = event.related.as_ref();
+    EventInventoryItem {
+        cluster_id: cluster_id.to_string(),
+        namespace: event
+            .metadata
+            .namespace
+            .clone()
+            .unwrap_or_else(|| fallback_namespace.to_string()),
+        name: event.name_any(),
+        event_type: event.type_.clone(),
+        reason: event.reason.clone(),
+        message: event.message.clone(),
+        count: event.count.unwrap_or(1),
+        action: event.action.clone(),
+        reporting_component: event.reporting_component.clone(),
+        reporting_instance: event.reporting_instance.clone(),
+        involved_object_api_version: involved_object.api_version.clone(),
+        involved_object_kind: involved_object.kind.clone(),
+        involved_object_namespace: involved_object.namespace.clone(),
+        involved_object_name: involved_object.name.clone(),
+        related_object_kind: related_object.and_then(|object| object.kind.clone()),
+        related_object_name: related_object.and_then(|object| object.name.clone()),
+        first_timestamp: event.first_timestamp.as_ref().map(|timestamp| timestamp.0),
+        last_timestamp: event.last_timestamp.as_ref().map(|timestamp| timestamp.0),
+        event_time: event.event_time.as_ref().map(|timestamp| timestamp.0),
+        created_at: event
+            .metadata
+            .creation_timestamp
+            .as_ref()
+            .map(|timestamp| timestamp.0),
+        collected_at,
+    }
+}
+
 #[derive(Clone)]
 pub struct PodService;
 
@@ -343,6 +385,72 @@ impl PodService {
                     namespace = namespace.unwrap_or("all"),
                     error = %e,
                     "Failed to list pod inventory"
+                );
+                Err(AppError::Kubernetes(e.to_string()))
+            }
+        }
+    }
+
+    pub async fn list_event_inventory(
+        &self,
+        cluster_config: &KubernetesClusterConfig,
+        cluster_id: &str,
+        namespace: Option<&str>,
+    ) -> Result<Vec<EventInventoryItem>, AppError> {
+        let namespace = namespace
+            .map(str::trim)
+            .filter(|namespace| !namespace.is_empty());
+        debug!(
+            target: "mayyam::services::kubernetes::pod",
+            cluster_name = cluster_config.api_server_url.as_deref().unwrap_or("unknown"),
+            namespace = namespace.unwrap_or("all"),
+            "Listing Event inventory"
+        );
+        let client = Self::get_kube_client(cluster_config).await?;
+
+        let api: Api<Event> = match namespace {
+            Some(namespace) if namespace != "all" => Api::namespaced(client, namespace),
+            _ => Api::all(client),
+        };
+        let lp = ListParams::default();
+        let collected_at = Utc::now();
+        match api.list(&lp).await {
+            Ok(event_list) => {
+                info!(
+                    target: "mayyam::services::kubernetes::pod",
+                    cluster_name = cluster_config.api_server_url.as_deref().unwrap_or("unknown"),
+                    namespace = namespace.unwrap_or("all"),
+                    count = event_list.items.len(),
+                    "Successfully listed Event inventory"
+                );
+                let fallback_namespace = namespace
+                    .filter(|namespace| *namespace != "all")
+                    .unwrap_or("");
+                let mut events = event_list
+                    .iter()
+                    .map(|event| {
+                        convert_kube_event_to_event_inventory(
+                            event,
+                            cluster_id,
+                            fallback_namespace,
+                            collected_at,
+                        )
+                    })
+                    .collect::<Vec<_>>();
+                events.sort_by(|left, right| {
+                    left.namespace
+                        .cmp(&right.namespace)
+                        .then_with(|| left.name.cmp(&right.name))
+                });
+                Ok(events)
+            }
+            Err(e) => {
+                error!(
+                    target: "mayyam::services::kubernetes::pod",
+                    cluster_name = cluster_config.api_server_url.as_deref().unwrap_or("unknown"),
+                    namespace = namespace.unwrap_or("all"),
+                    error = %e,
+                    "Failed to list Event inventory"
                 );
                 Err(AppError::Kubernetes(e.to_string()))
             }
@@ -581,6 +689,114 @@ impl PodService {
         let api: Api<Event> = Api::namespaced(client, namespace);
         let watcher = kube::runtime::watcher(api, kube::runtime::watcher::Config::default());
         Ok(watcher)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::TimeZone;
+    use k8s_openapi::api::core::v1::ObjectReference;
+    use k8s_openapi::apimachinery::pkg::apis::meta::v1::{MicroTime, Time};
+
+    #[test]
+    fn event_inventory_conversion_preserves_metadata_involved_related_and_timestamps() {
+        let collected_at = Utc.with_ymd_and_hms(2026, 6, 10, 0, 0, 0).unwrap();
+        let created_at = Utc.with_ymd_and_hms(2026, 6, 9, 23, 0, 0).unwrap();
+        let first_timestamp = Utc.with_ymd_and_hms(2026, 6, 9, 23, 5, 0).unwrap();
+        let last_timestamp = Utc.with_ymd_and_hms(2026, 6, 9, 23, 10, 0).unwrap();
+        let event_time = Utc.with_ymd_and_hms(2026, 6, 9, 23, 4, 0).unwrap();
+        let event = Event {
+            metadata: ObjectMeta {
+                name: Some("pod-a.started".to_string()),
+                namespace: Some("apps".to_string()),
+                creation_timestamp: Some(Time(created_at)),
+                ..Default::default()
+            },
+            type_: Some("Warning".to_string()),
+            reason: Some("FailedScheduling".to_string()),
+            message: Some("0/3 nodes are available".to_string()),
+            count: Some(50),
+            action: Some("Scheduling".to_string()),
+            reporting_component: Some("default-scheduler".to_string()),
+            reporting_instance: Some("scheduler-a".to_string()),
+            involved_object: ObjectReference {
+                api_version: Some("v1".to_string()),
+                kind: Some("Pod".to_string()),
+                namespace: Some("apps".to_string()),
+                name: Some("pod-a".to_string()),
+                ..Default::default()
+            },
+            related: Some(ObjectReference {
+                kind: Some("Node".to_string()),
+                name: Some("node-a".to_string()),
+                ..Default::default()
+            }),
+            first_timestamp: Some(Time(first_timestamp)),
+            last_timestamp: Some(Time(last_timestamp)),
+            event_time: Some(MicroTime(event_time)),
+            ..Default::default()
+        };
+
+        let inventory =
+            convert_kube_event_to_event_inventory(&event, "cluster-a", "fallback", collected_at);
+
+        assert_eq!(inventory.cluster_id, "cluster-a");
+        assert_eq!(inventory.namespace, "apps");
+        assert_eq!(inventory.name, "pod-a.started");
+        assert_eq!(inventory.event_type.as_deref(), Some("Warning"));
+        assert_eq!(inventory.reason.as_deref(), Some("FailedScheduling"));
+        assert_eq!(
+            inventory.message.as_deref(),
+            Some("0/3 nodes are available")
+        );
+        assert_eq!(inventory.count, 50);
+        assert_eq!(inventory.action.as_deref(), Some("Scheduling"));
+        assert_eq!(
+            inventory.reporting_component.as_deref(),
+            Some("default-scheduler")
+        );
+        assert_eq!(inventory.reporting_instance.as_deref(), Some("scheduler-a"));
+        assert_eq!(inventory.involved_object_api_version.as_deref(), Some("v1"));
+        assert_eq!(inventory.involved_object_kind.as_deref(), Some("Pod"));
+        assert_eq!(inventory.involved_object_namespace.as_deref(), Some("apps"));
+        assert_eq!(inventory.involved_object_name.as_deref(), Some("pod-a"));
+        assert_eq!(inventory.related_object_kind.as_deref(), Some("Node"));
+        assert_eq!(inventory.related_object_name.as_deref(), Some("node-a"));
+        assert_eq!(inventory.first_timestamp, Some(first_timestamp));
+        assert_eq!(inventory.last_timestamp, Some(last_timestamp));
+        assert_eq!(inventory.event_time, Some(event_time));
+        assert_eq!(inventory.created_at, Some(created_at));
+        assert_eq!(inventory.collected_at, collected_at);
+    }
+
+    #[test]
+    fn event_inventory_conversion_handles_missing_optional_state() {
+        let collected_at = Utc.with_ymd_and_hms(2026, 6, 10, 0, 0, 0).unwrap();
+        let event = Event {
+            metadata: ObjectMeta {
+                name: Some("pod-a.normal".to_string()),
+                ..Default::default()
+            },
+            involved_object: ObjectReference::default(),
+            ..Default::default()
+        };
+
+        let inventory =
+            convert_kube_event_to_event_inventory(&event, "cluster-a", "fallback", collected_at);
+
+        assert_eq!(inventory.namespace, "fallback");
+        assert_eq!(inventory.name, "pod-a.normal");
+        assert_eq!(inventory.count, 1);
+        assert_eq!(inventory.event_type, None);
+        assert_eq!(inventory.reason, None);
+        assert_eq!(inventory.message, None);
+        assert_eq!(inventory.related_object_kind, None);
+        assert_eq!(inventory.related_object_name, None);
+        assert_eq!(inventory.first_timestamp, None);
+        assert_eq!(inventory.last_timestamp, None);
+        assert_eq!(inventory.event_time, None);
+        assert_eq!(inventory.created_at, None);
     }
 }
 

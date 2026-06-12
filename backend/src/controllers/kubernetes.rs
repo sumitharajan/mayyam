@@ -49,6 +49,9 @@ use crate::services::kubernetes::endpoint_slice_inventory::{
 use crate::services::kubernetes::endpoints_inventory::{
     evaluate_kubernetes_endpoints_inventory, RESOURCE_TYPE as ENDPOINTS_RESOURCE_TYPE,
 };
+use crate::services::kubernetes::event_inventory::{
+    evaluate_kubernetes_event_inventory, RESOURCE_TYPE as EVENT_RESOURCE_TYPE,
+};
 use crate::services::kubernetes::gateway_api_inventory::{
     evaluate_kubernetes_gateway_api_inventory, RESOURCE_TYPE as GATEWAY_API_RESOURCE_TYPE,
 };
@@ -2078,6 +2081,62 @@ pub async fn get_custom_resource_inventory_pillar_reports_controller(
         "cluster_id": query.cluster_id,
         "namespace": query.namespace,
         "resources_evaluated": custom_resource_items.len(),
+        "oldest_refresh": oldest_refresh,
+        "reports": reports,
+    })))
+}
+
+pub async fn get_event_inventory_pillar_reports_controller(
+    claims: web::ReqData<Claims>,
+    db: web::Data<Arc<DatabaseConnection>>,
+    query: web::Query<KubernetesInventoryQuery>,
+    pod_service: web::Data<Arc<PodService>>,
+) -> Result<impl Responder, AppError> {
+    let query = query.into_inner();
+    debug!(
+        target: "mayyam::controllers::kubernetes",
+        user_id = %claims.username,
+        ?query,
+        "Kubernetes Event inventory pillar report request"
+    );
+
+    let pillars = parse_kubernetes_inventory_pillars(&query.pillar)?;
+    let cluster_id = query
+        .cluster_id
+        .as_deref()
+        .map(str::trim)
+        .filter(|cluster_id| !cluster_id.is_empty());
+    let namespace = query
+        .namespace
+        .as_deref()
+        .map(str::trim)
+        .filter(|namespace| !namespace.is_empty());
+    let event_items = if let Some(cluster_id) = cluster_id {
+        let cluster_config = get_cluster_config_by_id(db.get_ref().as_ref(), cluster_id).await?;
+        pod_service
+            .list_event_inventory(&cluster_config, cluster_id, namespace)
+            .await?
+    } else {
+        Vec::new()
+    };
+
+    let now = Utc::now();
+    let reports = pillars
+        .iter()
+        .map(|pillar| evaluate_kubernetes_event_inventory(&event_items, *pillar, now))
+        .collect::<Vec<_>>();
+    let oldest_refresh = event_items
+        .iter()
+        .map(|resource| resource.collected_at)
+        .min();
+
+    Ok(HttpResponse::Ok().json(json!({
+        "resource_type": EVENT_RESOURCE_TYPE,
+        "evaluated_at": now,
+        "stale_after_hours": DEFAULT_STALE_AFTER_HOURS,
+        "cluster_id": query.cluster_id,
+        "namespace": query.namespace,
+        "resources_evaluated": event_items.len(),
         "oldest_refresh": oldest_refresh,
         "reports": reports,
     })))
