@@ -113,6 +113,9 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
                 web::resource("/mysql/deadlocks/pillars")
                     .route(web::get().to(database::get_mysql_deadlocks_inventory_pillar_reports)),
             )
+            .service(web::resource("/mysql/index-cardinality/pillars").route(
+                web::get().to(database::get_mysql_index_cardinality_inventory_pillar_reports),
+            ))
             .service(
                 web::resource("/mysql/redo-log/pillars")
                     .route(web::get().to(database::get_mysql_redo_log_inventory_pillar_reports)),
