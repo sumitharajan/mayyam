@@ -17,7 +17,7 @@
 use actix_web::{dev::Service as _, http::StatusCode, test, web, App, HttpMessage};
 use mayyam::config::Config;
 use mayyam::controllers::database::{
-    get_mysql_binary_log_inventory_pillar_reports,
+    get_mysql_aurora_inventory_pillar_reports, get_mysql_binary_log_inventory_pillar_reports,
     get_mysql_digest_statistics_inventory_pillar_reports,
     get_mysql_group_replication_inventory_pillar_reports,
     get_mysql_innodb_buffer_pool_inventory_pillar_reports,
@@ -83,6 +83,10 @@ async fn mysql_performance_schema_inventory_pillar_reports_contract() {
             .route(
                 "/api/databases/mysql/group-replication/pillars",
                 web::get().to(get_mysql_group_replication_inventory_pillar_reports),
+            )
+            .route(
+                "/api/databases/mysql/aurora-mysql/pillars",
+                web::get().to(get_mysql_aurora_inventory_pillar_reports),
             )
             .route(
                 "/api/databases/mysql/redo-log/pillars",
@@ -283,6 +287,27 @@ async fn mysql_performance_schema_inventory_pillar_reports_contract() {
     assert_eq!(reports.len(), 2);
     assert_eq!(reports[0]["pillar"], "cost");
     assert_eq!(reports[1]["pillar"], "security");
+
+    let request = test::TestRequest::get()
+        .uri("/api/databases/mysql/aurora-mysql/pillars")
+        .to_request();
+    let response = test::call_service(&app, request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body: Value = test::read_body_json(response).await;
+    assert_eq!(body["resource_type"], "AuroraMySql");
+    let reports = body["reports"].as_array().expect("reports array");
+    assert_eq!(reports.len(), 3);
+
+    let request = test::TestRequest::get()
+        .uri("/api/databases/mysql/aurora-mysql/pillars?pillar=resilience")
+        .to_request();
+    let response = test::call_service(&app, request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let body: Value = test::read_body_json(response).await;
+    let reports = body["reports"].as_array().expect("reports array");
+    assert_eq!(reports.len(), 1);
+    assert_eq!(reports[0]["pillar"], "resilience");
 
     let request = test::TestRequest::get()
         .uri("/api/databases/mysql/redo-log/pillars")

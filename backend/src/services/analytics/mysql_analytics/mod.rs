@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+pub mod aurora_mysql_inventory;
 pub mod binary_log_inventory;
 pub mod digest_statistics_inventory;
 pub mod group_replication_inventory;
