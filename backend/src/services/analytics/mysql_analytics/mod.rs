@@ -18,6 +18,7 @@ pub mod connection_threads_inventory;
 pub mod digest_statistics_inventory;
 pub mod group_replication_inventory;
 pub mod innodb_buffer_pool_inventory;
+pub mod metadata_locks_inventory;
 pub mod mysql_analytics_service;
 pub mod mysql_signals;
 pub mod mysql_telemetry;

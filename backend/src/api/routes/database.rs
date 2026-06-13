@@ -105,6 +105,11 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
                 web::get().to(database::get_mysql_connection_threads_inventory_pillar_reports),
             ))
             .service(
+                web::resource("/mysql/metadata-locks/pillars").route(
+                    web::get().to(database::get_mysql_metadata_locks_inventory_pillar_reports),
+                ),
+            )
+            .service(
                 web::resource("/mysql/redo-log/pillars")
                     .route(web::get().to(database::get_mysql_redo_log_inventory_pillar_reports)),
             )
