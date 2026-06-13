@@ -98,6 +98,10 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
                     .route(web::get().to(database::get_mysql_aurora_inventory_pillar_reports)),
             )
             .service(
+                web::resource("/mysql/rds-mysql/pillars")
+                    .route(web::get().to(database::get_mysql_rds_inventory_pillar_reports)),
+            )
+            .service(
                 web::resource("/mysql/redo-log/pillars")
                     .route(web::get().to(database::get_mysql_redo_log_inventory_pillar_reports)),
             )
