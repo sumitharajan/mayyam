@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+pub mod binary_log_inventory;
 pub mod digest_statistics_inventory;
 pub mod innodb_buffer_pool_inventory;
 pub mod mysql_analytics_service;
