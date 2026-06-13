@@ -14,6 +14,7 @@
 
 pub mod aurora_mysql_inventory;
 pub mod binary_log_inventory;
+pub mod connection_threads_inventory;
 pub mod digest_statistics_inventory;
 pub mod group_replication_inventory;
 pub mod innodb_buffer_pool_inventory;
