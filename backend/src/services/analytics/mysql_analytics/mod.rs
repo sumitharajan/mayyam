@@ -21,6 +21,7 @@ pub mod performance_schema_inventory;
 pub mod redo_log_inventory;
 pub mod slow_query_log_inventory;
 pub mod sys_schema_inventory;
+pub mod undo_log_inventory;
 pub mod wait_events_inventory;
 pub use mysql_analytics_service::MySqlAnalyticsService;
 pub use mysql_telemetry::{MySqlTelemetryCollector, MySqlTelemetrySnapshot};
