@@ -139,6 +139,11 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
                 web::get().to(database::get_mysql_temporary_tables_inventory_pillar_reports),
             ))
             .service(
+                web::resource("/mysql/sort-operations/pillars").route(
+                    web::get().to(database::get_mysql_sort_operations_inventory_pillar_reports),
+                ),
+            )
+            .service(
                 web::resource("/mysql/redo-log/pillars")
                     .route(web::get().to(database::get_mysql_redo_log_inventory_pillar_reports)),
             )

@@ -57,6 +57,11 @@ pub struct MySqlWorkloadSnapshot {
     pub created_tmp_disk_tables: i64,
     pub created_tmp_files: i64,
     pub tmp_disk_table_pct: Option<f64>,
+    pub sort_merge_passes: i64,
+    pub sort_range: i64,
+    pub sort_rows: i64,
+    pub sort_scan: i64,
+    pub sort_merge_pass_pct: Option<f64>,
     pub qps_since_start: f64,
     pub read_write_ratio: Option<f64>,
 }
@@ -346,6 +351,10 @@ impl MySqlTelemetryCollector {
             + get_i64(status, "Com_delete");
         let created_tmp_tables = get_i64(status, "Created_tmp_tables");
         let created_tmp_disk_tables = get_i64(status, "Created_tmp_disk_tables");
+        let sort_merge_passes = get_i64(status, "Sort_merge_passes");
+        let sort_range = get_i64(status, "Sort_range");
+        let sort_scan = get_i64(status, "Sort_scan");
+        let sort_operations = sort_range + sort_scan;
 
         MySqlWorkloadSnapshot {
             questions,
@@ -360,6 +369,15 @@ impl MySqlTelemetryCollector {
             created_tmp_files: get_i64(status, "Created_tmp_files"),
             tmp_disk_table_pct: if created_tmp_tables > 0 {
                 Some(created_tmp_disk_tables as f64 / created_tmp_tables as f64 * 100.0)
+            } else {
+                None
+            },
+            sort_merge_passes,
+            sort_range,
+            sort_rows: get_i64(status, "Sort_rows"),
+            sort_scan,
+            sort_merge_pass_pct: if sort_operations > 0 {
+                Some(sort_merge_passes as f64 / sort_operations as f64 * 100.0)
             } else {
                 None
             },
@@ -1040,6 +1058,11 @@ mod tests {
                 created_tmp_disk_tables: 0,
                 created_tmp_files: 0,
                 tmp_disk_table_pct: None,
+                sort_merge_passes: 0,
+                sort_range: 0,
+                sort_rows: 0,
+                sort_scan: 0,
+                sort_merge_pass_pct: None,
                 qps_since_start: 1.0,
                 read_write_ratio: Some(4.0),
             },
