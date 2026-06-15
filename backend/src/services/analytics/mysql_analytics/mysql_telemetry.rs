@@ -39,6 +39,8 @@ pub struct MySqlTelemetrySnapshot {
 pub struct MySqlServerContext {
     pub version: Option<String>,
     pub uptime_seconds: i64,
+    pub have_ssl: Option<String>,
+    pub require_secure_transport: Option<String>,
     pub performance_schema_enabled: Option<String>,
     pub slow_query_log_enabled: Option<String>,
     pub long_query_time_seconds: Option<f64>,
@@ -67,6 +69,9 @@ pub struct MySqlWorkloadSnapshot {
     pub select_full_range_join: i64,
     pub select_range_check: i64,
     pub full_join_select_pct: Option<f64>,
+    pub ssl_accepts: i64,
+    pub ssl_finished_accepts: i64,
+    pub ssl_accept_pct: Option<f64>,
     pub qps_since_start: f64,
     pub read_write_ratio: Option<f64>,
 }
@@ -289,6 +294,8 @@ impl MySqlTelemetryCollector {
                 'Questions',
                 'Queries',
                 'Slow_queries',
+                'Ssl_accepts',
+                'Ssl_finished_accepts',
                 'Threads_cached',
                 'Threads_connected',
                 'Threads_running',
@@ -321,6 +328,8 @@ impl MySqlTelemetryCollector {
                 'long_query_time',
                 'max_connections',
                 'performance_schema',
+                'have_ssl',
+                'require_secure_transport',
                 'slow_query_log',
                 'thread_cache_size',
                 'version'
@@ -356,6 +365,8 @@ impl MySqlTelemetryCollector {
         MySqlServerContext {
             version: variables.get("version").cloned(),
             uptime_seconds: get_i64(status, "Uptime"),
+            have_ssl: variables.get("have_ssl").cloned(),
+            require_secure_transport: variables.get("require_secure_transport").cloned(),
             performance_schema_enabled: variables.get("performance_schema").cloned(),
             slow_query_log_enabled: variables.get("slow_query_log").cloned(),
             long_query_time_seconds: variables
@@ -380,6 +391,8 @@ impl MySqlTelemetryCollector {
         let sort_operations = sort_range + sort_scan;
         let select_full_join = get_i64(status, "Select_full_join");
         let select_full_range_join = get_i64(status, "Select_full_range_join");
+        let ssl_accepts = get_i64(status, "Ssl_accepts");
+        let ssl_finished_accepts = get_i64(status, "Ssl_finished_accepts");
 
         MySqlWorkloadSnapshot {
             questions,
@@ -414,6 +427,9 @@ impl MySqlTelemetryCollector {
             } else {
                 None
             },
+            ssl_accepts,
+            ssl_finished_accepts,
+            ssl_accept_pct: pct(ssl_accepts, ssl_finished_accepts),
             qps_since_start: if uptime > 0 {
                 questions as f64 / uptime as f64
             } else {
@@ -1132,6 +1148,8 @@ mod tests {
             server: MySqlServerContext {
                 version: Some("8.0".to_string()),
                 uptime_seconds: 3600,
+                have_ssl: Some("YES".to_string()),
+                require_secure_transport: Some("ON".to_string()),
                 performance_schema_enabled: Some("ON".to_string()),
                 slow_query_log_enabled: Some("ON".to_string()),
                 long_query_time_seconds: Some(2.0),
@@ -1158,6 +1176,9 @@ mod tests {
                 select_full_range_join: 0,
                 select_range_check: 0,
                 full_join_select_pct: None,
+                ssl_accepts: 0,
+                ssl_finished_accepts: 0,
+                ssl_accept_pct: None,
                 qps_since_start: 1.0,
                 read_write_ratio: Some(4.0),
             },

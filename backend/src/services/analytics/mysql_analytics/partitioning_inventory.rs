@@ -708,6 +708,8 @@ mod tests {
             server: MySqlServerContext {
                 version: Some("8.0".to_string()),
                 uptime_seconds: 3600,
+                have_ssl: Some("YES".to_string()),
+                require_secure_transport: Some("ON".to_string()),
                 performance_schema_enabled: Some("ON".to_string()),
                 slow_query_log_enabled: Some("ON".to_string()),
                 long_query_time_seconds: Some(1.0),
@@ -734,6 +736,9 @@ mod tests {
                 select_full_range_join: 0,
                 select_range_check: 0,
                 full_join_select_pct: None,
+                ssl_accepts: 0,
+                ssl_finished_accepts: 0,
+                ssl_accept_pct: None,
                 qps_since_start: 0.0,
                 read_write_ratio: None,
             },

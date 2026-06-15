@@ -162,6 +162,9 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
                     web::get().to(database::get_mysql_privilege_audit_inventory_pillar_reports),
                 ),
             )
+            .service(web::resource("/mysql/tls-configuration/pillars").route(
+                web::get().to(database::get_mysql_tls_configuration_inventory_pillar_reports),
+            ))
             .service(
                 web::resource("/mysql/redo-log/pillars")
                     .route(web::get().to(database::get_mysql_redo_log_inventory_pillar_reports)),
