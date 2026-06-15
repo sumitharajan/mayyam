@@ -22,7 +22,9 @@
 // triggered each finding. No AWS calls, no database access, no LLM.
 
 use chrono::{DateTime, Utc};
+use serde::Serialize;
 use serde_json::{json, Value};
+use std::collections::BTreeSet;
 
 use crate::models::aws_resource::Model as AwsResourceModel;
 use crate::services::aws::inventory::types::{
@@ -58,6 +60,49 @@ pub const REASON_OE_MISSING_TELEMETRY_COLLECTION_METADATA: &str =
 pub const REASON_OE_TELEMETRY_COLLECTION_ERRORS: &str = "EC2_OE_TELEMETRY_COLLECTION_ERRORS";
 pub const REASON_OE_BASIC_MONITORING: &str = "EC2_OE_BASIC_MONITORING";
 pub const REASON_INV_STALE_DATA: &str = "EC2_INV_STALE_DATA";
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Ec2PostureStatus {
+    Pass,
+    Fail,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct Ec2PostureRule {
+    pub rule_id: &'static str,
+    pub status: Ec2PostureStatus,
+    pub reason_codes: Vec<&'static str>,
+    pub affected_resources: Vec<String>,
+    pub suppression_supported: bool,
+    pub assignment_supported: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct Ec2CostPostureSummary {
+    pub status: Ec2PostureStatus,
+    pub rules_evaluated: usize,
+    pub rules_failed: usize,
+    pub affected_resources: Vec<String>,
+    pub rules: Vec<Ec2PostureRule>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct Ec2EvidenceCitation {
+    pub reason_code: String,
+    pub resource_id: String,
+    pub severity: Severity,
+    pub evidence: Value,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct Ec2CostTriageContext {
+    pub pillar: Pillar,
+    pub facts: Vec<String>,
+    pub hypotheses: Vec<String>,
+    pub missing_data_questions: Vec<String>,
+    pub evidence_citations: Vec<Ec2EvidenceCitation>,
+}
 
 /// Evaluate every EC2 instance in the fleet for one pillar.
 pub fn evaluate_ec2_fleet(
@@ -100,6 +145,135 @@ pub fn evaluate_ec2_fleet(
         score,
         findings,
     }
+}
+
+pub fn ec2_cost_posture_summary(report: &PillarReport) -> Ec2CostPostureSummary {
+    let rules = vec![
+        ec2_cost_posture_rule(
+            report,
+            "ec2-cost-allocation-tags",
+            &[REASON_COST_MISSING_ALLOCATION_TAGS],
+        ),
+        ec2_cost_posture_rule(
+            report,
+            "ec2-stopped-capacity-review",
+            &[REASON_COST_STOPPED_INSTANCE],
+        ),
+        ec2_cost_posture_rule(
+            report,
+            "ec2-utilization-telemetry-coverage",
+            &[REASON_COST_MISSING_UTILIZATION_TELEMETRY],
+        ),
+        ec2_cost_posture_rule(
+            report,
+            "ec2-low-utilization-rightsizing",
+            &[REASON_COST_LOW_UTILIZATION_TELEMETRY],
+        ),
+    ];
+    let affected_resources = sorted_unique_resources(
+        rules
+            .iter()
+            .flat_map(|rule| rule.affected_resources.iter().cloned()),
+    );
+    let rules_failed = rules
+        .iter()
+        .filter(|rule| rule.status == Ec2PostureStatus::Fail)
+        .count();
+
+    Ec2CostPostureSummary {
+        status: if rules_failed == 0 {
+            Ec2PostureStatus::Pass
+        } else {
+            Ec2PostureStatus::Fail
+        },
+        rules_evaluated: rules.len(),
+        rules_failed,
+        affected_resources,
+        rules,
+    }
+}
+
+pub fn ec2_cost_triage_context(report: &PillarReport) -> Ec2CostTriageContext {
+    let mut facts = Vec::new();
+    let mut hypotheses = Vec::new();
+    let mut missing_data_questions = Vec::new();
+    let mut evidence_citations = Vec::new();
+
+    for finding in &report.findings {
+        facts.push(format!(
+            "{} affects {} with {:?} severity",
+            finding.reason_code, finding.resource_id, finding.severity
+        ));
+        evidence_citations.push(Ec2EvidenceCitation {
+            reason_code: finding.reason_code.clone(),
+            resource_id: finding.resource_id.clone(),
+            severity: finding.severity,
+            evidence: finding.evidence.clone(),
+        });
+
+        match finding.reason_code.as_str() {
+            REASON_COST_LOW_UTILIZATION_TELEMETRY => hypotheses.push(format!(
+                "{} may be oversized or eligible for scheduling; validate business hours, recent deployments, and reservation coverage before rightsizing",
+                finding.resource_id
+            )),
+            REASON_COST_STOPPED_INSTANCE => hypotheses.push(format!(
+                "{} may be abandoned capacity; verify attached EBS volumes, elastic IPs, and recovery expectations before cleanup",
+                finding.resource_id
+            )),
+            REASON_COST_MISSING_UTILIZATION_TELEMETRY => missing_data_questions.push(format!(
+                "Collect CPUUtilization telemetry for {} before distinguishing idle capacity from active workload demand",
+                finding.resource_id
+            )),
+            REASON_COST_MISSING_ALLOCATION_TAGS => missing_data_questions.push(format!(
+                "Assign owner, team, project, or cost-center metadata for {} so savings can be routed",
+                finding.resource_id
+            )),
+            _ => {}
+        }
+    }
+
+    Ec2CostTriageContext {
+        pillar: report.pillar,
+        facts,
+        hypotheses,
+        missing_data_questions,
+        evidence_citations,
+    }
+}
+
+fn ec2_cost_posture_rule(
+    report: &PillarReport,
+    rule_id: &'static str,
+    reason_codes: &[&'static str],
+) -> Ec2PostureRule {
+    let affected_resources = sorted_unique_resources(
+        report
+            .findings
+            .iter()
+            .filter(|finding| reason_codes.contains(&finding.reason_code.as_str()))
+            .map(|finding| finding.resource_id.clone()),
+    );
+
+    Ec2PostureRule {
+        rule_id,
+        status: if affected_resources.is_empty() {
+            Ec2PostureStatus::Pass
+        } else {
+            Ec2PostureStatus::Fail
+        },
+        reason_codes: reason_codes.to_vec(),
+        affected_resources,
+        suppression_supported: true,
+        assignment_supported: true,
+    }
+}
+
+fn sorted_unique_resources(resources: impl Iterator<Item = String>) -> Vec<String> {
+    resources
+        .filter(|resource_id| !resource_id.is_empty())
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .collect()
 }
 
 fn evaluate_cost(resource: &AwsResourceModel, findings: &mut Vec<InventoryFinding>) {
@@ -1052,6 +1226,102 @@ mod tests {
         assert_eq!(idle.severity, Severity::Low);
         assert_eq!(idle.evidence["metric_name"], json!("CPUUtilization"));
         assert_eq!(idle.evidence["max"], json!(3.0));
+    }
+
+    #[test]
+    fn ec2_cost_posture_summary_maps_rules_to_affected_resources() {
+        let untagged = fixture(
+            "i-untagged",
+            json!({}),
+            json!({
+                "state": "stopped",
+                "availability_zone": "us-east-1a",
+                "cloudwatch_metrics": {
+                    "metrics": [
+                        metric("CPUUtilization", &[12.0])
+                    ]
+                }
+            }),
+            1,
+            now(),
+        );
+        let missing_telemetry = fixture(
+            "i-missing-telemetry",
+            json!({"cost-center": "cc-42", "owner": "sre"}),
+            json!({"state": "running", "availability_zone": "us-east-1a"}),
+            1,
+            now(),
+        );
+
+        let report = evaluate_ec2_fleet(&[untagged, missing_telemetry], Pillar::Cost, now());
+        let posture = ec2_cost_posture_summary(&report);
+
+        assert_eq!(posture.status, Ec2PostureStatus::Fail);
+        assert_eq!(posture.rules_evaluated, 4);
+        assert_eq!(posture.rules_failed, 3);
+        assert_eq!(
+            posture.affected_resources,
+            vec!["i-missing-telemetry".to_string(), "i-untagged".to_string()]
+        );
+        let allocation = posture
+            .rules
+            .iter()
+            .find(|rule| rule.rule_id == "ec2-cost-allocation-tags")
+            .expect("allocation tag rule");
+        assert_eq!(allocation.status, Ec2PostureStatus::Fail);
+        assert_eq!(
+            allocation.reason_codes,
+            vec![REASON_COST_MISSING_ALLOCATION_TAGS]
+        );
+        assert!(allocation.assignment_supported);
+        assert!(allocation.suppression_supported);
+    }
+
+    #[test]
+    fn ec2_cost_triage_context_separates_facts_hypotheses_and_questions() {
+        let idle = fixture(
+            "i-idle",
+            json!({"cost-center": "cc-42", "owner": "sre"}),
+            json!({
+                "state": "running",
+                "availability_zone": "us-east-1a",
+                "cloudwatch_metrics": {
+                    "metrics": [
+                        metric("CPUUtilization", &[1.2, 2.4, 3.0])
+                    ]
+                }
+            }),
+            1,
+            now(),
+        );
+        let missing_telemetry = fixture(
+            "i-missing-telemetry",
+            json!({"cost-center": "cc-42", "owner": "sre"}),
+            json!({"state": "running", "availability_zone": "us-east-1a"}),
+            1,
+            now(),
+        );
+
+        let report = evaluate_ec2_fleet(&[idle, missing_telemetry], Pillar::Cost, now());
+        let triage = ec2_cost_triage_context(&report);
+
+        assert_eq!(triage.pillar, Pillar::Cost);
+        assert!(triage
+            .facts
+            .iter()
+            .any(|fact| fact.contains(REASON_COST_LOW_UTILIZATION_TELEMETRY)));
+        assert!(triage
+            .hypotheses
+            .iter()
+            .any(|hypothesis| hypothesis.contains("rightsizing")));
+        assert!(triage
+            .missing_data_questions
+            .iter()
+            .any(|question| question.contains("CPUUtilization")));
+        assert!(triage
+            .evidence_citations
+            .iter()
+            .any(|citation| citation.reason_code == REASON_COST_MISSING_UTILIZATION_TELEMETRY));
     }
 
     #[test]
