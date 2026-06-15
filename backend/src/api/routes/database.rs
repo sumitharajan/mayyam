@@ -127,6 +127,10 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
                 ),
             )
             .service(
+                web::resource("/mysql/table-bloat/pillars")
+                    .route(web::get().to(database::get_mysql_table_bloat_inventory_pillar_reports)),
+            )
+            .service(
                 web::resource("/mysql/redo-log/pillars")
                     .route(web::get().to(database::get_mysql_redo_log_inventory_pillar_reports)),
             )
