@@ -92,6 +92,11 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
                     web::get().to(database::get_mysql_backup_posture_inventory_pillar_reports),
                 ),
             )
+            .service(
+                web::resource("/mysql/restore-drills/pillars").route(
+                    web::get().to(database::get_mysql_restore_drills_inventory_pillar_reports),
+                ),
+            )
             .service(web::resource("/mysql/replication-status/pillars").route(
                 web::get().to(database::get_mysql_replication_status_inventory_pillar_reports),
             ))
