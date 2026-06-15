@@ -630,6 +630,7 @@ mod tests {
             },
             statements: Vec::new(),
             tables,
+            partitions: Vec::new(),
             indexes: Vec::new(),
             waits: Vec::new(),
             locks: MySqlLockSnapshot {

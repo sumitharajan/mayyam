@@ -25,6 +25,7 @@ pub mod missing_indexes_inventory;
 pub mod mysql_analytics_service;
 pub mod mysql_signals;
 pub mod mysql_telemetry;
+pub mod partitioning_inventory;
 pub mod performance_schema_inventory;
 pub mod rds_mysql_inventory;
 pub mod redo_log_inventory;

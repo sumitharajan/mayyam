@@ -27,6 +27,7 @@ pub struct MySqlTelemetrySnapshot {
     pub innodb: MySqlInnoDbSnapshot,
     pub statements: Vec<MySqlStatementDigest>,
     pub tables: Vec<MySqlTableTelemetry>,
+    pub partitions: Vec<MySqlPartitionTelemetry>,
     pub indexes: Vec<MySqlIndexTelemetry>,
     pub waits: Vec<MySqlWaitTelemetry>,
     pub locks: MySqlLockSnapshot,
@@ -116,6 +117,20 @@ pub struct MySqlTableTelemetry {
 }
 
 #[derive(Debug, Clone, Serialize)]
+pub struct MySqlPartitionTelemetry {
+    pub schema_name: String,
+    pub table_name: String,
+    pub partition_name: String,
+    pub partition_method: Option<String>,
+    pub partition_expression: Option<String>,
+    pub partition_description: Option<String>,
+    pub table_rows: i64,
+    pub data_length: i64,
+    pub index_length: i64,
+    pub data_free: i64,
+}
+
+#[derive(Debug, Clone, Serialize)]
 pub struct MySqlIndexTelemetry {
     pub schema_name: String,
     pub table_name: String,
@@ -188,6 +203,7 @@ impl MySqlTelemetryCollector {
         let innodb = Self::innodb_snapshot(&status);
         let statements = Self::collect_statement_digests(conn).await?;
         let tables = Self::collect_table_telemetry(conn).await?;
+        let partitions = Self::collect_partition_telemetry(conn).await?;
         let indexes = Self::collect_index_telemetry(conn).await?;
         let waits = Self::collect_waits(conn).await?;
         let locks = Self::collect_locks(conn).await?;
@@ -200,6 +216,7 @@ impl MySqlTelemetryCollector {
             innodb,
             statements,
             tables,
+            partitions,
             indexes,
             waits,
             locks,
@@ -506,6 +523,50 @@ impl MySqlTelemetryCollector {
             });
         }
         Ok(tables)
+    }
+
+    async fn collect_partition_telemetry(
+        conn: &DatabaseConnection,
+    ) -> Result<Vec<MySqlPartitionTelemetry>, AppError> {
+        const SQL: &str = r#"
+            SELECT
+                p.TABLE_SCHEMA,
+                p.TABLE_NAME,
+                p.PARTITION_NAME,
+                p.PARTITION_METHOD,
+                p.PARTITION_EXPRESSION,
+                p.PARTITION_DESCRIPTION,
+                p.TABLE_ROWS,
+                p.DATA_LENGTH,
+                p.INDEX_LENGTH,
+                p.DATA_FREE
+            FROM information_schema.partitions p
+            JOIN information_schema.tables t
+              ON t.TABLE_SCHEMA = p.TABLE_SCHEMA
+             AND t.TABLE_NAME = p.TABLE_NAME
+            WHERE p.TABLE_SCHEMA = DATABASE()
+              AND p.PARTITION_NAME IS NOT NULL
+              AND t.TABLE_TYPE = 'BASE TABLE'
+            ORDER BY p.TABLE_NAME, p.PARTITION_ORDINAL_POSITION
+            LIMIT 500
+        "#;
+
+        let mut partitions = Vec::new();
+        for row in query_all(conn, SQL).await? {
+            partitions.push(MySqlPartitionTelemetry {
+                schema_name: string_value(&row, "TABLE_SCHEMA").unwrap_or_default(),
+                table_name: string_value(&row, "TABLE_NAME").unwrap_or_default(),
+                partition_name: string_value(&row, "PARTITION_NAME").unwrap_or_default(),
+                partition_method: string_value(&row, "PARTITION_METHOD"),
+                partition_expression: string_value(&row, "PARTITION_EXPRESSION"),
+                partition_description: string_value(&row, "PARTITION_DESCRIPTION"),
+                table_rows: i64_value(&row, "TABLE_ROWS").unwrap_or(0),
+                data_length: i64_value(&row, "DATA_LENGTH").unwrap_or(0),
+                index_length: i64_value(&row, "INDEX_LENGTH").unwrap_or(0),
+                data_free: i64_value(&row, "DATA_FREE").unwrap_or(0),
+            });
+        }
+        Ok(partitions)
     }
 
     async fn collect_index_telemetry(
@@ -990,6 +1051,7 @@ mod tests {
             },
             statements: Vec::new(),
             tables: Vec::new(),
+            partitions: Vec::new(),
             indexes: Vec::new(),
             waits: Vec::new(),
             locks: MySqlLockSnapshot {
