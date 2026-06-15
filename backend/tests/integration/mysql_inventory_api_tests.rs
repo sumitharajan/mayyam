@@ -20,6 +20,7 @@ use mayyam::controllers::database::{
     get_mysql_aurora_inventory_pillar_reports, get_mysql_backup_posture_inventory_pillar_reports,
     get_mysql_binary_log_inventory_pillar_reports,
     get_mysql_connection_threads_inventory_pillar_reports,
+    get_mysql_cost_attribution_inventory_pillar_reports,
     get_mysql_deadlocks_inventory_pillar_reports,
     get_mysql_digest_statistics_inventory_pillar_reports,
     get_mysql_group_replication_inventory_pillar_reports,
@@ -104,6 +105,10 @@ async fn mysql_performance_schema_inventory_pillar_reports_contract() {
             .route(
                 "/api/databases/mysql/parameter-drift/pillars",
                 web::get().to(get_mysql_parameter_drift_inventory_pillar_reports),
+            )
+            .route(
+                "/api/databases/mysql/cost-attribution/pillars",
+                web::get().to(get_mysql_cost_attribution_inventory_pillar_reports),
             )
             .route(
                 "/api/databases/mysql/replication-status/pillars",
@@ -395,6 +400,28 @@ async fn mysql_performance_schema_inventory_pillar_reports_contract() {
 
     let request = test::TestRequest::get()
         .uri("/api/databases/mysql/parameter-drift/pillars?pillar=cost,security")
+        .to_request();
+    let response = test::call_service(&app, request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let body: Value = test::read_body_json(response).await;
+    let reports = body["reports"].as_array().expect("reports array");
+    assert_eq!(reports.len(), 2);
+    assert_eq!(reports[0]["pillar"], "cost");
+    assert_eq!(reports[1]["pillar"], "security");
+
+    let request = test::TestRequest::get()
+        .uri("/api/databases/mysql/cost-attribution/pillars")
+        .to_request();
+    let response = test::call_service(&app, request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body: Value = test::read_body_json(response).await;
+    assert_eq!(body["resource_type"], "MySqlCostAttribution");
+    let reports = body["reports"].as_array().expect("reports array");
+    assert_eq!(reports.len(), 3);
+
+    let request = test::TestRequest::get()
+        .uri("/api/databases/mysql/cost-attribution/pillars?pillar=cost,security")
         .to_request();
     let response = test::call_service(&app, request).await;
     assert_eq!(response.status(), StatusCode::OK);

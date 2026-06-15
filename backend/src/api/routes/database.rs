@@ -102,6 +102,9 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
                     web::get().to(database::get_mysql_parameter_drift_inventory_pillar_reports),
                 ),
             )
+            .service(web::resource("/mysql/cost-attribution/pillars").route(
+                web::get().to(database::get_mysql_cost_attribution_inventory_pillar_reports),
+            ))
             .service(web::resource("/mysql/replication-status/pillars").route(
                 web::get().to(database::get_mysql_replication_status_inventory_pillar_reports),
             ))
