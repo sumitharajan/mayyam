@@ -53,6 +53,10 @@ pub struct MySqlWorkloadSnapshot {
     pub com_update: i64,
     pub com_delete: i64,
     pub slow_queries: i64,
+    pub created_tmp_tables: i64,
+    pub created_tmp_disk_tables: i64,
+    pub created_tmp_files: i64,
+    pub tmp_disk_table_pct: Option<f64>,
     pub qps_since_start: f64,
     pub read_write_ratio: Option<f64>,
 }
@@ -340,6 +344,8 @@ impl MySqlTelemetryCollector {
         let writes = get_i64(status, "Com_insert")
             + get_i64(status, "Com_update")
             + get_i64(status, "Com_delete");
+        let created_tmp_tables = get_i64(status, "Created_tmp_tables");
+        let created_tmp_disk_tables = get_i64(status, "Created_tmp_disk_tables");
 
         MySqlWorkloadSnapshot {
             questions,
@@ -349,6 +355,14 @@ impl MySqlTelemetryCollector {
             com_update: get_i64(status, "Com_update"),
             com_delete: get_i64(status, "Com_delete"),
             slow_queries: get_i64(status, "Slow_queries"),
+            created_tmp_tables,
+            created_tmp_disk_tables,
+            created_tmp_files: get_i64(status, "Created_tmp_files"),
+            tmp_disk_table_pct: if created_tmp_tables > 0 {
+                Some(created_tmp_disk_tables as f64 / created_tmp_tables as f64 * 100.0)
+            } else {
+                None
+            },
             qps_since_start: if uptime > 0 {
                 questions as f64 / uptime as f64
             } else {
@@ -1022,6 +1036,10 @@ mod tests {
                 com_update: 50,
                 com_delete: 50,
                 slow_queries: 0,
+                created_tmp_tables: 0,
+                created_tmp_disk_tables: 0,
+                created_tmp_files: 0,
+                tmp_disk_table_pct: None,
                 qps_since_start: 1.0,
                 read_write_ratio: Some(4.0),
             },

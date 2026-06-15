@@ -32,6 +32,7 @@ use mayyam::controllers::database::{
     get_mysql_replication_status_inventory_pillar_reports,
     get_mysql_slow_query_log_inventory_pillar_reports,
     get_mysql_sys_schema_inventory_pillar_reports, get_mysql_table_bloat_inventory_pillar_reports,
+    get_mysql_temporary_tables_inventory_pillar_reports,
     get_mysql_undo_log_inventory_pillar_reports, get_mysql_unused_indexes_inventory_pillar_reports,
     get_mysql_wait_events_inventory_pillar_reports,
 };
@@ -130,6 +131,10 @@ async fn mysql_performance_schema_inventory_pillar_reports_contract() {
             .route(
                 "/api/databases/mysql/partitioning/pillars",
                 web::get().to(get_mysql_partitioning_inventory_pillar_reports),
+            )
+            .route(
+                "/api/databases/mysql/temporary-tables/pillars",
+                web::get().to(get_mysql_temporary_tables_inventory_pillar_reports),
             )
             .route(
                 "/api/databases/mysql/redo-log/pillars",
@@ -545,6 +550,28 @@ async fn mysql_performance_schema_inventory_pillar_reports_contract() {
     let reports = body["reports"].as_array().expect("reports array");
     assert_eq!(reports.len(), 2);
     assert_eq!(reports[0]["pillar"], "resilience");
+    assert_eq!(reports[1]["pillar"], "security");
+
+    let request = test::TestRequest::get()
+        .uri("/api/databases/mysql/temporary-tables/pillars")
+        .to_request();
+    let response = test::call_service(&app, request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body: Value = test::read_body_json(response).await;
+    assert_eq!(body["resource_type"], "MySqlTemporaryTables");
+    let reports = body["reports"].as_array().expect("reports array");
+    assert_eq!(reports.len(), 3);
+
+    let request = test::TestRequest::get()
+        .uri("/api/databases/mysql/temporary-tables/pillars?pillar=cost,security")
+        .to_request();
+    let response = test::call_service(&app, request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let body: Value = test::read_body_json(response).await;
+    let reports = body["reports"].as_array().expect("reports array");
+    assert_eq!(reports.len(), 2);
+    assert_eq!(reports[0]["pillar"], "cost");
     assert_eq!(reports[1]["pillar"], "security");
 
     let request = test::TestRequest::get()
