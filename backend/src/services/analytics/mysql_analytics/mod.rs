@@ -32,6 +32,7 @@ pub mod query_plans_inventory;
 pub mod rds_mysql_inventory;
 pub mod redo_log_inventory;
 pub mod replication_status_inventory;
+pub mod schema_explorer_inventory;
 pub mod slow_query_log_inventory;
 pub mod sort_operations_inventory;
 pub mod sys_schema_inventory;
