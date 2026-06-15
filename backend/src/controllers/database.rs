@@ -80,6 +80,10 @@ use crate::services::analytics::mysql_analytics::mysql_signals::{
     MySqlPerformanceSignal, MySqlSignalEvaluator, MySqlSignalRules, MySqlSignalSnapshot,
 };
 use crate::services::analytics::mysql_analytics::mysql_telemetry::MySqlTelemetryCollector;
+use crate::services::analytics::mysql_analytics::parameter_drift_inventory::{
+    evaluate_mysql_parameter_drift_inventory, parameter_drift_item_from_telemetry,
+    RESOURCE_TYPE as MYSQL_PARAMETER_DRIFT_RESOURCE_TYPE,
+};
 use crate::services::analytics::mysql_analytics::partitioning_inventory::{
     evaluate_mysql_partitioning_inventory, partitioning_item_from_telemetry,
     RESOURCE_TYPE as MYSQL_PARTITIONING_RESOURCE_TYPE,
@@ -1064,6 +1068,77 @@ pub async fn get_mysql_restore_drills_inventory_pillar_reports(
 
     Ok(HttpResponse::Ok().json(json!({
         "resource_type": MYSQL_RESTORE_DRILLS_RESOURCE_TYPE,
+        "evaluated_at": now,
+        "stale_after_hours": DEFAULT_STALE_AFTER_HOURS,
+        "connection_id": query.connection_id,
+        "resources_evaluated": items.len(),
+        "oldest_refresh": oldest_refresh,
+        "reports": reports,
+    })))
+}
+
+pub async fn get_mysql_parameter_drift_inventory_pillar_reports(
+    query: web::Query<MySqlInventoryQuery>,
+    db_pool: web::Data<Arc<DatabaseConnection>>,
+    config: web::Data<Config>,
+    claims: web::ReqData<Claims>,
+) -> Result<impl Responder, AppError> {
+    let query = query.into_inner();
+    let pillars = parse_mysql_inventory_pillars(&query.pillar, "MySQL parameter drift")?;
+    let connection_id = query
+        .connection_id
+        .as_deref()
+        .map(str::trim)
+        .filter(|connection_id| !connection_id.is_empty());
+
+    let items = if let Some(connection_id) = connection_id {
+        let db_repo = DatabaseRepository::new(db_pool.get_ref().clone(), config.get_ref().clone());
+        let conn_id = uuid::Uuid::parse_str(connection_id)
+            .map_err(|e| AppError::BadRequest(format!("Invalid UUID: {}", e)))?;
+        let conn_model = db_repo
+            .find_by_id(conn_id)
+            .await?
+            .ok_or_else(|| AppError::NotFound("Database connection not found".to_string()))?;
+
+        let user_id = uuid::Uuid::parse_str(&claims.sub)
+            .map_err(|e| AppError::BadRequest(format!("Invalid user UUID: {}", e)))?;
+        let is_admin = claims.roles.iter().any(|role| role == "admin");
+        if conn_model.created_by != user_id && !is_admin {
+            return Err(AppError::Auth(
+                "You do not have access to this database connection".to_string(),
+            ));
+        }
+
+        let connection_type = conn_model.connection_type.to_lowercase();
+        if connection_type != "mysql" && connection_type != "aurora-mysql" {
+            return Err(AppError::BadRequest(
+                "MySQL parameter drift inventory is only supported for mysql or aurora-mysql connections"
+                    .to_string(),
+            ));
+        }
+
+        let dynamic_conn = connect_to_dynamic_database(&conn_model, config.get_ref()).await?;
+        let telemetry = MySqlTelemetryCollector::collect(&dynamic_conn).await?;
+        vec![parameter_drift_item_from_telemetry(
+            &conn_model.id.to_string(),
+            &conn_model.name,
+            Some(conn_model.created_by.to_string()),
+            BTreeMap::new(),
+            &telemetry,
+        )]
+    } else {
+        Vec::new()
+    };
+
+    let now = Utc::now();
+    let reports = pillars
+        .iter()
+        .map(|pillar| evaluate_mysql_parameter_drift_inventory(&items, *pillar, now))
+        .collect::<Vec<_>>();
+    let oldest_refresh = items.iter().map(|item| item.collected_at).min();
+
+    Ok(HttpResponse::Ok().json(json!({
+        "resource_type": MYSQL_PARAMETER_DRIFT_RESOURCE_TYPE,
         "evaluated_at": now,
         "stale_after_hours": DEFAULT_STALE_AFTER_HOURS,
         "connection_id": query.connection_id,
