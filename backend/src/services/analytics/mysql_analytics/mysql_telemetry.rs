@@ -62,6 +62,10 @@ pub struct MySqlWorkloadSnapshot {
     pub sort_rows: i64,
     pub sort_scan: i64,
     pub sort_merge_pass_pct: Option<f64>,
+    pub select_full_join: i64,
+    pub select_full_range_join: i64,
+    pub select_range_check: i64,
+    pub full_join_select_pct: Option<f64>,
     pub qps_since_start: f64,
     pub read_write_ratio: Option<f64>,
 }
@@ -355,6 +359,8 @@ impl MySqlTelemetryCollector {
         let sort_range = get_i64(status, "Sort_range");
         let sort_scan = get_i64(status, "Sort_scan");
         let sort_operations = sort_range + sort_scan;
+        let select_full_join = get_i64(status, "Select_full_join");
+        let select_full_range_join = get_i64(status, "Select_full_range_join");
 
         MySqlWorkloadSnapshot {
             questions,
@@ -378,6 +384,14 @@ impl MySqlTelemetryCollector {
             sort_scan,
             sort_merge_pass_pct: if sort_operations > 0 {
                 Some(sort_merge_passes as f64 / sort_operations as f64 * 100.0)
+            } else {
+                None
+            },
+            select_full_join,
+            select_full_range_join,
+            select_range_check: get_i64(status, "Select_range_check"),
+            full_join_select_pct: if selects > 0 {
+                Some((select_full_join + select_full_range_join) as f64 / selects as f64 * 100.0)
             } else {
                 None
             },
@@ -1063,6 +1077,10 @@ mod tests {
                 sort_rows: 0,
                 sort_scan: 0,
                 sort_merge_pass_pct: None,
+                select_full_join: 0,
+                select_full_range_join: 0,
+                select_range_check: 0,
+                full_join_select_pct: None,
                 qps_since_start: 1.0,
                 read_write_ratio: Some(4.0),
             },

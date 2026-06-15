@@ -24,6 +24,7 @@ use mayyam::controllers::database::{
     get_mysql_group_replication_inventory_pillar_reports,
     get_mysql_index_cardinality_inventory_pillar_reports,
     get_mysql_innodb_buffer_pool_inventory_pillar_reports,
+    get_mysql_join_buffers_inventory_pillar_reports,
     get_mysql_metadata_locks_inventory_pillar_reports,
     get_mysql_missing_indexes_inventory_pillar_reports,
     get_mysql_partitioning_inventory_pillar_reports,
@@ -140,6 +141,10 @@ async fn mysql_performance_schema_inventory_pillar_reports_contract() {
             .route(
                 "/api/databases/mysql/sort-operations/pillars",
                 web::get().to(get_mysql_sort_operations_inventory_pillar_reports),
+            )
+            .route(
+                "/api/databases/mysql/join-buffers/pillars",
+                web::get().to(get_mysql_join_buffers_inventory_pillar_reports),
             )
             .route(
                 "/api/databases/mysql/redo-log/pillars",
@@ -592,6 +597,28 @@ async fn mysql_performance_schema_inventory_pillar_reports_contract() {
 
     let request = test::TestRequest::get()
         .uri("/api/databases/mysql/sort-operations/pillars?pillar=cost,security")
+        .to_request();
+    let response = test::call_service(&app, request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+    let body: Value = test::read_body_json(response).await;
+    let reports = body["reports"].as_array().expect("reports array");
+    assert_eq!(reports.len(), 2);
+    assert_eq!(reports[0]["pillar"], "cost");
+    assert_eq!(reports[1]["pillar"], "security");
+
+    let request = test::TestRequest::get()
+        .uri("/api/databases/mysql/join-buffers/pillars")
+        .to_request();
+    let response = test::call_service(&app, request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body: Value = test::read_body_json(response).await;
+    assert_eq!(body["resource_type"], "MySqlJoinBuffers");
+    let reports = body["reports"].as_array().expect("reports array");
+    assert_eq!(reports.len(), 3);
+
+    let request = test::TestRequest::get()
+        .uri("/api/databases/mysql/join-buffers/pillars?pillar=cost,security")
         .to_request();
     let response = test::call_service(&app, request).await;
     assert_eq!(response.status(), StatusCode::OK);
