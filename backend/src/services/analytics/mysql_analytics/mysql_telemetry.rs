@@ -41,6 +41,10 @@ pub struct MySqlServerContext {
     pub uptime_seconds: i64,
     pub have_ssl: Option<String>,
     pub require_secure_transport: Option<String>,
+    pub log_bin: Option<String>,
+    pub binlog_expire_logs_seconds: Option<i64>,
+    pub expire_logs_days: Option<i64>,
+    pub gtid_mode: Option<String>,
     pub performance_schema_enabled: Option<String>,
     pub slow_query_log_enabled: Option<String>,
     pub long_query_time_seconds: Option<f64>,
@@ -328,7 +332,11 @@ impl MySqlTelemetryCollector {
                 'long_query_time',
                 'max_connections',
                 'performance_schema',
+                'binlog_expire_logs_seconds',
+                'expire_logs_days',
+                'gtid_mode',
                 'have_ssl',
+                'log_bin',
                 'require_secure_transport',
                 'slow_query_log',
                 'thread_cache_size',
@@ -367,6 +375,14 @@ impl MySqlTelemetryCollector {
             uptime_seconds: get_i64(status, "Uptime"),
             have_ssl: variables.get("have_ssl").cloned(),
             require_secure_transport: variables.get("require_secure_transport").cloned(),
+            log_bin: variables.get("log_bin").cloned(),
+            binlog_expire_logs_seconds: variables
+                .get("binlog_expire_logs_seconds")
+                .and_then(|value| value.parse::<i64>().ok()),
+            expire_logs_days: variables
+                .get("expire_logs_days")
+                .and_then(|value| value.parse::<i64>().ok()),
+            gtid_mode: variables.get("gtid_mode").cloned(),
             performance_schema_enabled: variables.get("performance_schema").cloned(),
             slow_query_log_enabled: variables.get("slow_query_log").cloned(),
             long_query_time_seconds: variables
@@ -1150,6 +1166,10 @@ mod tests {
                 uptime_seconds: 3600,
                 have_ssl: Some("YES".to_string()),
                 require_secure_transport: Some("ON".to_string()),
+                log_bin: Some("ON".to_string()),
+                binlog_expire_logs_seconds: Some(604800),
+                expire_logs_days: None,
+                gtid_mode: Some("ON".to_string()),
                 performance_schema_enabled: Some("ON".to_string()),
                 slow_query_log_enabled: Some("ON".to_string()),
                 long_query_time_seconds: Some(2.0),
