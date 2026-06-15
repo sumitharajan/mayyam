@@ -765,6 +765,7 @@ mod tests {
             tables,
             partitions,
             indexes: Vec::new(),
+            privileges: Vec::new(),
             waits: Vec::new(),
             locks: MySqlLockSnapshot {
                 blocked_processes: 0,

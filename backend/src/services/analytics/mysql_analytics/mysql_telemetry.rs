@@ -29,6 +29,7 @@ pub struct MySqlTelemetrySnapshot {
     pub tables: Vec<MySqlTableTelemetry>,
     pub partitions: Vec<MySqlPartitionTelemetry>,
     pub indexes: Vec<MySqlIndexTelemetry>,
+    pub privileges: Vec<MySqlPrivilegeTelemetry>,
     pub waits: Vec<MySqlWaitTelemetry>,
     pub locks: MySqlLockSnapshot,
     pub findings: Vec<MySqlFinding>,
@@ -156,6 +157,22 @@ pub struct MySqlIndexTelemetry {
 }
 
 #[derive(Debug, Clone, Serialize)]
+pub struct MySqlPrivilegeTelemetry {
+    pub user: String,
+    pub host: String,
+    pub account_locked: Option<bool>,
+    pub password_expired: Option<bool>,
+    pub ssl_type: Option<String>,
+    pub super_priv: bool,
+    pub grant_priv: bool,
+    pub create_user_priv: bool,
+    pub file_priv: bool,
+    pub process_priv: bool,
+    pub shutdown_priv: bool,
+    pub reload_priv: bool,
+}
+
+#[derive(Debug, Clone, Serialize)]
 pub struct MySqlWaitTelemetry {
     pub event_name: String,
     pub count: i64,
@@ -218,6 +235,7 @@ impl MySqlTelemetryCollector {
         let tables = Self::collect_table_telemetry(conn).await?;
         let partitions = Self::collect_partition_telemetry(conn).await?;
         let indexes = Self::collect_index_telemetry(conn).await?;
+        let privileges = Self::collect_privilege_telemetry(conn).await?;
         let waits = Self::collect_waits(conn).await?;
         let locks = Self::collect_locks(conn).await?;
 
@@ -231,6 +249,7 @@ impl MySqlTelemetryCollector {
             tables,
             partitions,
             indexes,
+            privileges,
             waits,
             locks,
             findings: Vec::new(),
@@ -662,6 +681,56 @@ impl MySqlTelemetryCollector {
         Ok(indexes)
     }
 
+    async fn collect_privilege_telemetry(
+        conn: &DatabaseConnection,
+    ) -> Result<Vec<MySqlPrivilegeTelemetry>, AppError> {
+        const SQL: &str = r#"
+            SELECT
+                User,
+                Host,
+                account_locked,
+                password_expired,
+                ssl_type,
+                Super_priv,
+                Grant_priv,
+                Create_user_priv,
+                File_priv,
+                Process_priv,
+                Shutdown_priv,
+                Reload_priv
+            FROM mysql.user
+            ORDER BY User, Host
+            LIMIT 200
+        "#;
+
+        let rows = match query_all(conn, SQL).await {
+            Ok(rows) => rows,
+            Err(err) => {
+                tracing::warn!("Unable to collect MySQL privilege telemetry: {}", err);
+                return Ok(Vec::new());
+            }
+        };
+
+        let mut privileges = Vec::new();
+        for row in rows {
+            privileges.push(MySqlPrivilegeTelemetry {
+                user: string_value(&row, "User").unwrap_or_default(),
+                host: string_value(&row, "Host").unwrap_or_default(),
+                account_locked: optional_yes_no_value(&row, "account_locked"),
+                password_expired: optional_yes_no_value(&row, "password_expired"),
+                ssl_type: string_value(&row, "ssl_type"),
+                super_priv: yes_no_value(&row, "Super_priv"),
+                grant_priv: yes_no_value(&row, "Grant_priv"),
+                create_user_priv: yes_no_value(&row, "Create_user_priv"),
+                file_priv: yes_no_value(&row, "File_priv"),
+                process_priv: yes_no_value(&row, "Process_priv"),
+                shutdown_priv: yes_no_value(&row, "Shutdown_priv"),
+                reload_priv: yes_no_value(&row, "Reload_priv"),
+            });
+        }
+        Ok(privileges)
+    }
+
     async fn collect_waits(conn: &DatabaseConnection) -> Result<Vec<MySqlWaitTelemetry>, AppError> {
         const SQL: &str = r#"
             SELECT
@@ -998,6 +1067,14 @@ fn string_value(row: &QueryResult, column: &str) -> Option<String> {
         .or_else(|| row.try_get::<Option<String>>("", column).ok().flatten())
 }
 
+fn optional_yes_no_value(row: &QueryResult, column: &str) -> Option<bool> {
+    string_value(row, column).map(|value| value.eq_ignore_ascii_case("Y"))
+}
+
+fn yes_no_value(row: &QueryResult, column: &str) -> bool {
+    optional_yes_no_value(row, column).unwrap_or(false)
+}
+
 fn i64_value(row: &QueryResult, column: &str) -> Option<i64> {
     row.try_get::<i64>("", column)
         .ok()
@@ -1112,6 +1189,7 @@ mod tests {
             tables: Vec::new(),
             partitions: Vec::new(),
             indexes: Vec::new(),
+            privileges: Vec::new(),
             waits: Vec::new(),
             locks: MySqlLockSnapshot {
                 blocked_processes: 0,
