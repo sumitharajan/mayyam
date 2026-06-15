@@ -28,6 +28,7 @@ pub mod mysql_signals;
 pub mod mysql_telemetry;
 pub mod partitioning_inventory;
 pub mod performance_schema_inventory;
+pub mod query_plans_inventory;
 pub mod rds_mysql_inventory;
 pub mod redo_log_inventory;
 pub mod replication_status_inventory;

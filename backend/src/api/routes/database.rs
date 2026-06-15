@@ -149,6 +149,10 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
                 ),
             )
             .service(
+                web::resource("/mysql/query-plans/pillars")
+                    .route(web::get().to(database::get_mysql_query_plans_inventory_pillar_reports)),
+            )
+            .service(
                 web::resource("/mysql/redo-log/pillars")
                     .route(web::get().to(database::get_mysql_redo_log_inventory_pillar_reports)),
             )
